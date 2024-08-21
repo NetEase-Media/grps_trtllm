@@ -200,7 +200,7 @@ curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
 # openai_cli.py 非stream请求
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" false
 
-# openai_cli.py stream骑牛
+# openai_cli.py stream请求
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" true
 
 # openai_func_call.py进行function call模拟
