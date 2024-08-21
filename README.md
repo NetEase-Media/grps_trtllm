@@ -14,7 +14,7 @@
 当前问题：
 
 1. 由于不同家族系的```LLM```的```chat```和```function call```
-   的prompt构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```。目前仅实现了```qwen```
+   的```prompt```构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```。目前仅实现了```qwen```
    ，后续可以实现其他家族的```styler```，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
    不同家族的```styler```持续开发中...。
 2. 当前基于```tensorrt-llm  v0.10.0```进行的实现，新版本持续支持中...。
@@ -243,7 +243,7 @@ docker rm -f grps_trtllm_server
 
 ### 4. 性能比较
 
-这里不再比较与```triton-trtllm-server```性能，因为它不是OpenAI协议。比较与```xinference-vllm```服务的性能差异。
+这里不再比较与```triton-trtllm-server```性能，因为它不是```OpenAI```协议。比较与```xinference-vllm```服务的性能差异。
 
 ```
 GPU: RTX 2080Ti * 4
