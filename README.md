@@ -35,7 +35,7 @@
 |-- second_party                        # 第二方依赖
 |   |-- grps-server-framework           # grps框架依赖
 |-- src                                 # 自定义源码
-|   |-- constants.cc/.h      # 常量定义
+|   |-- constants.cc/.h                 # 常量定义
 |   |-- customized_inferer.cc/.h        # 自定义推理器
 |   |-- grps_server_customized.cc/.h    # 自定义库初始化
 |   |-- llm_styler.cc/.h                # LLM风格定义，prompt构建，结果解析
