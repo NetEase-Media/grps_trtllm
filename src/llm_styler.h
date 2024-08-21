@@ -35,7 +35,7 @@ public:
   virtual ~LLMStyler() = default;
 
   /**
-   * @brief Build prompt for model input from OpenAI interface format
+   * @brief Build prompt for model input from OpenAI interface json body request.
    * @param json_body: Json body from client.
    * @return <if_function_call, prompt>: if_function_call is true if the prompt contains function call.
    */
@@ -43,7 +43,7 @@ public:
 
   /**
    * @brief Parse function call response from generated text and build content and tool_calls array of message
-   * member of OpenAI interface response format.
+   * member of OpenAI interface response.
    * @param gen_txt: Generated text.
    * @param req_id: Request id.
    * @param message: Message member of OpenAI interface response format.
@@ -85,7 +85,7 @@ public:
   ~QwenStyler() override = default;
 
   /**
-   * @brief Build prompt for model input from OpenAI interface format
+   * @brief Build prompt for model input from OpenAI interface request.
    * @param json_body: Json body from client.
    * @return <if_function_call, prompt>: if_function_call is true if the prompt contains function call.
    */
@@ -93,7 +93,7 @@ public:
 
   /**
    * @brief Parse function call response from generated text and build content and tool_calls array of message
-   * member of OpenAI interface response format.
+   * member of OpenAI interface response.
    * @param gen_txt: Generated text.
    * @param req_id: Request id.
    * @param message: Message member of OpenAI interface response format.
