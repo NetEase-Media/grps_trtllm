@@ -85,7 +85,7 @@ public:
   ~QwenStyler() override = default;
 
   /**
-   * @brief Build prompt for model input from OpenAI interface request.
+   * @brief Build prompt for model input from OpenAI interface json body request.
    * @param json_body: Json body from client.
    * @return <if_function_call, prompt>: if_function_call is true if the prompt contains function call.
    */
