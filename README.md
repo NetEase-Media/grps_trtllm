@@ -1,7 +1,7 @@
 # grps-trtllm
 
-[grps](https://github.com/NetEase-Media/grps)接入[TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM)
-实现```LLM```服务，相比较[triton-trtllm-server](https://github.com/triton-inference-server/tensorrtllm_backend)
+[grps](https://github.com/NetEase-Media/grps)接入[tensorrt-llm](https://github.com/NVIDIA/TensorRT-LLM)
+实现```LLM```服务，相比较[triton-trtllm](https://github.com/triton-inference-server/tensorrtllm_backend)
 实现```LLM```服务，有如下优势：
 
 1. 通过纯```C++```实现完整```LLM```服务，包含```tokenizer```部分。
@@ -9,7 +9,7 @@
 3. 通过```grps```的自定义```http```功能实现```OpenAI```接口协议，支持```chat```和```function call```模式。
 4. 支持扩展不同```LLM```的```prompt```构建风格以及生成结果的解析风格，以实现不同```LLM```的```chat```
    和```function call```模式。
-5. 通过测试，```grps-trtllm```相比较```triton-trtllm-server```性能有稳定的提升。
+5. 通过测试，```grps-trtllm```相比较```triton-trtllm```性能有稳定的提升。
 
 当前问题：
 
