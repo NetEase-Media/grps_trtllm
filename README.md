@@ -1,18 +1,5 @@
 # grps-trtllm
 
-* [1. 工程结构](#1-工程结构)
-* [2. 本地开发与调试](#2-本地开发与调试)
-    * [2.1 拉取代码](#21-拉取代码)
-    * [2.2 创建容器](#22-创建容器)
-    * [2.3 构建trtllm引擎](#23-构建trtllm引擎)
-    * [2.3 修改trtllm_inferer参数](#23-修改trtllm_inferer参数)
-    * [2.5 构建与部署](#25-构建与部署)
-    * [2.6 模拟请求](#26-模拟请求)
-    * [2.7 指标观测](#27-指标观测)
-    * [2.8 关闭](#28-关闭)
-* [3. docker部署](#3-docker部署)
-* [4. 性能比较](#4-性能比较)
-
 [grps](https://github.com/NetEase-Media/grps)接入[TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM)
 实现```LLM```服务，相比较[triton-trtllm-server](https://github.com/triton-inference-server/tensorrtllm_backend)
 实现```LLM```服务，有如下优势：
@@ -120,6 +107,9 @@ cd ../../../../
 和```gpt_model_path```为新路径，更多核心参数见如下：
 
 ```yaml
+models:
+  - name: trtllm_model
+    ...
     inferer_args:
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
       # Current support {`qwen`}.
