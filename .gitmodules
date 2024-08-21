@@ -1,0 +1,6 @@
+[submodule "third_party/TensorRT-LLM"]
+	path = third_party/TensorRT-LLM
+	url = git@github.com:NVIDIA/TensorRT-LLM.git
+[submodule "third_party/tokenizers-cpp"]
+	path = third_party/tokenizers-cpp
+	url = git@github.com:mlc-ai/tokenizers-cpp.git
