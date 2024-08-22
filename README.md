@@ -1,26 +1,45 @@
 # grps-trtllm
 
-[grps](https://github.com/NetEase-Media/grps)接入[tensorrt-llm](https://github.com/NVIDIA/TensorRT-LLM)
-实现```LLM```服务，相比较[triton-trtllm](https://github.com/triton-inference-server/tensorrtllm_backend)
-实现```LLM```服务，有如下优势：
+## 目录
 
-1. 通过纯```C++```实现完整```LLM```服务，包含```tokenizer```部分。
-2. 不存在```triton_server <--> tokenizer_backend <--> trtllm_backend```之间的进程间通信。
-3. 通过```grps```的自定义```http```功能实现```OpenAI```接口协议，支持```chat```和```function call```模式。
-4. 支持扩展不同```LLM```的```prompt```构建风格以及生成结果的解析风格，以实现不同```LLM```的```chat```
-   和```function call```模式。
-5. 通过测试，```grps-trtllm```相比较```triton-trtllm```性能有稳定的提升。
+* [1. 说明](#1-说明)
+* [2. 工程结构](#2-工程结构)
+* [3. 本地开发与调试](#3-本地开发与调试)
+    * [3.1 拉取代码](#31-拉取代码)
+    * [3.2 创建容器](#32-创建容器)
+    * [3.3 构建trtllm引擎](#33-构建trtllm引擎)
+    * [3.3 修改inference.yml配置](#33-修改inferenceyml配置)
+    * [3.5 构建与部署](#35-构建与部署)
+    * [3.6 模拟请求](#36-模拟请求)
+    * [3.7 指标观测](#37-指标观测)
+    * [3.8 关闭服务](#38-关闭服务)
+* [4. docker部署](#4-docker部署)
+* [5. 与xinference-vllm性能比较](#5-与xinference-vllm性能比较)
+
+## 1. 说明
+
+[grps](https://github.com/NetEase-Media/grps)接入[trtllm](https://github.com/NVIDIA/TensorRT-LLM)
+实现```LLM```服务，相比较[triton-trtllm](https://github.com/triton-inference-server/tensorrtllm_backend)
+实现服务。有如下优势：
+
+* 通过纯```C++```实现完整```LLM```服务，包含```tokenizer```部分。
+* 不存在```triton_server <--> tokenizer_backend <--> trtllm_backend```之间的进程间通信。
+* 通过```grps```的自定义```http```功能实现```OpenAI```接口协议，支持```chat```和```function call```模式。
+* 支持扩展不同```LLM```的```prompt```构建风格以及生成结果的解析风格，以实现不同```LLM```的```chat```
+  和```function call```模式。
+* 通过测试，```grps-trtllm```相比较```triton-trtllm```性能有稳定的提升。
 
 当前问题：
 
-1. 由于不同家族系的```LLM```的```chat```和```function call```
-   的```prompt```构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```。目前仅实现了```qwen```
-   ，后续可以实现其他家族的```styler```，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
-   不同家族的```styler```持续开发中...。
-2. 当前基于```tensorrt-llm v0.10.0```进行的实现，新版本持续支持中...。
-3. ```grps```刚支持```trtllm```没多久，欢迎提交```pr```贡献支持更多的```LLM```家族的```styler```以及修复bug。
+* 由于不同家族系的```LLM```的```chat```和```function call```
+  的```prompt```构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```
+  。目前仅实现了```qwen```
+  ，后续可以实现其他家族的```styler```，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
+  不同家族的```styler```持续开发中...。
+* 当前基于```tensorrt-llm v0.10.0```进行的实现，新版本持续支持中...。
+* ```grps```刚支持```trtllm```没多久，欢迎提交```pr```贡献支持更多的```LLM```家族的```styler```以及修复bug。
 
-## 1. 工程结构
+## 2. 工程结构
 
 ```text
 |-- client                              # 客户端样例
@@ -51,11 +70,11 @@
 |-- .config                             # 工程配置文件，包含一些工程配置开关
 ```
 
-## 2. 本地开发与调试
+## 3. 本地开发与调试
 
 以qwen2为例。
 
-### 2.1 拉取代码
+### 3.1 拉取代码
 
 ```bash
 git clone git@github.com:NetEase-Media/grps_trtllm.git
@@ -63,7 +82,7 @@ cd grps_trtllm
 git submodule update --init --recursive
 ```
 
-### 2.2 创建容器
+### 3.2 创建容器
 
 使用```registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.4_cudnn8.9_trtllm0.10.0_py3.10```镜像。
 这里挂载了当前目录用于构建工程并保留构建产物，挂载/tmp目录用于保存构建的trtllm引擎文件。```--shm-size=2g --ulimit memlock=-1```
@@ -78,7 +97,7 @@ registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.4_cudnn8.9_
 docker exec -it grps_trtllm_dev bash
 ```
 
-### 2.3 构建trtllm引擎
+### 3.3 构建trtllm引擎
 
 ```bash
 # 下载Qwen2-7B模型
@@ -101,7 +120,7 @@ trtllm-build --checkpoint_dir /tmp/Qwen2-7B/tllm_checkpoint_4gpu_tp4/ \
 cd ../../../../
 ```
 
-### 2.3 修改trtllm_inferer参数
+### 3.3 修改inference.yml配置
 
 修改[conf/inference.yml](conf/inference.yml)中```inferer_args```相关参数。注意修改```tokenizer_path```
 和```gpt_model_path```为新路径，更多核心参数见如下：
@@ -141,7 +160,7 @@ models:
       exclude_input_in_output: true # will be set to false if not set.
 ```
 
-### 2.5 构建与部署
+### 3.5 构建与部署
 
 ```bash
 # 构建
@@ -159,7 +178,7 @@ PORT(HTTP,RPC)      NAME                PID                 DEPLOY_PATH
 9997                my_grps             65322               /home/appops/.grps/my_grps
 ```
 
-### 2.6 模拟请求
+### 3.6 模拟请求
 
 ```bash
 # curl命令非stream请求
@@ -178,6 +197,32 @@ curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
       }
     ]
   }'
+# 返回如下：
+: '
+{
+ "id": "chatcmpl-737",
+ "object": "chat.completion",
+ "created": 1724291091,
+ "model": "qwen2",
+ "system_fingerprint": "grps-trtllm-server",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "你好，我是Open Assistant，一个基于开源技术的AI助手。你可以向我提问，我将尽力回答。"
+   },
+   "logprobs": null,
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 24,
+  "completion_tokens": 24,
+  "total_tokens": 48
+ }
+}
+'
 
 # curl命令stream请求
 curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
@@ -196,31 +241,55 @@ curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
     ],
     "stream": true
   }'
+# 返回如下：
+: '
+data: {"id":"chatcmpl-738","object":"chat.completion.chunk","created":1724291206,"model":"qwen2","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"role":"assistant","content":"你好"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-738","object":"chat.completion.chunk","created":1724291206,"model":"qwen2","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"，"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-738","object":"chat.completion.chunk","created":1724291206,"model":"qwen2","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"我是"},"logprobs":null,"finish_reason":null}]}
+'
 
 # openai_cli.py 非stream请求
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" false
+# 返回如下：
+: '
+ChatCompletion(id='chatcmpl-739', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='你好，我是Open Assistant，一个基于开源技术的AI助手。你可以向我提问，我将尽力回答。', role='assistant', function_call=None, tool_calls=None))], created=1724291271, model='qwen2', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=24, prompt_tokens=24, total_tokens=48))
+'
 
 # openai_cli.py stream请求
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" true
+# 返回如下：
+: '
+ChatCompletionChunk(id='chatcmpl-740', choices=[Choice(delta=ChoiceDelta(content='你好', function_call=None, role='assistant', tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724291301, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-740', choices=[Choice(delta=ChoiceDelta(content='，', function_call=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724291301, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-740', choices=[Choice(delta=ChoiceDelta(content='我是', function_call=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724291301, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+'
 
 # openai_func_call.py进行function call模拟
 python3 client/openai_func_call.py 127.0.0.1:9997
+# 返回如下：
+: '
+Query server with question: What's the weather like in Boston today? ...
+Server response: thought:  I need to use the get_current_weather API to get the current weather in Boston.
+, call local function(get_current_weather) with arguments: location=Boston,MA, unit=celsius
+Send the result back to the server with function result(59.0) ...
+Final server response:  I can use get_current_weather.
+'
 ```
 
-### 2.7 指标观测
+### 3.7 指标观测
 
 通过访问```http://ip:9997/``` 可以查看服务的指标信息。如下指标：
 ![metrics_0.png](data/metrics_0.png)<br>
 ![metrics_1.png](data/metrics_1.png)
 
-### 2.8 关闭
+### 3.8 关闭服务
 
 ```bash
 # 关闭服务
 grpst stop my_grps
 ```
 
-## 3. docker部署
+## 4. docker部署
 
 ```bash
 # 构建自定义工程docker镜像
@@ -235,15 +304,15 @@ grps_trtllm_server:1.0.0 grpst start server.mar --mpi_np 4
 # 使用docker logs可以跟踪服务日志
 docker logs -f grps_trtllm_server
 
-# 模拟请求见2.6章节所述
+# 模拟请求见3.6章节所述
 
 # 关闭容器
 docker rm -f grps_trtllm_server
 ```
 
-### 4. 性能比较
+### 5. 与xinference-vllm性能比较
 
-这里不再比较与```triton-trtllm-server```性能，因为它不是```OpenAI```协议。比较与```xinference-vllm```服务的性能差异。
+这里不再比较与```triton-trtllm```性能，因为它不是```OpenAI```协议。比较与```xinference-vllm```服务的性能差异。
 
 ```
 GPU: RTX 2080Ti * 4
