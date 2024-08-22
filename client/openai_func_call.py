@@ -45,7 +45,7 @@ client = openai.Client(
 
 print("Query server with question: What's the weather like in Boston today? ...")
 res = client.chat.completions.create(
-    model="qwen2",
+    model="qwen2-instruct",
     messages=[
         {
             "content": "What's the weather like in Boston today?",
@@ -76,7 +76,7 @@ if function.name == "get_current_weather":
     # send the result back to the server
     print(f'Send the result back to the server with function result({weather}) ...')
     res = client.chat.completions.create(
-        model="qwen2",
+        model="qwen2-instruct",
         messages=[
             {
                 "content": "What's the weather like in Boston today?",

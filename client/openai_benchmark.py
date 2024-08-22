@@ -54,7 +54,7 @@ def request(server, prompt):
 
     url = f'{server}/v1/chat/completions'
     data = {
-        "model": "qwen2",
+        "model": "qwen2-instruct",
         "messages": [
             {
                 "role": "system",

@@ -72,12 +72,12 @@
 
 ## 3. 本地开发与调试
 
-以qwen2为例。
+以qwen2-instruct为例。
 
 ### 3.1 拉取代码
 
 ```bash
-git clone git@github.com:NetEase-Media/grps_trtllm.git
+git clone https://github.com/NetEase-Media/grps_trtllm.git
 cd grps_trtllm
 git submodule update --init --recursive
 ```
@@ -100,20 +100,20 @@ docker exec -it grps_trtllm_dev bash
 ### 3.3 构建trtllm引擎
 
 ```bash
-# 下载Qwen2-7B模型
+# 下载Qwen2-7B-Instruct模型
 apt update && apt install git-lfs
 git lfs install
-git clone https://huggingface.co/Qwen/Qwen2-7B /tmp/Qwen2-7B
+git clone https://huggingface.co/Qwen/Qwen2-7B-Instruct /tmp/Qwen2-7B-Instruct
 
 # 进入TensorRT-LLM/examples/qwen目录，参考README进行构建trtllm引擎。
 cd third_party/TensorRT-LLM/examples/qwen
 # 这里以tp4为例进行构建，即使用4张卡进行tensor并行推理
 # 转换ckpt
-python3 convert_checkpoint.py --model_dir /tmp/Qwen2-7B \
---output_dir /tmp/Qwen2-7B/tllm_checkpoint_4gpu_tp4/ --dtype float16 --tp_size 4
+python3 convert_checkpoint.py --model_dir /tmp/Qwen2-7B-Instruct \
+--output_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint_4gpu_tp4/ --dtype float16 --tp_size 4
 # 构建引擎，当出现OOM，可以适当缩小max_batch_size，max_input_len，max_output_len等参数
-trtllm-build --checkpoint_dir /tmp/Qwen2-7B/tllm_checkpoint_4gpu_tp4/ \
---output_dir /tmp/Qwen2-7B/trt_engines/fp16_4gpu/ \
+trtllm-build --checkpoint_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint_4gpu_tp4/ \
+--output_dir /tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/ \
 --gemm_plugin float16 --context_fmha disable --use_custom_all_reduce disable \
 --max_batch_size 16 --paged_kv_cache enable --max_input_len 2048 --max_output_len 512
 # 回到工程根目录
@@ -137,7 +137,7 @@ models:
       # tokenizer config.
       # path of tokenizer. Must be set. Could be tokenizer.json(hf tokenizer), tokenizer.model(sentencepiece
       # tokenizer) or tokenizer_model(RWKV world tokenizer).
-      tokenizer_path: /tmp/Qwen2-7B/tokenizer.json
+      tokenizer_path: /tmp/Qwen2-7B-Instruct/tokenizer.json
       tokenizer_parallelism: 16 # tokenizers count for parallel tokenization. Will be set to 1 if not set.
       end_token_id: 151643 # end token id of tokenizer. Null if not set.
       pad_token_id: 151643 # pad token id of tokenizer. Null if not set.
@@ -154,7 +154,7 @@ models:
 
       # trtllm config.
       gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
-      gpt_model_path: /tmp/Qwen2-7B/trt_engines/fp16_4gpu/ # path of model. Must be set.
+      gpt_model_path: /tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/ # path of model. Must be set.
       batch_scheduler_policy: guaranteed_no_evict # must be `max_utilization` or `guaranteed_no_evict`.
       kv_cache_free_gpu_mem_fraction: 0.6 # will be set to 0.9 or `max_tokens_in_paged_kv_cache` if not set.
       exclude_input_in_output: true # will be set to false if not set.
@@ -185,7 +185,7 @@ PORT(HTTP,RPC)      NAME                PID                 DEPLOY_PATH
 curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen2",
+    "model": "qwen2-instruct",
     "messages": [
       {
         "role": "system",
@@ -203,7 +203,7 @@ curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
  "id": "chatcmpl-737",
  "object": "chat.completion",
  "created": 1724291091,
- "model": "qwen2",
+ "model": "qwen2-instruct",
  "system_fingerprint": "grps-trtllm-server",
  "choices": [
   {
@@ -228,7 +228,7 @@ curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
 curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen2",
+    "model": "qwen2-instruct",
     "messages": [
       {
         "role": "system",
@@ -243,25 +243,25 @@ curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
   }'
 # 返回如下：
 : '
-data: {"id":"chatcmpl-738","object":"chat.completion.chunk","created":1724291206,"model":"qwen2","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"role":"assistant","content":"你好"},"logprobs":null,"finish_reason":null}]}
-data: {"id":"chatcmpl-738","object":"chat.completion.chunk","created":1724291206,"model":"qwen2","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"，"},"logprobs":null,"finish_reason":null}]}
-data: {"id":"chatcmpl-738","object":"chat.completion.chunk","created":1724291206,"model":"qwen2","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"我是"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-738","object":"chat.completion.chunk","created":1724291206,"model":"qwen2-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"role":"assistant","content":"你好"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-738","object":"chat.completion.chunk","created":1724291206,"model":"qwen2-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"，"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-738","object":"chat.completion.chunk","created":1724291206,"model":"qwen2-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"我是"},"logprobs":null,"finish_reason":null}]}
 '
 
 # openai_cli.py 非stream请求
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" false
 # 返回如下：
 : '
-ChatCompletion(id='chatcmpl-739', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='你好，我是Open Assistant，一个基于开源技术的AI助手。你可以向我提问，我将尽力回答。', role='assistant', function_call=None, tool_calls=None))], created=1724291271, model='qwen2', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=24, prompt_tokens=24, total_tokens=48))
+ChatCompletion(id='chatcmpl-739', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='你好，我是Open Assistant，一个基于开源技术的AI助手。你可以向我提问，我将尽力回答。', role='assistant', function_call=None, tool_calls=None))], created=1724291271, model='qwen2-instruct', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=24, prompt_tokens=24, total_tokens=48))
 '
 
 # openai_cli.py stream请求
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" true
 # 返回如下：
 : '
-ChatCompletionChunk(id='chatcmpl-740', choices=[Choice(delta=ChoiceDelta(content='你好', function_call=None, role='assistant', tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724291301, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
-ChatCompletionChunk(id='chatcmpl-740', choices=[Choice(delta=ChoiceDelta(content='，', function_call=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724291301, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
-ChatCompletionChunk(id='chatcmpl-740', choices=[Choice(delta=ChoiceDelta(content='我是', function_call=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724291301, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-740', choices=[Choice(delta=ChoiceDelta(content='你好', function_call=None, role='assistant', tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724291301, model='qwen2-instruct', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-740', choices=[Choice(delta=ChoiceDelta(content='，', function_call=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724291301, model='qwen2-instruct', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-740', choices=[Choice(delta=ChoiceDelta(content='我是', function_call=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724291301, model='qwen2-instruct', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
 '
 
 # openai_func_call.py进行function call模拟
@@ -269,10 +269,9 @@ python3 client/openai_func_call.py 127.0.0.1:9997
 # 返回如下：
 : '
 Query server with question: What's the weather like in Boston today? ...
-Server response: thought:  I need to use the get_current_weather API to get the current weather in Boston.
-, call local function(get_current_weather) with arguments: location=Boston,MA, unit=celsius
+Server response: thought:  I need to use the get_current_weather API to find out the current weather in Boston., call local function(get_current_weather) with arguments: location=Boston,MA, unit=fahrenheit
 Send the result back to the server with function result(59.0) ...
-Final server response:  I can use get_current_weather.
+Final server response: The current weather in Boston is 59 degrees Fahrenheit.
 '
 ```
 
@@ -317,12 +316,12 @@ docker rm -f grps_trtllm_server
 ```
 GPU: RTX 2080Ti * 4
 CUDA: cuda_12.4
-Triton-trtllm-backend: 0.10.0
 Trtllm: 0.10.0
 xinference: 0.14.1
 vLLM: 0.5.4
 CPU: Intel(R) Xeon(R) Gold 6242R CPU @ 3.10GHz
 Mem：128G
+LLM: Qwen2-7B
 ```
 
 短输入输出：

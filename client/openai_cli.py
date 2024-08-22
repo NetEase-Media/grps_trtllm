@@ -16,7 +16,7 @@ client = openai.Client(
     base_url=f"http://{server}/v1"
 )
 res = client.chat.completions.create(
-    model="qwen2",
+    model="qwen2-instruct",
     messages=[
         {
             "content": prompt,
