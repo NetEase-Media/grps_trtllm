@@ -210,7 +210,7 @@ curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
    "index": 0,
    "message": {
     "role": "assistant",
-    "content": "你好，我是Open Assistant，一个基于开源技术的AI助手。你可以向我提问，我将尽力回答。"
+    "content": "你好！我是阿里云开发的一款超大规模语言模型，我叫通义千问。作为一个AI助手，我的目标是帮助用户获得准确、有用的信息，解决他们的问题和困惑。我被设计成能够进行多轮对话、保持逻辑一致，并能够覆盖各种主题，包括但不限于科技、文化、生活常识等。无论是你需要学习知识、完成任务，还是只是想聊天解闷，我都在这里为你服务。请随时告诉我你需要什么帮助，我会尽力提供支持。"
    },
    "logprobs": null,
    "finish_reason": "stop"
@@ -243,25 +243,25 @@ curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
   }'
 # 返回如下：
 : '
-data: {"id":"chatcmpl-738","object":"chat.completion.chunk","created":1724291206,"model":"qwen2-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"role":"assistant","content":"你好"},"logprobs":null,"finish_reason":null}]}
-data: {"id":"chatcmpl-738","object":"chat.completion.chunk","created":1724291206,"model":"qwen2-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"，"},"logprobs":null,"finish_reason":null}]}
-data: {"id":"chatcmpl-738","object":"chat.completion.chunk","created":1724291206,"model":"qwen2-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"我是"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-4","object":"chat.completion.chunk","created":1724295387,"model":"qwen2-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"role":"assistant","content":"你好"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-4","object":"chat.completion.chunk","created":1724295387,"model":"qwen2-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"！"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-4","object":"chat.completion.chunk","created":1724295387,"model":"qwen2-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"我是"},"logprobs":null,"finish_reason":null}]}
 '
 
 # openai_cli.py 非stream请求
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" false
 # 返回如下：
 : '
-ChatCompletion(id='chatcmpl-739', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='你好，我是Open Assistant，一个基于开源技术的AI助手。你可以向我提问，我将尽力回答。', role='assistant', function_call=None, tool_calls=None))], created=1724291271, model='qwen2-instruct', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=24, prompt_tokens=24, total_tokens=48))
+ChatCompletion(id='chatcmpl-5', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='你好！我是阿里云开发的一款超大规模语言模型，我叫通义千问。作为一个AI助手，我的目标是帮助用户获得准确、有用的信息，解决他们的问题和困惑。我被设计成能够进行多轮对话、保持逻辑一致，并能够覆盖各种主题，包括但不限于科技、文化、生活常识等。无论是你需要学习知识、完成任务，还是只是想聊天解闷，我都在这里为你服务。请随时告诉我你需要什么帮助，我会尽力提供支持。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1724295422, model='qwen2', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=102, prompt_tokens=24, total_tokens=126))
 '
 
 # openai_cli.py stream请求
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" true
 # 返回如下：
 : '
-ChatCompletionChunk(id='chatcmpl-740', choices=[Choice(delta=ChoiceDelta(content='你好', function_call=None, role='assistant', tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724291301, model='qwen2-instruct', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
-ChatCompletionChunk(id='chatcmpl-740', choices=[Choice(delta=ChoiceDelta(content='，', function_call=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724291301, model='qwen2-instruct', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
-ChatCompletionChunk(id='chatcmpl-740', choices=[Choice(delta=ChoiceDelta(content='我是', function_call=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724291301, model='qwen2-instruct', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-6', choices=[Choice(delta=ChoiceDelta(content='你好', function_call=None, refusal=None, role='assistant', tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724295460, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-6', choices=[Choice(delta=ChoiceDelta(content='！', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724295460, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-6', choices=[Choice(delta=ChoiceDelta(content='我是', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724295460, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
 '
 
 # openai_func_call.py进行function call模拟
