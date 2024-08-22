@@ -85,12 +85,12 @@ git submodule update --init --recursive
 ### 3.2 创建容器
 
 使用```registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.4_cudnn8.9_trtllm0.10.0_py3.10```镜像。
-这里挂载了当前目录用于构建工程并保留构建产物，挂载/tmp目录用于保存构建的trtllm引擎文件。```--shm-size=2g --ulimit memlock=-1```
-用于设置共享内存大小和解锁内存限制。
+这里挂载了当前目录用于构建工程并保留构建产物，挂载/tmp目录用于保存构建的trtllm引擎文件。参考```triton-trtllm```
+设置共享内存大小，解除物理内存锁定限制，设置栈大小，配置参数```--shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864```。
 
 ```bash
 # 创建容器
-docker run -itd --name grps_trtllm_dev --runtime=nvidia --network host --shm-size=2g --ulimit memlock=-1 \
+docker run -itd --name grps_trtllm_dev --runtime=nvidia --network host --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
 -v $(pwd):/grps_dev -v /tmp:/tmp -w /grps_dev \
 registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.4_cudnn8.9_trtllm0.10.0_py3.10 bash
 # 进入开发容器
@@ -297,7 +297,8 @@ docker build -t grps_trtllm_server:1.0.0 -f docker/Dockerfile .
 # 使用上面构建好的镜像启动docker容器
 # 注意挂载/tmp目录，因为构建的trtllm引擎文件在/tmp目录下
 # 映射服务端口9997
-docker run -itd --runtime=nvidia --name="grps_trtllm_server" --shm-size=2g --ulimit memlock=-1 -v /tmp:/tmp -p 9997:9997 \
+docker run -itd --runtime=nvidia --name="grps_trtllm_server" --shm-size=2g --ulimit memlock=-1 \
+--ulimit stack=67108864 -v /tmp:/tmp -p 9997:9997 \
 grps_trtllm_server:1.0.0 grpst start server.mar --mpi_np 4
 
 # 使用docker logs可以跟踪服务日志
