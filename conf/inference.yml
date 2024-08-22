@@ -13,7 +13,7 @@ models:
       # tokenizer config.
       # path of tokenizer. Must be set. Could be tokenizer.json(hf tokenizer), tokenizer.model(sentencepiece
       # tokenizer) or tokenizer_model(RWKV world tokenizer).
-      tokenizer_path: /tmp/Qwen2-7B/tokenizer.json
+      tokenizer_path: /tmp/Qwen2-7B-Instruct/tokenizer.json
       tokenizer_parallelism: 16 # tokenizers count for parallel tokenization. Will be set to 1 if not set.
       end_token_id: 151643 # end token id of tokenizer. Null if not set.
       pad_token_id: 151643 # pad token id of tokenizer. Null if not set.
@@ -31,7 +31,7 @@ models:
       # trtllm config.
       FORCE_CPU_ONLY_INPUT_TENSORS: no
       gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
-      gpt_model_path: /tmp/Qwen2-7B/trt_engines/fp16_4gpu/ # path of model. Must be set.
+      gpt_model_path: /tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/ # path of model. Must be set.
       max_tokens_in_paged_kv_cache: # use default if not set.
       max_attention_window_size: # use default (i.e. max_sequence_length) if not set.
       sink_token_length: # use default if not set.
