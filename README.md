@@ -43,9 +43,10 @@
 
 ```text
 |-- client                              # 客户端样例
-|   |--http_benchmark.py                # 压测脚本
+|   |--openai_benchmark.py              # 通过OpenAI客户端进行benchmark
 |   |--openai_cli.py                    # 通过OpenAI客户端进行chat
 |   |--openai_func_call.py              # 通过OpenAI客户端进行function call
+|   |--triton_benchmark.py              # Triton trtllm server benchmark脚本
 |-- conf                                # 配置文件
 |   |-- inference.yml                   # 推理配置
 |   |-- server.yml                      # 服务配置
