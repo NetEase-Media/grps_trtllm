@@ -115,8 +115,7 @@ python3 convert_checkpoint.py --model_dir /tmp/Qwen2-7B-Instruct \
 # 构建引擎，当出现OOM，可以适当缩小max_batch_size，max_input_len，max_output_len等参数
 trtllm-build --checkpoint_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint_4gpu_tp4/ \
 --output_dir /tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/ \
---gemm_plugin float16 --context_fmha disable --use_custom_all_reduce disable \
---max_batch_size 16 --paged_kv_cache enable --max_input_len 2048 --max_output_len 512
+--gemm_plugin float16 --max_batch_size 16 --paged_kv_cache enable --max_input_len 2048 --max_output_len 512
 # 回到工程根目录
 cd ../../../../
 ```
