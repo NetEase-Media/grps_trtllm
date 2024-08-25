@@ -83,6 +83,7 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
                                                                                  bool streaming,
                                                                                  LLMStyler* llm_styler,
                                                                                  MultiInstanceTokenizer* tokenizer,
-                                                                                 size_t max_output_len);
+                                                                                 size_t max_output_len,
+                                                                                 executor::ModelType model_type);
 } // namespace utils
 } // namespace netease::grps

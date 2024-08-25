@@ -36,7 +36,7 @@
   。目前仅实现了```qwen```
   ，后续可以实现其他家族的```styler```，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
   不同家族的```styler```持续开发中...。
-* 当前基于```tensorrt-llm v0.10.0```进行的实现，新版本持续支持中...。
+* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.11.0```，具体见仓库的分支信息。
 * ```grps```刚支持```trtllm```没多久，欢迎提交```pr```贡献支持更多的```LLM```家族的```styler```以及修复bug。
 
 ## 2. 工程结构
@@ -154,7 +154,8 @@ models:
 
       # trtllm config.
       gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
-      gpt_model_path: /tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/ # path of model. Must be set.
+      gpt_model_path: /tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/ # path of decoder model. Must be set.
+      encoder_model_path: # path of encoder model. Null if not set.
       batch_scheduler_policy: guaranteed_no_evict # must be `max_utilization` or `guaranteed_no_evict`.
       kv_cache_free_gpu_mem_fraction: 0.6 # will be set to 0.9 or `max_tokens_in_paged_kv_cache` if not set.
       exclude_input_in_output: true # will be set to false if not set.

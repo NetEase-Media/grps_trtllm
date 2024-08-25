@@ -269,32 +269,35 @@ executor::ExecutorConfig TrtLlmModelInstance::GetExecutorConfigFromParams() {
   try {
     std::string decoding_mode_str = model_state_->GetParameter<std::string>("decoding_mode");
     if (decoding_mode_str == "top_k") {
-      decoding_mode = executor::DecodingMode::kTOP_K;
+      decoding_mode = executor::DecodingMode::TopK();
     } else if (decoding_mode_str == "top_p") {
-      decoding_mode = executor::DecodingMode::kTOP_P;
+      decoding_mode = executor::DecodingMode::TopP();
     } else if (decoding_mode_str == "top_k_top_p") {
-      decoding_mode = executor::DecodingMode::kTOP_K_TOP_P;
+      decoding_mode = executor::DecodingMode::TopKTopP();
     } else if (decoding_mode_str == "beam_search") {
-      decoding_mode = executor::DecodingMode::kBEAM_SEARCH;
+      decoding_mode = executor::DecodingMode::BeamSearch();
     } else if (decoding_mode_str == "medusa") {
-      decoding_mode = executor::DecodingMode::kMEDUSA;
+      decoding_mode = executor::DecodingMode::Medusa();
     } else {
       throw std::runtime_error("");
     }
   } catch (std::exception const& e) {
     CLOG4(WARN,
           "decoding_mode parameter is invalid or not specified"
-          "(must be one of the {top_k, top_p, top_k_top_p, beam_search})."
+          "(must be one of the {top_k, top_p, top_k_top_p, beam_search, medusa}). "
           "Using default: top_k_top_p if max_beam_width == 1, beam_search otherwise");
   }
 
-  std::optional<executor::MedusaChoices> medusa_choices = std::nullopt;
+  executor::DecodingConfig decoding_config(decoding_mode);
   try {
-    medusa_choices = model_state_->GetParameter<executor::MedusaChoices>("medusa_choices");
+    auto medusa_choices = model_state_->GetParameter<executor::MedusaChoices>("medusa_choices");
+    decoding_config.setMedusaChoices(medusa_choices);
   } catch (std::exception const& e) {
-    CLOG4(WARN,
-          "medusa_choices parameter is not specified. "
-          "Will be using default mc_sim_7b_63 choices instead");
+    if (decoding_mode && decoding_mode->isMedusa()) {
+      CLOG4(WARN,
+            "medusa_choices parameter is not specified. "
+            "Will be using default mc_sim_7b_63 choices instead");
+    }
   }
 
   float gpu_weights_percent = 1.0f;
@@ -306,46 +309,86 @@ executor::ExecutorConfig TrtLlmModelInstance::GetExecutorConfigFromParams() {
 
   return executor::ExecutorConfig(max_beam_width, scheduler_config, kv_cache_config, enable_chunked_context,
                                   normalize_log_probs, iter_stats_max_iterations, request_stats_max_iterations,
-                                  batching_type, parallel_config, peft_cache_config, std::nullopt, medusa_choices,
-                                  decoding_mode, gpu_weights_percent);
+                                  batching_type, std::nullopt, std::nullopt, parallel_config, peft_cache_config,
+                                  std::nullopt, std::nullopt, decoding_config, gpu_weights_percent);
 }
 
 TrtLlmModelInstance::TrtLlmModelInstance(TrtLlmModelState* model_state,
                                          LLMStyler* llm_styler,
                                          MultiInstanceTokenizer* tokenizer)
     : model_state_(model_state), llm_styler_(llm_styler), tokenizer_(tokenizer) {
-  model_path_ = model_state_->GetParameter<std::string>("gpt_model_path");
+  std::string decoder_model_path;
+  try {
+    decoder_model_path = model_state_->GetParameter<std::string>("gpt_model_path");
+    TLLM_CHECK_WITH_INFO(std::filesystem::exists(decoder_model_path), "Decoder (GPT) model path at %s does not exist.",
+                         decoder_model_path.c_str());
+  } catch (std::exception const& e) {
+    // If parameter is not specified, just ignore
+    CLOG4(WARN, "gpt_model_path is not specified, will be left empty");
+    decoder_model_path = "";
+  }
 
-  auto model_conf_bytes = utils::LoadBytesFromFile(model_path_ + "config.json");
+  auto model_conf_bytes = utils::LoadBytesFromFile(decoder_model_path + "config.json");
   rapidjson::Document model_conf_doc;
   model_conf_doc.Parse(model_conf_bytes.data(), model_conf_bytes.size());
   if (model_conf_doc.HasParseError()) {
-    throw std::runtime_error("Failed to parse model config file: " + model_path_ + "config.json");
+    throw std::runtime_error("Failed to parse model config file: " + decoder_model_path + "config.json");
   }
   if (!model_conf_doc.HasMember("build_config") || !model_conf_doc["build_config"].IsObject()) {
-    throw std::runtime_error("Model config file does not contain valid build_config field: " + model_path_ +
+    throw std::runtime_error("Model config file does not contain valid build_config field: " + decoder_model_path +
                              "config.json");
   }
   auto build_config = model_conf_doc["build_config"].GetObject();
   if (!build_config.HasMember("max_batch_size") || !build_config["max_batch_size"].IsInt()) {
-    throw std::runtime_error("Model config file does not contain valid max_batch_size field: " + model_path_ +
+    throw std::runtime_error("Model config file does not contain valid max_batch_size field: " + decoder_model_path +
                              "config.json");
   }
   max_batch_size_ = build_config["max_batch_size"].GetInt();
   if (!build_config.HasMember("max_input_len") || !build_config["max_input_len"].IsInt()) {
-    throw std::runtime_error("Model config file does not contain valid max_input_len field: " + model_path_ +
+    throw std::runtime_error("Model config file does not contain valid max_input_len field: " + decoder_model_path +
                              "config.json");
   }
   max_input_len_ = build_config["max_input_len"].GetInt();
-  if (!build_config.HasMember("max_output_len") || !build_config["max_output_len"].IsInt()) {
-    throw std::runtime_error("Model config file does not contain valid max_output_len field: " + model_path_ +
+  if (!build_config.HasMember("max_seq_len") || !build_config["max_seq_len"].IsInt()) {
+    throw std::runtime_error("Model config file does not contain valid max_seq_len field: " + decoder_model_path +
                              "config.json");
   }
-  max_output_len_ = build_config["max_output_len"].GetInt();
+  max_output_len_ = build_config["max_seq_len"].GetInt() - max_input_len_;
+
+  std::string encoder_model_path;
+  try {
+    encoder_model_path = model_state_->GetParameter<std::string>("encoder_model_path");
+    TLLM_CHECK_WITH_INFO(std::filesystem::exists(encoder_model_path), "Encoder model path at %s does not exist.",
+                         encoder_model_path.c_str());
+  } catch (std::exception const& e) {
+    // If parameter is not specified, just ignore
+    CLOG4(WARN, "encoder_model_path is not specified, will be left empty");
+    encoder_model_path = "";
+  }
+
+  TLLM_CHECK_WITH_INFO(!decoder_model_path.empty() || !encoder_model_path.empty(),
+                       "Both encoder and decoder model paths are empty");
 
   auto executor_config = GetExecutorConfigFromParams();
 
-  executor_ = std::make_unique<executor::Executor>(model_path_, executor::ModelType::kDECODER_ONLY, executor_config);
+  if (!decoder_model_path.empty()) {
+    // Encoder-decoder model
+    if (!encoder_model_path.empty()) {
+      model_type_ = executor::ModelType::kENCODER_DECODER;
+      executor_ =
+        std::make_unique<executor::Executor>(encoder_model_path, decoder_model_path, model_type_, executor_config);
+    }
+    // Decoder only model
+    else {
+      model_type_ = executor::ModelType::kDECODER_ONLY;
+      executor_ = std::make_unique<executor::Executor>(decoder_model_path, model_type_, executor_config);
+    }
+  }
+  // Encoder only
+  else {
+    model_type_ = executor::ModelType::kENCODER_ONLY;
+    executor_ = std::make_unique<executor::Executor>(encoder_model_path, model_type_, executor_config);
+  }
 
   bool exclude_input_in_output = false;
   try {
@@ -387,9 +430,9 @@ TrtLlmModelInstance::TrtLlmModelInstance(TrtLlmModelState* model_state,
 }
 
 void TrtLlmModelInstance::EnqueueAndWait(GrpsContext& grps_ctx, const std::string& http_body) {
-  auto [func_call, model, executor_request] =
-    utils::CreateRequestFromOpenAiHttpBody(http_body, instance_specific_config.exclude_input_from_output,
-                                           grps_ctx.IfStreaming(), llm_styler_, tokenizer_, max_output_len_);
+  auto [func_call, model, executor_request] = utils::CreateRequestFromOpenAiHttpBody(
+    http_body, instance_specific_config.exclude_input_from_output, grps_ctx.IfStreaming(), llm_styler_, tokenizer_,
+    max_output_len_, model_type_);
   size_t input_tokens_size = executor_request.getInputTokenIds().size();
   if (input_tokens_size > max_input_len_) {
     std::string err = "Input tokens size " + std::to_string(input_tokens_size) + " exceeds max input length " +

@@ -19,7 +19,7 @@
 #include "tensorrt_llm/batch_manager/kvCacheConfig.h"
 #include "tensorrt_llm/batch_manager/namedTensor.h"
 #include "tensorrt_llm/batch_manager/trtGptModelOptionalParams.h"
-#include "tensorrt_llm/runtime/decodingMode.h"
+#include "tensorrt_llm/executor/types.h"
 
 using namespace tensorrt_llm;
 using namespace tensorrt_llm::batch_manager;
@@ -63,23 +63,20 @@ struct RequestData {
 
 // TrtLlmModelInstance
 class TrtLlmModelInstance {
-  using DecodingMode = tensorrt_llm::runtime::DecodingMode;
   using InferenceRequest = tensorrt_llm::batch_manager::InferenceRequest;
   using NamedTensor = tensorrt_llm::batch_manager::NamedTensor;
   using TrtGptModelType = tensorrt_llm::batch_manager::TrtGptModelType;
 
 public:
   // number of cpu workers used to move weights host cache to gpu cache
-  static constexpr SizeType32 kPeftCacheNumEnsureWorkers = 4;
+  static constexpr executor::SizeType32 kPeftCacheNumEnsureWorkers = 4;
   // number of cuda streams used for H2D copies of peft cache pages
-  static constexpr SizeType32 kPeftCacheNumCopyStreams = 4;
+  static constexpr executor::SizeType32 kPeftCacheNumCopyStreams = 4;
   // number of cpu workers used to load weight into host cache
-  static constexpr SizeType32 kPeftCacheNumPutWorkers = 4;
+  static constexpr executor::SizeType32 kPeftCacheNumPutWorkers = 4;
 
   /// @brief Constructor
-  explicit TrtLlmModelInstance(TrtLlmModelState* model_state,
-                               LLMStyler* llm_styler,
-                               MultiInstanceTokenizer* tokenizer);
+  explicit TrtLlmModelInstance(TrtLlmModelState* model_state, LLMStyler* llm_styler, MultiInstanceTokenizer* tokenizer);
 
   virtual ~TrtLlmModelInstance() {
     stop_wait_for_response_ = true;
@@ -130,7 +127,7 @@ private:
 
   MultiInstanceTokenizer* tokenizer_;
 
-  std::string model_path_;
+  executor::ModelType model_type_;
 
   size_t max_batch_size_;
   size_t max_input_len_;

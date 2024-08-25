@@ -261,7 +261,8 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
                                                                                  bool streaming,
                                                                                  LLMStyler* llm_styler,
                                                                                  MultiInstanceTokenizer* tokenizer,
-                                                                                 size_t max_output_len) {
+                                                                                 size_t max_output_len,
+                                                                                 executor::ModelType model_type) {
   rapidjson::Document json_body;
   json_body.Parse(http_body.c_str());
   if (json_body.HasParseError()) {
@@ -301,6 +302,14 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   // End and pad id.
   std::optional<executor::SizeType32> end_id = tokenizer->end_token_id();
   std::optional<executor::SizeType32> pad_id = tokenizer->pad_token_id();
+
+  std::optional<executor::VecTokens> encoder_input_tokens{std::nullopt};
+  if (model_type == executor::ModelType::kENCODER_ONLY || model_type == executor::ModelType::kENCODER_DECODER) {
+    encoder_input_tokens = std::move(input_tokens);
+    if (!pad_id) {
+      input_tokens = {pad_id.value()};
+    }
+  }
 
   // Sampling config.
   auto sampling_config = utils::GetSamplingConfigFromJsonBody(json_body, model);
@@ -358,17 +367,18 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
     stop_words_list.emplace_back(tokenizer->Encode(llm_styler->func_call_observation_words()));
   }
 
-  // [TODO]: Support embedding_bias, p_tuning_config, lora_config, speculative_decoding_config
+  // [TODO]: Support embedding_bias, p_tuning_config, lora_config, external_draft_tokens_config
   std::optional<executor::Tensor> embedding_bias{std::nullopt};
   std::optional<executor::PromptTuningConfig> p_tuning_config{std::nullopt};
   std::optional<executor::LoraConfig> lora_config{std::nullopt};
-  std::optional<executor::SpeculativeDecodingConfig> speculative_decoding_config{std::nullopt};
+  std::optional<executor::ExternalDraftTokensConfig> external_draft_tokens_config{std::nullopt};
 
-  return {func_call, std::move(model),
-          executor::Request{input_tokens, max_new_tokens, func_call ? false : streaming, sampling_config, out_config,
-                            end_id, pad_id, bad_words_list.empty() ? std::nullopt : std::make_optional(bad_words_list),
-                            stop_words_list.empty() ? std::nullopt : std::make_optional(stop_words_list),
-                            embedding_bias, speculative_decoding_config, p_tuning_config, lora_config, std::nullopt}};
+  return {
+    func_call, std::move(model),
+    executor::Request{input_tokens, max_new_tokens, !func_call && streaming, sampling_config, out_config, end_id,
+                      pad_id, bad_words_list.empty() ? std::nullopt : std::make_optional(bad_words_list),
+                      stop_words_list.empty() ? std::nullopt : std::make_optional(stop_words_list), embedding_bias,
+                      external_draft_tokens_config, p_tuning_config, lora_config, std::nullopt, encoder_input_tokens}};
 }
 
 } // namespace netease::grps::utils
