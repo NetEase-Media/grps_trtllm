@@ -49,7 +49,7 @@
 |   |--openai_txt_cli.py                # 通过OpenAI客户端输入文本文件内容进行chat
 |   |--triton_benchmark.py              # Triton trtllm server benchmark脚本
 |   |--triton_cli.py                    # Triton trtllm server chat脚本
-|   |--triton_txt_cli.py                # Triton trtllm server输入文本文件内容chat脚本
+|   |--triton_txt_cli.py                # Triton trtllm server输入文本文件内容进行chat
 |-- conf                                # 配置文件
 |   |-- inference.yml                   # 推理配置
 |   |-- server.yml                      # 服务配置
