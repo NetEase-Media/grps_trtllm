@@ -1,15 +1,19 @@
 import openai
 import sys
 
-if len(sys.argv) < 4:
-    print("Usage: python open_cli.py <server> <prompt> <stream>")
+if len(sys.argv) < 5:
+    print("Usage: python open_cli.py <server> <txt-path> <append_prompt> <stream>")
     exit(1)
 
 server = sys.argv[1]
-prompt = sys.argv[2]
+txt_path = sys.argv[2]
 stream = False
-if sys.argv[3].lower() == "true" or sys.argv[3].lower() == "1":
+if sys.argv[4].lower() == "true" or sys.argv[3].lower() == "1":
     stream = True
+
+with open(txt_path, "r") as f:
+    prompt = f.read()
+    prompt += str(sys.argv[3])
 
 client = openai.Client(
     api_key="cannot be empty",
