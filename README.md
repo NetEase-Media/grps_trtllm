@@ -112,7 +112,7 @@ cd third_party/TensorRT-LLM/examples/qwen
 # 转换ckpt
 python3 convert_checkpoint.py --model_dir /tmp/Qwen2-7B-Instruct \
 --output_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint_4gpu_tp4/ --dtype float16 --tp_size 4
-# 构建引擎，当出现OOM，可以适当缩小max_batch_size，max_input_len，max_output_len等参数
+# 构建引擎
 trtllm-build --checkpoint_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint_4gpu_tp4/ \
 --output_dir /tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/ \
 --gemm_plugin float16 --max_batch_size 16 --paged_kv_cache enable --max_input_len 2048 --max_output_len 512
