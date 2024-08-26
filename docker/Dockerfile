@@ -1,7 +1,7 @@
 # Build grps customized project image.
 
 # --------Building stage.--------
-FROM registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.4_cudnn8.9_trtllm0.10.0_py3.10 AS build
+FROM registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.4_cudnn8.9_trtllm0.11.0_py3.10 AS build
 
 # grps archive.
 RUN mkdir -p /my_grps
@@ -17,7 +17,7 @@ RUN cd /my_grps && \
     grpst archive . --skip_unittest --output_path server.mar
 
 # --------Release stage.--------
-FROM registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.4_cudnn8.9_trtllm0.10.0_py3.10
+FROM registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.4_cudnn8.9_trtllm0.11.0_py3.10
 
 WORKDIR /my_grps
 COPY --from=build /my_grps/server.mar /my_grps/server.mar
