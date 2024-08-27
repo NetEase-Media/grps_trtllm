@@ -1,3 +1,5 @@
+import time
+
 import openai
 import sys
 
@@ -15,6 +17,7 @@ client = openai.Client(
     api_key="cannot be empty",
     base_url=f"http://{server}/v1"
 )
+begin = time.time()
 res = client.chat.completions.create(
     model="qwen2-instruct",
     messages=[
@@ -33,3 +36,12 @@ if stream:
         print(message)
 else:
     print(res)
+    latency = (time.time() - begin) * 1000
+    input_token_len = res.usage.prompt_tokens
+    output_token_len = res.usage.completion_tokens
+    total_tokens = res.usage.total_tokens
+    speed = total_tokens / latency * 1000
+    print(f'Latency: {latency} ms', flush=True)
+    print(f'Input tokens: {input_token_len}, Output tokens: {output_token_len}, Total tokens: {total_tokens}',
+          flush=True)
+    print(f'Speed: {speed} tokens/s', flush=True)

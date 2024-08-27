@@ -119,7 +119,7 @@ python3 convert_checkpoint.py --model_dir /tmp/Qwen2-7B-Instruct \
 trtllm-build --checkpoint_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint_4gpu_tp4/ \
 --output_dir /tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/ \
 --gemm_plugin bfloat16 --max_batch_size 16 --paged_kv_cache enable \
---max_input_len 32166 --max_output_len 512 --max_num_tokens 32166
+--max_input_len 32256 --max_output_len 512 --max_num_tokens 32256
 # 运行测试
 mpirun -n 4 --allow-run-as-root python3 ../run.py --input_text "你好，你是谁？" --max_output_len=50 \
 --tokenizer_dir /tmp/Qwen2-7B-Instruct/ \
