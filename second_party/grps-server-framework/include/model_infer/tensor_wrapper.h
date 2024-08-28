@@ -134,29 +134,10 @@ public:
   std::shared_ptr<Eigen::Tensor<int64_t, 2>> eigen_2d_l_tensor;
   std::shared_ptr<Eigen::Tensor<int64_t, 3>> eigen_3d_l_tensor;
   std::shared_ptr<Eigen::Tensor<int64_t, 4>> eigen_4d_l_tensor;
-
-  bool bool_tensor = false;
-  char char_tensor = 0;
-  std::string str_tensor;
-  uint8_t uint8_t_tensor = 0;
-  int8_t int8_t_tensor = 0;
-  uint32_t uint32_t_tensor = 0;
-  int32_t int32_t_tensor = 0;
-  uint64_t uint64_t_tensor = 0;
-  int64_t int64_t_tensor = 0;
-  float float_tensor = 0.0;
-  double double_tensor = 0.0;
-  std::vector<bool> bool_vec_tensor;
-  std::vector<char> char_vec_tensor;
-  std::vector<uint8_t> uint8_t_vec_tensor;
-  std::vector<int8_t> int8_t_vec_tensor;
-  std::vector<uint32_t> uint32_t_vec_tensor;
-  std::vector<int32_t> int32_t_vec_tensor;
-  std::vector<uint64_t> uint64_t_vec_tensor;
-  std::vector<int64_t> int64_t_vec_tensor;
-  std::vector<float> float_vec_tensor;
-  std::vector<double> double_vec_tensor;
-  void* tensor_ptr = nullptr; // raw ptr, user should manage the life cycle of tensor_ptr, not recommended.
+  std::shared_ptr<Eigen::Tensor<std::string, 1>> eigen_1d_s_tensor;
+  std::shared_ptr<Eigen::Tensor<std::string, 2>> eigen_2d_s_tensor;
+  std::shared_ptr<Eigen::Tensor<std::string, 3>> eigen_3d_s_tensor;
+  std::shared_ptr<Eigen::Tensor<std::string, 4>> eigen_4d_s_tensor;
 
   TensorWrapper() = default;
   ~TensorWrapper() = default;
@@ -333,87 +314,37 @@ public:
       : eigen_4d_l_tensor(std::make_shared<Eigen::Tensor<int64_t, 4>>(eigen_4d_l_tensor)) {}
   explicit TensorWrapper(Eigen::Tensor<int64_t, 4>&& eigen_4d_l_tensor)
       : eigen_4d_l_tensor(std::make_shared<Eigen::Tensor<int64_t, 4>>(std::move(eigen_4d_l_tensor))) {}
-
-  // Set bool tensor.
-  explicit TensorWrapper(bool bool_tensor) : bool_tensor(bool_tensor) {}
-
-  // Set char tensor.
-  explicit TensorWrapper(char char_tensor) : char_tensor(char_tensor) {}
-
-  // Set string tensor.
-  explicit TensorWrapper(const std::string& str_tensor) : str_tensor(str_tensor) {}
-  explicit TensorWrapper(std::string&& str_tensor) : str_tensor(std::move(str_tensor)) {}
-
-  // Set uint8 tensor.
-  explicit TensorWrapper(uint8_t uint8_t_tensor) : uint8_t_tensor(uint8_t_tensor) {}
-
-  // Set int8 tensor.
-  explicit TensorWrapper(int8_t int8_t_tensor) : int8_t_tensor(int8_t_tensor) {}
-
-  // Set uint32 tensor.
-  explicit TensorWrapper(uint32_t uint32_t_tensor) : uint32_t_tensor(uint32_t_tensor) {}
-
-  // Set int32 tensor.
-  explicit TensorWrapper(int32_t int32_t_tensor) : int32_t_tensor(int32_t_tensor) {}
-
-  // Set uint64 tensor.
-  explicit TensorWrapper(uint64_t uint64_t_tensor) : uint64_t_tensor(uint64_t_tensor) {}
-
-  // Set int64 tensor.
-  explicit TensorWrapper(int64_t int64_t_tensor) : int64_t_tensor(int64_t_tensor) {}
-
-  // Set float tensor.
-  explicit TensorWrapper(float float_tensor) : float_tensor(float_tensor) {}
-
-  // Set double tensor.
-  explicit TensorWrapper(double double_tensor) : double_tensor(double_tensor) {}
-
-  // Set bool vector tensor.
-  explicit TensorWrapper(const std::vector<bool>& bool_vec_tensor) : bool_vec_tensor(bool_vec_tensor) {}
-  explicit TensorWrapper(std::vector<bool>&& bool_vec_tensor) : bool_vec_tensor(std::move(bool_vec_tensor)) {}
-
-  // Set char vector tensor.
-  explicit TensorWrapper(const std::vector<char>& char_vec_tensor) : char_vec_tensor(char_vec_tensor) {}
-  explicit TensorWrapper(std::vector<char>&& char_vec_tensor) : char_vec_tensor(std::move(char_vec_tensor)) {}
-
-  // Set uint8 vector tensor.
-  explicit TensorWrapper(const std::vector<uint8_t>& uint8_t_vec_tensor) : uint8_t_vec_tensor(uint8_t_vec_tensor) {}
-  explicit TensorWrapper(std::vector<uint8_t>&& uint8_t_vec_tensor)
-      : uint8_t_vec_tensor(std::move(uint8_t_vec_tensor)) {}
-
-  // Set int8 vector tensor.
-  explicit TensorWrapper(const std::vector<int8_t>& int8_t_vec_tensor) : int8_t_vec_tensor(int8_t_vec_tensor) {}
-  explicit TensorWrapper(std::vector<int8_t>&& int8_t_vec_tensor) : int8_t_vec_tensor(std::move(int8_t_vec_tensor)) {}
-
-  // Set uint32 vector tensor.
-  explicit TensorWrapper(const std::vector<uint32_t>& uint32_t_vec_tensor) : uint32_t_vec_tensor(uint32_t_vec_tensor) {}
-  explicit TensorWrapper(std::vector<uint32_t>&& uint32_t_vec_tensor)
-      : uint32_t_vec_tensor(std::move(uint32_t_vec_tensor)) {}
-
-  // Set int32 vector tensor.
-  explicit TensorWrapper(const std::vector<int32_t>& int32_t_vec_tensor) : int32_t_vec_tensor(int32_t_vec_tensor) {}
-  explicit TensorWrapper(std::vector<int32_t>&& int32_t_vec_tensor)
-      : int32_t_vec_tensor(std::move(int32_t_vec_tensor)) {}
-
-  // Set uint64 vector tensor.
-  explicit TensorWrapper(const std::vector<uint64_t>& uint64_t_vec_tensor) : uint64_t_vec_tensor(uint64_t_vec_tensor) {}
-  explicit TensorWrapper(std::vector<uint64_t>&& uint64_t_vec_tensor)
-      : uint64_t_vec_tensor(std::move(uint64_t_vec_tensor)) {}
-
-  // Set int64 vector tensor.
-  explicit TensorWrapper(const std::vector<int64_t>& int64_t_vec_tensor) : int64_t_vec_tensor(int64_t_vec_tensor) {}
-  explicit TensorWrapper(std::vector<int64_t>&& int64_t_vec_tensor)
-      : int64_t_vec_tensor(std::move(int64_t_vec_tensor)) {}
-
-  // Set float vector tensor.
-  explicit TensorWrapper(const std::vector<float>& float_vec_tensor) : float_vec_tensor(float_vec_tensor) {}
-  explicit TensorWrapper(std::vector<float>&& float_vec_tensor) : float_vec_tensor(std::move(float_vec_tensor)) {}
-
-  // Set double vector tensor.
-  explicit TensorWrapper(const std::vector<double>& double_vec_tensor) : double_vec_tensor(double_vec_tensor) {}
-  explicit TensorWrapper(std::vector<double>&& double_vec_tensor) : double_vec_tensor(std::move(double_vec_tensor)) {}
-
-  // Set raw ptr tensor.
-  explicit TensorWrapper(void* tensor_ptr) : tensor_ptr(tensor_ptr) {}
+  explicit TensorWrapper(const std::shared_ptr<Eigen::Tensor<std::string, 1>>& eigen_1d_s_tensor)
+      : eigen_1d_s_tensor(eigen_1d_s_tensor) {}
+  explicit TensorWrapper(std::shared_ptr<Eigen::Tensor<std::string, 1>>&& eigen_1d_s_tensor)
+      : eigen_1d_s_tensor(std::move(eigen_1d_s_tensor)) {}
+  explicit TensorWrapper(const Eigen::Tensor<std::string, 1>& eigen_1d_s_tensor)
+      : eigen_1d_s_tensor(std::make_shared<Eigen::Tensor<std::string, 1>>(eigen_1d_s_tensor)) {}
+  explicit TensorWrapper(Eigen::Tensor<std::string, 1>&& eigen_1d_s_tensor)
+      : eigen_1d_s_tensor(std::make_shared<Eigen::Tensor<std::string, 1>>(std::move(eigen_1d_s_tensor))) {}
+  explicit TensorWrapper(const std::shared_ptr<Eigen::Tensor<std::string, 2>>& eigen_2d_s_tensor)
+      : eigen_2d_s_tensor(eigen_2d_s_tensor) {}
+  explicit TensorWrapper(std::shared_ptr<Eigen::Tensor<std::string, 2>>&& eigen_2d_s_tensor)
+      : eigen_2d_s_tensor(std::move(eigen_2d_s_tensor)) {}
+  explicit TensorWrapper(const Eigen::Tensor<std::string, 2>& eigen_2d_s_tensor)
+      : eigen_2d_s_tensor(std::make_shared<Eigen::Tensor<std::string, 2>>(eigen_2d_s_tensor)) {}
+  explicit TensorWrapper(Eigen::Tensor<std::string, 2>&& eigen_2d_s_tensor)
+      : eigen_2d_s_tensor(std::make_shared<Eigen::Tensor<std::string, 2>>(std::move(eigen_2d_s_tensor))) {}
+  explicit TensorWrapper(const std::shared_ptr<Eigen::Tensor<std::string, 3>>& eigen_3d_s_tensor)
+      : eigen_3d_s_tensor(eigen_3d_s_tensor) {}
+  explicit TensorWrapper(std::shared_ptr<Eigen::Tensor<std::string, 3>>&& eigen_3d_s_tensor)
+      : eigen_3d_s_tensor(std::move(eigen_3d_s_tensor)) {}
+  explicit TensorWrapper(const Eigen::Tensor<std::string, 3>& eigen_3d_s_tensor)
+      : eigen_3d_s_tensor(std::make_shared<Eigen::Tensor<std::string, 3>>(eigen_3d_s_tensor)) {}
+  explicit TensorWrapper(Eigen::Tensor<std::string, 3>&& eigen_3d_s_tensor)
+      : eigen_3d_s_tensor(std::make_shared<Eigen::Tensor<std::string, 3>>(std::move(eigen_3d_s_tensor))) {}
+  explicit TensorWrapper(const std::shared_ptr<Eigen::Tensor<std::string, 4>>& eigen_4d_s_tensor)
+      : eigen_4d_s_tensor(eigen_4d_s_tensor) {}
+  explicit TensorWrapper(std::shared_ptr<Eigen::Tensor<std::string, 4>>&& eigen_4d_s_tensor)
+      : eigen_4d_s_tensor(std::move(eigen_4d_s_tensor)) {}
+  explicit TensorWrapper(const Eigen::Tensor<std::string, 4>& eigen_4d_s_tensor)
+      : eigen_4d_s_tensor(std::make_shared<Eigen::Tensor<std::string, 4>>(eigen_4d_s_tensor)) {}
+  explicit TensorWrapper(Eigen::Tensor<std::string, 4>&& eigen_4d_s_tensor)
+      : eigen_4d_s_tensor(std::make_shared<Eigen::Tensor<std::string, 4>>(std::move(eigen_4d_s_tensor))) {}
 };
 } // namespace netease::grps

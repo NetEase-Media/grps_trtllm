@@ -5,7 +5,7 @@ import requests
 import threading
 from transformers import AutoTokenizer
 
-tokenizer = AutoTokenizer.from_pretrained('/tmp/Qwen2-7B')
+tokenizer = AutoTokenizer.from_pretrained('/tmp/Qwen2-7B-Instruct')
 
 latency_list = []
 tokens_list = []

@@ -29,6 +29,7 @@ public:
         struct {
           StreamingCtrlMode ctrl_mode = StreamingCtrlMode::kQueryParam;
           std::string ctrl_key = "streaming";
+          std::string res_content_type = "application/octet-stream";
         } streaming_ctrl;
       } customized_predict_http;
     } interface;
@@ -67,7 +68,8 @@ public:
         ss << "customized_predict_http: " << interface.customized_predict_http.path << " "
            << interface.customized_predict_http.customized_body << " "
            << int(interface.customized_predict_http.streaming_ctrl.ctrl_mode) << " "
-           << interface.customized_predict_http.streaming_ctrl.ctrl_key << std::endl;
+           << interface.customized_predict_http.streaming_ctrl.ctrl_key << " "
+           << interface.customized_predict_http.streaming_ctrl.res_content_type << std::endl;
       }
       if (_is_set.max_connections) {
         ss << "max_connections: " << max_connections << std::endl;
@@ -178,7 +180,7 @@ private:
 
   ServerConfig server_config_;
   InferenceConfig inference_config_;
-  MPIConfig mpi_;
+  MPIConfig mpi_{};
 
   bool LoadServerConf(const std::string& conf_path);
 

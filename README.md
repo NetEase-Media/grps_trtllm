@@ -36,7 +36,7 @@
   。目前仅实现了```qwen```
   ，后续可以实现其他家族的```styler```，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
   不同家族的```styler```持续开发中...。
-* 当前基于```tensorrt-llm v0.10.0```进行的实现，新版本持续支持中...。
+* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.11.0```，具体见仓库的分支信息。
 * ```grps```刚支持```trtllm```没多久，欢迎提交```pr```贡献支持更多的```LLM```家族的```styler```以及修复bug。
 
 ## 2. 工程结构
@@ -46,7 +46,10 @@
 |   |--openai_benchmark.py              # 通过OpenAI客户端进行benchmark
 |   |--openai_cli.py                    # 通过OpenAI客户端进行chat
 |   |--openai_func_call.py              # 通过OpenAI客户端进行function call
+|   |--openai_txt_cli.py                # 通过OpenAI客户端输入文本文件内容进行chat
 |   |--triton_benchmark.py              # Triton trtllm server benchmark脚本
+|   |--triton_cli.py                    # Triton trtllm server chat脚本
+|   |--triton_txt_cli.py                # Triton trtllm server输入文本文件内容进行chat
 |-- conf                                # 配置文件
 |   |-- inference.yml                   # 推理配置
 |   |-- server.yml                      # 服务配置
@@ -111,11 +114,16 @@ cd third_party/TensorRT-LLM/examples/qwen
 # 这里以tp4为例进行构建，即使用4张卡进行tensor并行推理
 # 转换ckpt
 python3 convert_checkpoint.py --model_dir /tmp/Qwen2-7B-Instruct \
---output_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint_4gpu_tp4/ --dtype float16 --tp_size 4
-# 构建引擎，当出现OOM，可以适当缩小max_batch_size，max_input_len，max_output_len等参数
+--output_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint_4gpu_tp4/ --dtype bfloat16 --tp_size 4
+# 构建引擎
 trtllm-build --checkpoint_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint_4gpu_tp4/ \
 --output_dir /tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/ \
---gemm_plugin float16 --max_batch_size 16 --paged_kv_cache enable --max_input_len 2048 --max_output_len 512
+--gemm_plugin bfloat16 --max_batch_size 16 --paged_kv_cache enable \
+--max_input_len 32256 --max_output_len 512 --max_num_tokens 32256
+# 运行测试
+mpirun -n 4 --allow-run-as-root python3 ../run.py --input_text "你好，你是谁？" --max_output_len=50 \
+--tokenizer_dir /tmp/Qwen2-7B-Instruct/ \
+--engine_dir=/tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/
 # 回到工程根目录
 cd ../../../../
 ```
@@ -156,7 +164,7 @@ models:
       gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
       gpt_model_path: /tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/ # path of model. Must be set.
       batch_scheduler_policy: guaranteed_no_evict # must be `max_utilization` or `guaranteed_no_evict`.
-      kv_cache_free_gpu_mem_fraction: 0.6 # will be set to 0.9 or `max_tokens_in_paged_kv_cache` if not set.
+      kv_cache_free_gpu_mem_fraction: 0.9 # will be set to 0.9 or `max_tokens_in_paged_kv_cache` if not set.
       exclude_input_in_output: true # will be set to false if not set.
 ```
 
@@ -262,6 +270,20 @@ python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" true
 ChatCompletionChunk(id='chatcmpl-6', choices=[Choice(delta=ChoiceDelta(content='你好', function_call=None, refusal=None, role='assistant', tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724295460, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
 ChatCompletionChunk(id='chatcmpl-6', choices=[Choice(delta=ChoiceDelta(content='！', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724295460, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
 ChatCompletionChunk(id='chatcmpl-6', choices=[Choice(delta=ChoiceDelta(content='我是', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724295460, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+'
+
+# 输入32k长文本小说验证长文本的支持
+python3 client/openai_txt_cli.py 127.0.0.1:9997 ./data/32k_novel.txt "上面这篇小说作者是谁？" false
+# 返回如下：
+: '
+ChatCompletion(id='chatcmpl-6', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='这篇小说的作者是弦三千。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1724685519, model='qwen2-instruct', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=8, prompt_tokens=31603, total_tokens=31611))
+'
+
+# 输入32k长文本小说进行总结
+python3 client/openai_txt_cli.py 127.0.0.1:9997 ./data/32k_novel.txt "简述一下上面这篇小说的前几章内容。" false
+# 返回如下：
+: '
+ChatCompletion(id='chatcmpl-5', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='这篇小说的前几章主要讲述了主角楚云霁意外穿成北极熊后的生活经历。以下是简述：\n\n1. 楚云霁在一次意外中穿成了一只北极熊，他刚穿过来时遇到了暴风雪，幸而及时躲进石头后才得以生存。暴风雪结束后，楚云霁在寻找食物时意外发现有人类队伍，他试图与他们交流，最终用一条鱼成功吸引了他们的注意。\n\n2. 楚云霁与科考队的成员们建立了初步的联系，他试图与他们一起生活，但科考队成员们对他的出现感到紧张和警惕。楚云霁通过友好的行为，如分享食物，逐渐赢得了他们的信任。\n\n3. 楚云霁在与科考队成员相处的过程中，发现自己的北极熊身份引起了不小的轰动，他的行为和外貌吸引了大量观众的关注，直播间的热度迅速上升。同时，他也开始探索自己的北极熊生活，尝试捕猎、寻找食物和适应野外环境。\n\n4. 楚云霁在一次捕猎时，意外救下了一只被其他动物追赶的海豹，这一行为让他与一只名为“白狼”的北极狼建立了联系。白狼似乎对楚云霁有某种保护或帮助的倾向，楚云霁也逐渐意识到白狼的存在对他的生存有着积极的影响。\n\n5. 楚云霁在与白狼的互动中，发现白狼不仅在捕猎方面有着高超的技巧，还展现出了一定的智慧和对他的关心。楚云霁也通过与白狼的相处，逐渐适应了北极熊的生活方式，开始尝试利用环境中的资源，如钓鱼竿等，来获取食物。\n\n6. 在一次偶然的机会中，楚云霁发现了一根被海浪冲到岸边的钓鱼竿，他尝试使用它来钓鱼，虽然方法简单，但意外地捕获了一些鱼。这一发现让他对北极熊的生活有了新的认识，也增加了他对探索周围环境的兴趣。\n\n7. 楚云霁在一次外出时，意外发现了一只偷吃他食物的海象，他试图报复，但最终被一只北极狼阻止。这只北极狼在楚云霁需要时帮助他，显示出了对他的保护倾向。楚云霁也通过这次事件，意识到与野生动物之间的复杂关系，以及在野外生存中需要的智慧和策略。\n\n8. 楚云霁在与北极狼的互动中，逐渐建立起了一种特殊的友谊，他开始尝试利用北极狼的智慧和力量来帮助自己更好地适应北极熊的生活，包括捕猎、寻找食物等。同时，他也开始思考如何利用自己的新身份，为保护野生动物和北极环境做出贡献。\n\n以上是这篇小说前几章的主要内容概要，讲述了楚云霁从穿成北极熊后，如何适应新环境、与野生动物建立联系，以及在野外生存中遇到的各种挑战和机遇。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1724685435, model='qwen2-instruct', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=618, prompt_tokens=31609, total_tokens=32227))
 '
 
 # openai_func_call.py进行function call模拟
