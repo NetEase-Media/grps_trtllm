@@ -2,6 +2,7 @@
 
 #include "llm_styler.h"
 
+#include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
@@ -10,8 +11,48 @@
 #include <vector>
 
 #include "logger/logger.h"
+#include "src/utils.h"
 
 namespace netease::grps {
+
+std::tuple<bool, std::string> LLMStyler::BuildPromptWithChatTemplate(const rapidjson::Document& json_body,
+                                                                     jinja2::Template* tpl) {
+  if (!tpl) {
+    throw std::invalid_argument("Jinja2 chat templater is null.");
+  }
+
+  jinja2::ValuesMap params;
+
+  // Parse messages.
+  if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
+    throw std::invalid_argument("`messages` not found or not an array");
+  }
+  params["messages"] = utils::RapidJson2JinjaVal(json_body["messages"]);
+
+  // Parse tools.
+  bool has_tools = false;
+  if (json_body.HasMember("tools") && json_body["tools"].IsArray()) {
+    has_tools = true;
+    params["tools"] = utils::RapidJson2JinjaVal(json_body["tools"]);
+  }
+
+  if (add_generation_prompt_) {
+    params["add_generation_prompt"] = true;
+  }
+
+  return {has_tools, tpl->RenderAsString(params).value()};
+}
+
+std::tuple<bool, std::string> LLMStyler::BuildPrompt(const rapidjson::Document& json_body) {
+  throw std::runtime_error("BuildPrompt not implemented.");
+}
+
+std::string LLMStyler::ParseFunctionCall(const std::string& gen_txt,
+                                         int64_t req_id,
+                                         rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                         rapidjson::MemoryPoolAllocator<>& allocator) {
+  throw std::runtime_error("ParseFunctionCall not implemented.");
+}
 
 std::tuple<bool, std::string> QwenStyler::BuildPrompt(const rapidjson::Document& json_body) {
   std::string prompt;
@@ -27,6 +68,7 @@ std::tuple<bool, std::string> QwenStyler::BuildPrompt(const rapidjson::Document&
     for (auto& tool : json_body["tools"].GetArray()) {
       if (tool.HasMember("function") && tool["function"].IsObject()) {
         auto& function = tool["function"];
+
         auto& fp = function["parameters"];
         std::string parameters;
         if (fp.IsObject()) {
@@ -34,7 +76,7 @@ std::tuple<bool, std::string> QwenStyler::BuildPrompt(const rapidjson::Document&
           if (fp.HasMember("required") && fp["required"].IsArray()) {
             for (auto& required : fp["required"].GetArray()) {
               if (!required.IsString()) {
-                throw std::invalid_argument("required parameter is not a string");
+                throw std::invalid_argument("function `required` parameter is not a string arr");
               }
               required_parameters.insert(required.GetString());
             }
@@ -58,6 +100,13 @@ std::tuple<bool, std::string> QwenStyler::BuildPrompt(const rapidjson::Document&
           rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
           parameters_doc.Accept(writer);
           parameters = buffer.GetString();
+        }
+
+        if (!function.HasMember("name") || !function["name"].IsString()) {
+          throw std::invalid_argument("function `name` not found or not a string");
+        }
+        if (!function.HasMember("description") || !function["description"].IsString()) {
+          throw std::invalid_argument("function `description` not found or not a string");
         }
         const auto& name = function["name"].GetString();
         const auto& desc = function["description"].GetString();
@@ -148,7 +197,7 @@ std::tuple<bool, std::string> QwenStyler::BuildPrompt(const rapidjson::Document&
     }
     std::string ori_content = message["content"].GetString();
 
-    prompt.append(intra_message_sep());
+    prompt.append("");
 
     std::string content;
     if (has_tools) {
@@ -271,12 +320,133 @@ std::string QwenStyler::ParseFunctionCall(const std::string& gen_txt,
   }
 }
 
+std::tuple<bool, std::string> ChatGlm3Styler::BuildPrompt(const rapidjson::Document& json_body) {
+  // Parse messages.
+  if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
+    throw std::invalid_argument("`messages` not found or not an array");
+  }
+  if (json_body["messages"].Empty()) {
+    throw std::invalid_argument("`messages` is empty");
+  }
+  jinja2::ValuesMap params;
+  params["messages"] = jinja2::ValuesList();
+  for (auto& message : json_body["messages"].GetArray()) {
+    if (!message.HasMember("role") || !message["role"].IsString()) {
+      throw std::invalid_argument("`role` not found or not a string");
+    }
+    std::string role = message["role"].GetString();
+    if (!message.HasMember("content") || !message["content"].IsString()) {
+      throw std::invalid_argument("`content` not found or not a string");
+    }
+    params["messages"].asList().emplace_back(jinja2::ValuesMap{
+      {"role", role},
+      {"content", message["content"].GetString()},
+    });
+  }
+
+  // Parse tools.
+  std::string tools_str;
+  if (json_body.HasMember("tools") && json_body["tools"].IsArray()) {
+    // To string.
+    rapidjson::StringBuffer buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+    writer.SetIndent(' ', 4);
+    json_body["tools"].Accept(writer);
+    tools_str = buffer.GetString();
+  }
+  if (!tools_str.empty()) {
+    params["messages"].asList().front().asMap()["content"].asString().append("\n" + tools_str);
+  }
+
+  params["add_generation_prompt"] = true;
+
+  // jinja render to string.
+  return {!tools_str.empty(), chat_templater_.RenderAsString(params).value()};
+}
+
+std::string ChatGlm3Styler::ParseFunctionCall(const std::string& gen_txt,
+                                              int64_t req_id,
+                                              rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                              rapidjson::MemoryPoolAllocator<>& allocator) {
+  return "";
+}
+
+std::tuple<bool, std::string> Glm4Styler::BuildPrompt(const rapidjson::Document& json_body) {
+  // Parse messages.
+  if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
+    throw std::invalid_argument("`messages` not found or not an array");
+  }
+  if (json_body["messages"].Empty()) {
+    throw std::invalid_argument("`messages` is empty");
+  }
+  jinja2::ValuesMap params;
+  params["messages"] = jinja2::ValuesList();
+  for (auto& message : json_body["messages"].GetArray()) {
+    if (!message.HasMember("role") || !message["role"].IsString()) {
+      throw std::invalid_argument("`role` not found or not a string");
+    }
+    std::string role = message["role"].GetString();
+    if (!message.HasMember("content") || !message["content"].IsString()) {
+      throw std::invalid_argument("`content` not found or not a string");
+    }
+    params["messages"].asList().emplace_back(jinja2::ValuesMap{
+      {"role", role},
+      {"content", message["content"].GetString()},
+    });
+  }
+
+  bool has_tools;
+  // Parse tools, if there is tools, will insert to first `message`.
+  if (json_body.HasMember("tools") && json_body["tools"].IsArray()) {
+    has_tools = true;
+    auto& first_message = params["messages"].asList().front().asMap();
+    first_message["tools"] = jinja2::ValuesList();
+    for (auto& tool : json_body["tools"].GetArray()) {
+      if (tool.HasMember("type") && tool["type"].IsString()) {
+        if (std::string(tool["type"].GetString()) == "function") {
+          if (!tool.HasMember("function") || !tool["function"].IsObject()) {
+            throw std::invalid_argument("`function` not found or not an object");
+          }
+          auto& function = tool["function"];
+          if (!function.HasMember("name") || !function["name"].IsString()) {
+            throw std::invalid_argument("function `name` not found or not a string");
+          }
+
+          auto function_map = utils::RapidJson2JinjaVal(function);
+
+          jinja2::ValuesMap tool_map;
+          tool_map["type"] = "function";
+          tool_map["function"] = function_map;
+          first_message["tools"].asList().emplace_back(tool_map);
+        } else {
+          throw std::invalid_argument("Unsupported tool type: " + std::string(tool["type"].GetString()));
+        }
+      }
+    }
+  }
+
+  params["add_generation_prompt"] = true;
+
+  // jinja render to string.
+  return {has_tools, chat_templater_.RenderAsString(params).value()};
+}
+
+std::string Glm4Styler::ParseFunctionCall(const std::string& gen_txt,
+                                          int64_t req_id,
+                                          rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                          rapidjson::MemoryPoolAllocator<>& allocator) {
+  return "";
+}
+
 std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& llm_style) {
   if (llm_style == "qwen") {
     return std::make_unique<QwenStyler>();
+  } else if (llm_style == "chatglm3") {
+    return std::make_unique<ChatGlm3Styler>();
+  } else if (llm_style == "glm4") {
+    return std::make_unique<Glm4Styler>();
   } else {
     throw std::runtime_error("LLM style " + llm_style + " not supported now.");
   }
 }
-
 } // namespace netease::grps

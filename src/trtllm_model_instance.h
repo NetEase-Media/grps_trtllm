@@ -127,6 +127,9 @@ private:
 
   MultiInstanceTokenizer* tokenizer_;
 
+  std::unordered_set<std::string> stop_words_;
+  std::unordered_set<std::string> bad_words_;
+
   executor::ModelType model_type_;
 
   size_t max_batch_size_;

@@ -31,13 +31,19 @@
 
 当前问题：
 
+* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.11.0```，具体见仓库的分支信息。
 * 由于不同家族系的```LLM```的```chat```和```function call```
   的```prompt```构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```
-  。目前仅实现了```qwen```
-  ，后续可以实现其他家族的```styler```，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
+  ，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
   不同家族的```styler```持续开发中...。
-* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.11.0```，具体见仓库的分支信息。
-* ```grps```刚支持```trtllm```没多久，欢迎提交```pr```贡献支持更多的```LLM```家族的```styler```以及修复bug。
+
+支持的```LLM styler```家族：
+
+| llm_styler | chat | function_call |
+|------------|------|---------------|
+| qwen       | ✅    | ✅             |
+| chatglm3   | ✅    | ✅             |
+| glm4       | ✅    | ✅             |
 
 ## 2. 工程结构
 
@@ -113,24 +119,26 @@ git clone https://huggingface.co/Qwen/Qwen2-7B-Instruct /tmp/Qwen2-7B-Instruct
 cd third_party/TensorRT-LLM/examples/qwen
 # 这里以tp4为例进行构建，即使用4张卡进行tensor并行推理
 # 转换ckpt
+rm -rf /tmp/Qwen2-7B-Instruct/tllm_checkpoint/
 python3 convert_checkpoint.py --model_dir /tmp/Qwen2-7B-Instruct \
---output_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint_4gpu_tp4/ --dtype bfloat16 --tp_size 4
+--output_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint/ --dtype bfloat16 --tp_size 4
 # 构建引擎
-trtllm-build --checkpoint_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint_4gpu_tp4/ \
---output_dir /tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/ \
+rm -rf /tmp/Qwen2-7B-Instruct/trt_engines/
+trtllm-build --checkpoint_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint/ \
+--output_dir /tmp/Qwen2-7B-Instruct/trt_engines/ \
 --gemm_plugin bfloat16 --max_batch_size 16 --paged_kv_cache enable \
 --max_input_len 32256 --max_output_len 512 --max_num_tokens 32256
 # 运行测试
 mpirun -n 4 --allow-run-as-root python3 ../run.py --input_text "你好，你是谁？" --max_output_len=50 \
 --tokenizer_dir /tmp/Qwen2-7B-Instruct/ \
---engine_dir=/tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/
+--engine_dir=/tmp/Qwen2-7B-Instruct/trt_engines/
 # 回到工程根目录
 cd ../../../../
 ```
 
 ### 3.3 修改inference.yml配置
 
-修改[conf/inference.yml](conf/inference.yml)中```inferer_args```相关参数。注意修改```tokenizer_path```
+修改llm对应的conf/inference*.yml中```inferer_args```相关参数。注意修改```tokenizer_path```
 和```gpt_model_path```为新路径，更多核心参数见如下：
 
 ```yaml
@@ -143,27 +151,30 @@ models:
       llm_style: qwen
 
       # tokenizer config.
-      # path of tokenizer. Must be set. Could be tokenizer.json(hf tokenizer), tokenizer.model(sentencepiece
-      # tokenizer) or tokenizer_model(RWKV world tokenizer).
-      tokenizer_path: /tmp/Qwen2-7B-Instruct/tokenizer.json
+      tokenizer_type: huggingface # can be `huggingface`, `sentencepiece`. Must be set.
+      tokenizer_path: /tmp/Qwen2-7B-Instruct/ # path of tokenizer. Must be set.
       tokenizer_parallelism: 16 # tokenizers count for parallel tokenization. Will be set to 1 if not set.
       end_token_id: 151643 # end token id of tokenizer. Null if not set.
       pad_token_id: 151643 # pad token id of tokenizer. Null if not set.
-      stop_words: # additional stop words of tokenizer. Empty if not set.
-        - "<|im_start|>"
-        - "<|im_end|>"
-        - "<|endoftext|>"
-      bad_words: # additional bad words of tokenizer. Empty if not set.
-      special_tokens_id: # special tokens of tokenizer. Empty if not set.
+      skip_special_tokens: # skip special tokens when decoding. Empty if not set.
         - 151643 # "<|endoftext|>"
         - 151644 # "<|im_start|>"
         - 151645 # "<|im_end|>"
-      skip_special_tokens: true # skip special tokens when decoding. Will be set to true if not set.
+      force_tokens_dict: # will be used to force map tokens to ids when encode and decode. Empty if not set.
+      #  - token: "<|endoftext|>"
+      #    id: 151643
+      prefix_tokens_id: # prefix tokens id will be added to the beginning of the input ids. Empty if not set.
+      suffix_tokens_id: # suffix tokens id will be added to the end of the input ids. Empty if not set.
 
       # trtllm config.
       gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
-      gpt_model_path: /tmp/Qwen2-7B-Instruct/trt_engines/fp16_4gpu/ # path of decoder model. Must be set.
+      gpt_model_path: /tmp/Qwen2-7B-Instruct/trt_engines/ # path of decoder model. Must be set.
       encoder_model_path: # path of encoder model. Null if not set.
+      stop_words: # additional stop words. Empty if not set.
+        - "<|im_start|>"
+        - "<|im_end|>"
+        - "<|endoftext|>"
+      bad_words: # additional bad words. Empty if not set.
       batch_scheduler_policy: guaranteed_no_evict # must be `max_utilization` or `guaranteed_no_evict`.
       kv_cache_free_gpu_mem_fraction: 0.9 # will be set to 0.9 or `max_tokens_in_paged_kv_cache` if not set.
       exclude_input_in_output: true # will be set to false if not set.
@@ -175,10 +186,9 @@ models:
 # 构建
 grpst archive .
 
-# 部署，注意使用mpi方式启动，参数为并行推理的GPU数量
-# 首次构建完后，修改配置后可以直接启动服务无需重新构建，通过--inference_conf以及--server_conf参数指定.
-# grpst start --inference_conf=conf/inference.yml --server_conf=conf/server.yml --mpi_np 4
-grpst start ./server.mar --mpi_np 4
+# 部署，注意如果使用多卡推理，需要使用mpi方式启动，参数为并行推理的GPU数量
+# 使用模型对应的inferer_conf配置文件启动服务
+grpst start ./server.mar --mpi_np 4 --inference_conf=conf/inference_qwen2.yml
 
 # 查看服务状态
 grpst ps
@@ -191,15 +201,11 @@ PORT(HTTP,RPC)      NAME                PID                 DEPLOY_PATH
 
 ```bash
 # curl命令非stream请求
-curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
+curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen2-instruct",
     "messages": [
-      {
-        "role": "system",
-        "content": "You are a helpful assistant."
-      },
       {
         "role": "user",
         "content": "你好，你是谁？"
@@ -234,15 +240,11 @@ curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
 '
 
 # curl命令stream请求
-curl --no-buffer http://127.0.0.1:9997//v1/chat/completions \
+curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen2-instruct",
     "messages": [
-      {
-        "role": "system",
-        "content": "You are a helpful assistant."
-      },
       {
         "role": "user",
         "content": "你好，你是谁？"

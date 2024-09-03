@@ -19,8 +19,16 @@ void TrtllmInferer::Init(const std::string& path, const std::string& device, con
 
 void TrtllmInferer::Load() {
   try {
-    std::string tokenizer_path = model_state_->GetParameter<std::string>("tokenizer_path");
     tokenizer_ = std::make_unique<MultiInstanceTokenizer>();
+
+    std::string tokenizer_type = model_state_->GetParameter<std::string>("tokenizer_type");
+    if (tokenizer_type.empty()) {
+      throw std::invalid_argument("tokenizer_type is not specified.");
+    }
+    std::string tokenizer_path = model_state_->GetParameter<std::string>("tokenizer_path");
+    if (tokenizer_path.empty()) {
+      throw std::invalid_argument("tokenizer_path is not specified.");
+    }
 
     int instance_num = 1;
     try {
@@ -43,36 +51,47 @@ void TrtllmInferer::Load() {
       CLOG4(WARN, "pad_token_id is not specified, will use default value of null.");
     }
 
-    std::vector<std::string> stop_words;
+    std::vector<int32_t> skip_special_tokens;
     try {
-      stop_words = model_state_->GetParameter<std::vector<std::string>>("stop_words");
-    } catch (const std::exception& e) {
-      CLOG4(WARN, "stop_words is not specified, will use default value of empty.");
-    }
-
-    std::vector<std::string> bad_words;
-    try {
-      bad_words = model_state_->GetParameter<std::vector<std::string>>("bad_words");
-    } catch (const std::exception& e) {
-      CLOG4(WARN, "bad_words is not specified, will use default value of empty.");
-    }
-
-    std::vector<int32_t> special_tokens_id;
-    try {
-      special_tokens_id = model_state_->GetParameter<std::vector<int32_t>>("special_tokens_id");
-    } catch (const std::exception& e) {
-      CLOG4(WARN, "special_tokens_id is not specified, will use default value of empty.");
-    }
-
-    bool skip_special_tokens = true;
-    try {
-      skip_special_tokens = model_state_->GetParameter<bool>("skip_special_tokens");
+      skip_special_tokens = model_state_->GetParameter<std::vector<int32_t>>("skip_special_tokens");
     } catch (const std::exception& e) {
       CLOG4(WARN, "skip_special_tokens is not specified, will use default value of true.");
     }
 
-    tokenizer_->Load(tokenizer_path, instance_num, pad_token_id, end_token_id, stop_words, bad_words, special_tokens_id,
-                     skip_special_tokens);
+    std::unordered_map<std::string, int32_t> force_tokens_dict;
+    try {
+      const auto& model_config = model_state_->GetModelConfig();
+      if (model_config["force_tokens_dict"] && model_config["force_tokens_dict"].IsSequence()) {
+        for (const auto& item : model_config["force_tokens_dict"]) {
+          if (item.IsMap() && item["token"] && item["id"]) {
+            force_tokens_dict[item["token"].as<std::string>()] = item["id"].as<int32_t>();
+          } else {
+            throw std::invalid_argument("Failed to parse force_tokens_dict, not a sequence of <token, id> map.");
+          }
+        }
+      } else {
+        throw std::invalid_argument("Failed to parse force_tokens_dict, not a sequence of <token, id> map.");
+      }
+    } catch (const std::exception& e) {
+      CLOG4(WARN, "force_tokens_dict is not specified, will use default value of empty.");
+    }
+
+    std::vector<int32_t> prefix_tokens_id;
+    try {
+      prefix_tokens_id = model_state_->GetParameter<std::vector<int32_t>>("prefix_tokens_id");
+    } catch (const std::exception& e) {
+      CLOG4(WARN, "prefix_tokens_id is not specified, will use default value of empty.");
+    }
+
+    std::vector<int32_t> suffix_tokens_id;
+    try {
+      suffix_tokens_id = model_state_->GetParameter<std::vector<int32_t>>("suffix_tokens_id");
+    } catch (const std::exception& e) {
+      CLOG4(WARN, "suffix_tokens_id is not specified, will use default value of empty.");
+    }
+
+    tokenizer_->Load(tokenizer_type, tokenizer_path, instance_num, pad_token_id, end_token_id, skip_special_tokens,
+                     force_tokens_dict, prefix_tokens_id, suffix_tokens_id);
   } catch (const std::exception& e) {
     throw InfererException("Load tokenizer failed: " + std::string(e.what()));
   }

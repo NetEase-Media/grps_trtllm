@@ -188,12 +188,24 @@ set(DEPEND_LINK_DIRECTORIES
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/lib
 )
 
-#------------------- hugging face tokenizers  -------------------
+#------------------- tokenizers -------------------
+set(MLC_ENABLE_SENTENCEPIECE_TOKENIZER ON)
+option(SPM_ENABLE_SHARED "override sentence piece config" OFF)
+option(SPM_ENABLE_TCMALLOC "" OFF)
+option(SPM_USE_BUILTIN_PROTOBUF "Use built-in protobuf" OFF)
 include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/tokenizers-cpp/include
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/tokenizers-cpp/sentencepiece/src/
 )
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/tokenizers-cpp)
+
+#------------------- Jinja2cpp -------------------
+set(JINJA2CPP_BUILD_SHARED TRUE)
+set(JINJA2CPP_PATH /usr/local/jinja2cpp)
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${JINJA2CPP_PATH}/lib/jinja2cpp)
+find_package(jinja2cpp REQUIRED)
+include_directories(${JINJA2CPP_PATH}/include)
+install(DIRECTORY /usr/local/jinja2cpp/lib/ DESTINATION lib FILES_MATCHING PATTERN "*.so*")
 
 add_subdirectory(src)
 

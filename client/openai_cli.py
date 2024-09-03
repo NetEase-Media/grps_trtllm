@@ -19,7 +19,7 @@ client = openai.Client(
 )
 begin = time.time()
 res = client.chat.completions.create(
-    model="qwen2-instruct",
+    model="",
     messages=[
         {
             "content": prompt,

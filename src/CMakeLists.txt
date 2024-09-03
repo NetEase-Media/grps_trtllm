@@ -121,7 +121,9 @@ target_include_directories(
         ${NCCL_INCLUDE_DIR}
         ${3RDPARTY_DIR}/cutlass/include
         ${MPI_INCLUDE_PATH}
-        ${COMMON_HEADER_DIRS})
+        ${COMMON_HEADER_DIRS}
+        ${jinja2cpp_INCLUDE_DIRS}
+)
 
 target_compile_features(grps-tensorrt-llm-common PRIVATE cxx_std_17)
 
@@ -188,6 +190,7 @@ target_link_libraries(grps-server-customized PRIVATE
         pthread
         boost_system
         boost_thread
+        jinja2cpp
         dl
 )
 
@@ -243,6 +246,7 @@ target_link_libraries(unit_test PUBLIC
         grps-server-customized
         libgrps-server-framework.a
         "-Wl,--no-whole-archive"
+        tokenizers_cpp
         ${MPI_LIBRARIES}
         brpc
         grpc++_unsecure
@@ -255,6 +259,7 @@ target_link_libraries(unit_test PUBLIC
         pthread
         boost_system
         boost_thread
+        jinja2cpp
         dl
 )
 if (CUDA_ENABLE)

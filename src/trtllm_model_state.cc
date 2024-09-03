@@ -167,4 +167,27 @@ std::vector<std::vector<int32_t>> TrtLlmModelState::GetParameter<std::vector<std
   return vec;
 }
 
+template <>
+std::unordered_map<std::string, int32_t> TrtLlmModelState::GetParameter<std::unordered_map<std::string, int32_t>>(
+  std::string const& name) {
+  std::unordered_map<std::string, int32_t> str2int;
+  auto map = model_config_[name];
+  if (map && map.IsMap()) {
+    for (const auto& item : map) {
+      try {
+        str2int[item.first.as<std::string>()] = item.second.as<int32_t>();
+      } catch (const std::exception& e) {
+        std::string err = std::string("Failed to parse conf, conf_name: ") + name;
+        err += ", data_type: std::unordered_map<std::string, int32_t>";
+        err += ", err: ";
+        err += e.what();
+        throw std::invalid_argument(err);
+      }
+    }
+  } else {
+    throw std::invalid_argument("Failed to parse conf, not a map, conf_name: " + name);
+  }
+  return str2int;
+}
+
 } // namespace netease::grps

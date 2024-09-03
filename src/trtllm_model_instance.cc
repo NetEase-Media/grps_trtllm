@@ -417,6 +417,22 @@ TrtLlmModelInstance::TrtLlmModelInstance(TrtLlmModelState* model_state,
   }
   instance_specific_config.stats_check_period_ms = stats_check_period_ms;
 
+  std::vector<std::string> stop_words;
+  try {
+    stop_words = model_state_->GetParameter<std::vector<std::string>>("stop_words");
+    stop_words_.insert(stop_words.begin(), stop_words.end());
+  } catch (const std::exception& e) {
+    CLOG4(WARN, "stop_words is not specified, will use default value of empty.");
+  }
+
+  std::vector<std::string> bad_words;
+  try {
+    bad_words = model_state_->GetParameter<std::vector<std::string>>("bad_words");
+    bad_words_.insert(bad_words.begin(), bad_words.end());
+  } catch (const std::exception& e) {
+    CLOG4(WARN, "bad_words is not specified, will use default value of empty.");
+  }
+
   if (executor_->canEnqueueRequests()) {
     stop_wait_for_response_ = false;
     wait_for_response_thread_ = std::thread(&TrtLlmModelInstance::WaitForResponse, this);
@@ -432,7 +448,7 @@ TrtLlmModelInstance::TrtLlmModelInstance(TrtLlmModelState* model_state,
 void TrtLlmModelInstance::EnqueueAndWait(GrpsContext& grps_ctx, const std::string& http_body) {
   auto [func_call, model, executor_request] = utils::CreateRequestFromOpenAiHttpBody(
     http_body, instance_specific_config.exclude_input_from_output, grps_ctx.IfStreaming(), llm_styler_, tokenizer_,
-    max_output_len_, model_type_);
+    stop_words_, bad_words_, max_output_len_, model_type_);
   size_t input_tokens_size = executor_request.getInputTokenIds().size();
   if (input_tokens_size > max_input_len_) {
     std::string err = "Input tokens size " + std::to_string(input_tokens_size) + " exceeds max input length " +

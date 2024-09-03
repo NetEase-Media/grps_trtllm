@@ -29,9 +29,13 @@ bool IsValidUTF8(const std::string& str) {
 }
 
 std::string LoadBytesFromFile(const std::string& path) {
+  if (std::filesystem::exists(path) == false) {
+    CLOG4(ERROR, "File not found: " + path);
+    throw std::invalid_argument("File not found: " + path);
+  }
   std::ifstream fs(path, std::ios::in | std::ios::binary);
   if (fs.fail()) {
-    CLOG4(FATAL, "Cannot open" + path);
+    CLOG4(ERROR, "Cannot open " + path);
     throw std::invalid_argument("Cannot open" + path);
   }
   std::string data;
@@ -41,6 +45,36 @@ std::string LoadBytesFromFile(const std::string& path) {
   data.resize(size);
   fs.read(data.data(), long(size));
   return data;
+}
+
+jinja2::Value RapidJson2JinjaVal(const rapidjson::GenericValue<rapidjson::UTF8<>>& json_val) {
+  jinja2::Value jinja_val;
+  if (json_val.IsObject()) {
+    jinja2::ValuesMap map;
+    for (auto it = json_val.MemberBegin(); it != json_val.MemberEnd(); ++it) {
+      jinja2::Value value;
+      map[it->name.GetString()] = RapidJson2JinjaVal(it->value);
+    }
+    return map;
+  } else if (json_val.IsArray()) {
+    jinja2::ValuesList list;
+    for (auto it = json_val.Begin(); it != json_val.End(); ++it) {
+      jinja2::Value value;
+      list.push_back(RapidJson2JinjaVal(*it));
+    }
+    return list;
+  } else if (json_val.IsString()) {
+    return json_val.GetString();
+  } else if (json_val.IsInt()) {
+    return json_val.GetInt();
+  } else if (json_val.IsInt64()) {
+    return json_val.GetInt64();
+  } else if (json_val.IsDouble()) {
+    return json_val.GetDouble();
+  } else if (json_val.IsBool()) {
+    return json_val.GetBool();
+  }
+  return {};
 }
 
 void SetHttpResponse(GrpsContext& grps_ctx,
@@ -256,13 +290,16 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
                                   presence_penalty, frequency_penalty, length_penalty, early_stopping);
 }
 
-std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody(const std::string& http_body,
-                                                                                 bool exclude_input_from_output,
-                                                                                 bool streaming,
-                                                                                 LLMStyler* llm_styler,
-                                                                                 MultiInstanceTokenizer* tokenizer,
-                                                                                 size_t max_output_len,
-                                                                                 executor::ModelType model_type) {
+std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody(
+  const std::string& http_body,
+  bool exclude_input_from_output,
+  bool streaming,
+  LLMStyler* llm_styler,
+  MultiInstanceTokenizer* tokenizer,
+  const std::unordered_set<std::string>& stop_words,
+  const std::unordered_set<std::string>& bad_words,
+  size_t max_output_len,
+  executor::ModelType model_type) {
   rapidjson::Document json_body;
   json_body.Parse(http_body.c_str());
   if (json_body.HasParseError()) {
@@ -280,7 +317,10 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   std::string model = json_body[InputFieldsNames::kModelName].GetString();
 
   // Prompt input tokens.
-  auto [func_call, prompt] = llm_styler->BuildPrompt(json_body);
+  if (json_body.HasMember("tools") && !llm_styler->support_func_call()) {
+    throw std::invalid_argument("Function call is not supported for this llm.");
+  }
+  auto [func_call, prompt] = llm_styler->BuildPromptWrap(json_body, tokenizer->chat_templater());
   // CLOG4(INFO, "Prompt: " << prompt);
   executor::VecTokens input_tokens = tokenizer->Encode(prompt);
 
@@ -319,13 +359,13 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   if (json_body.HasMember(InputFieldsNames::kBadWords)) {
     if (json_body[InputFieldsNames::kBadWords].IsString()) {
       std::string bad_words_str = json_body[InputFieldsNames::kBadWords].GetString();
-      auto bad_words = tokenizer->Encode(bad_words_str);
+      auto bad_words = tokenizer->Encode(bad_words_str, false, false);
       bad_words_list.emplace_back(bad_words);
     } else if (json_body[InputFieldsNames::kBadWords].IsArray()) {
       for (auto& bad : json_body[InputFieldsNames::kBadWords].GetArray()) {
         if (bad.IsString()) {
           auto bad_words_str = bad.GetString();
-          auto bad_words = tokenizer->Encode(bad_words_str);
+          auto bad_words = tokenizer->Encode(bad_words_str, false, false);
           bad_words_list.emplace_back(bad_words);
         } else {
           throw std::invalid_argument("`bad_words` is not a string or an array of strings");
@@ -335,8 +375,8 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
       throw std::invalid_argument("`bad_words` is not a string or an array of strings");
     }
   }
-  for (auto& bad_words : tokenizer->bad_words()) {
-    bad_words_list.emplace_back(tokenizer->Encode(bad_words));
+  for (auto& bad_word : bad_words) {
+    bad_words_list.emplace_back(tokenizer->Encode(bad_word, false, false));
   }
 
   // Stop words.
@@ -344,13 +384,13 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   if (json_body.HasMember(InputFieldsNames::kStopWords)) {
     if (json_body[InputFieldsNames::kStopWords].IsString()) {
       std::string stop_words_str = json_body[InputFieldsNames::kStopWords].GetString();
-      auto stop_words = tokenizer->Encode(stop_words_str);
+      auto stop_words = tokenizer->Encode(stop_words_str, false, false);
       stop_words_list.emplace_back(stop_words);
     } else if (json_body[InputFieldsNames::kStopWords].IsArray()) {
       for (auto& stop : json_body[InputFieldsNames::kStopWords].GetArray()) {
         if (stop.IsString()) {
           auto stop_words_str = stop.GetString();
-          auto stop_words = tokenizer->Encode(stop_words_str);
+          auto stop_words = tokenizer->Encode(stop_words_str, false, false);
           stop_words_list.emplace_back(stop_words);
         } else {
           throw std::invalid_argument("`stop` is not a string or an array of strings");
@@ -360,11 +400,11 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
       throw std::invalid_argument("`stop` is not a string or an array of strings");
     }
   }
-  for (auto& stop_words : tokenizer->stop_words()) {
-    stop_words_list.emplace_back(tokenizer->Encode(stop_words));
+  for (auto& stop_word : stop_words) {
+    stop_words_list.emplace_back(tokenizer->Encode(stop_word, false, false));
   }
   if (func_call) { // Add function call observation words to early stop.
-    stop_words_list.emplace_back(tokenizer->Encode(llm_styler->func_call_observation_words()));
+    stop_words_list.emplace_back(tokenizer->Encode(llm_styler->func_call_observation_words(), false, false));
   }
 
   // [TODO]: Support embedding_bias, p_tuning_config, lora_config, external_draft_tokens_config

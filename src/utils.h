@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <jinja2cpp/template.h>
 #include <rapidjson/document.h>
 
 #include <chrono>
@@ -11,7 +12,6 @@
 #include <string>
 #include <unordered_set>
 
-#include "NvInfer.h"
 #include "context/context.h"
 #include "model_infer/tensor_wrapper.h"
 #include "src/constants.h"
@@ -38,6 +38,8 @@ namespace utils {
 bool IsValidUTF8(const std::string& str);
 
 std::string LoadBytesFromFile(const std::string& path);
+
+jinja2::Value RapidJson2JinjaVal(const rapidjson::GenericValue<rapidjson::UTF8<>>& json_val);
 
 void SetHttpResponse(GrpsContext& grps_ctx,
                      int status_code,
@@ -78,12 +80,15 @@ void HttpStreamingRespondWithOpenAi(GrpsContext& grps_ctx,
                                     LLMStyler* llm_styler);
 
 /// @brief Construct <if_func_call, model_id, executor::Request> from OpenAI format http body
-std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody(const std::string& http_body,
-                                                                                 bool exclude_input_from_output,
-                                                                                 bool streaming,
-                                                                                 LLMStyler* llm_styler,
-                                                                                 MultiInstanceTokenizer* tokenizer,
-                                                                                 size_t max_output_len,
-                                                                                 executor::ModelType model_type);
+std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody(
+  const std::string& http_body,
+  bool exclude_input_from_output,
+  bool streaming,
+  LLMStyler* llm_styler,
+  MultiInstanceTokenizer* tokenizer,
+  const std::unordered_set<std::string>& stop_words,
+  const std::unordered_set<std::string>& bad_words,
+  size_t max_output_len,
+  executor::ModelType model_type);
 } // namespace utils
 } // namespace netease::grps

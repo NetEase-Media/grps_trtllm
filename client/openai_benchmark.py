@@ -54,7 +54,7 @@ def request(server, prompt):
 
     url = f'{server}/v1/chat/completions'
     data = {
-        "model": "qwen2-instruct",
+        "model": "",
         "messages": [
             {
                 "role": "system",
@@ -66,7 +66,6 @@ def request(server, prompt):
             }
         ],
         "max_tokens": 512,
-        "stop": ["<|im_start|>", "<|im_end|>"],
         "top_p": 0.3,
         "repetition_penalty": 1.0,
         "temperature": 0.1

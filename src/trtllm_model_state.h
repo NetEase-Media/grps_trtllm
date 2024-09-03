@@ -82,4 +82,8 @@ template <>
 std::vector<std::vector<int32_t>> TrtLlmModelState::GetParameter<std::vector<std::vector<int32_t>>>(
   std::string const& name);
 
+template <>
+std::unordered_map<std::string, int32_t> TrtLlmModelState::GetParameter<std::unordered_map<std::string, int32_t>>(
+  std::string const& name);
+
 } // namespace netease::grps

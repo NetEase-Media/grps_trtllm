@@ -3,10 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include <memory>
-
-TEST(LocalTest, TestInit) {
-}
+TEST(LocalTest, TestInit) {}
 
 TEST(LocalTest, TestInfer) {}
 
