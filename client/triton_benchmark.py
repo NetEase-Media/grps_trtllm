@@ -49,7 +49,7 @@ random_prompts = [
 
 
 def request(server, prompt):
-    if type[prompt] == 'list':
+    if type(prompt) is list:
         prompt_idx = random.randint(0, len(prompt) - 1)
         text_inp = prompt[prompt_idx]
     else:
