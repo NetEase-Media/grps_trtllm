@@ -42,7 +42,7 @@
 | llm_styler | chat | function_call |
 |------------|------|---------------|
 | qwen       | ✅    | ✅             |
-| chatglm3   | ✅    | ✅             |
+| chatglm3   | ✅    | ❎             |
 | glm4       | ✅    | ✅             |
 
 ## 2. 工程结构
@@ -57,7 +57,7 @@
 |   |--triton_cli.py                    # Triton trtllm server chat脚本
 |   |--triton_txt_cli.py                # Triton trtllm server输入文本文件内容进行chat
 |-- conf                                # 配置文件
-|   |-- inference.yml                   # 推理配置
+|   |-- inference*.yml                  # 各类llm推理配置
 |   |-- server.yml                      # 服务配置
 |-- data                                # 数据文件
 |-- docker                              # docker镜像构建

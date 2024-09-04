@@ -359,14 +359,14 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   if (json_body.HasMember(InputFieldsNames::kBadWords)) {
     if (json_body[InputFieldsNames::kBadWords].IsString()) {
       std::string bad_words_str = json_body[InputFieldsNames::kBadWords].GetString();
-      auto bad_words = tokenizer->Encode(bad_words_str, false, false);
-      bad_words_list.emplace_back(bad_words);
+      auto words_id = tokenizer->Encode(bad_words_str, false, false);
+      bad_words_list.emplace_back(words_id);
     } else if (json_body[InputFieldsNames::kBadWords].IsArray()) {
       for (auto& bad : json_body[InputFieldsNames::kBadWords].GetArray()) {
         if (bad.IsString()) {
           auto bad_words_str = bad.GetString();
-          auto bad_words = tokenizer->Encode(bad_words_str, false, false);
-          bad_words_list.emplace_back(bad_words);
+          auto words_id = tokenizer->Encode(bad_words_str, false, false);
+          bad_words_list.emplace_back(words_id);
         } else {
           throw std::invalid_argument("`bad_words` is not a string or an array of strings");
         }
@@ -384,14 +384,14 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   if (json_body.HasMember(InputFieldsNames::kStopWords)) {
     if (json_body[InputFieldsNames::kStopWords].IsString()) {
       std::string stop_words_str = json_body[InputFieldsNames::kStopWords].GetString();
-      auto stop_words = tokenizer->Encode(stop_words_str, false, false);
-      stop_words_list.emplace_back(stop_words);
+      auto words_id = tokenizer->Encode(stop_words_str, false, false);
+      stop_words_list.emplace_back(words_id);
     } else if (json_body[InputFieldsNames::kStopWords].IsArray()) {
       for (auto& stop : json_body[InputFieldsNames::kStopWords].GetArray()) {
         if (stop.IsString()) {
           auto stop_words_str = stop.GetString();
-          auto stop_words = tokenizer->Encode(stop_words_str, false, false);
-          stop_words_list.emplace_back(stop_words);
+          auto words_id = tokenizer->Encode(stop_words_str, false, false);
+          stop_words_list.emplace_back(words_id);
         } else {
           throw std::invalid_argument("`stop` is not a string or an array of strings");
         }

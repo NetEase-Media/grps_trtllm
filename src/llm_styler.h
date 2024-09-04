@@ -146,7 +146,8 @@ public:
 
 class ChatGlm3Styler : public LLMStyler {
 public:
-  ChatGlm3Styler() : LLMStyler("chatglm3", "", {"<|system|>", "<|user|>", "<|assistant|>"}, false, "", false) {
+  ChatGlm3Styler()
+      : LLMStyler("chatglm3", "", {"<|system|>", "<|user|>", "<|assistant|>"}, false, "", false) {
     chat_templater_.Load(
       "{% for item in messages %}{% if item['content'] %}<|{{ item['role'] }}|>{{ item['metadata'] }}\n {{ "
       "item['content'] }}{% endif %}{% endfor %}{% if add_generation_prompt %}<|assistant|>\n{% endif %}");
