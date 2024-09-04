@@ -276,20 +276,34 @@ std::string QwenStyler::ParseFunctionCall(const std::string& gen_txt,
                                           rapidjson::GenericValue<rapidjson::UTF8<>>& message,
                                           rapidjson::MemoryPoolAllocator<>& allocator) {
   std::string thought, func_name, func_args;
-  size_t h = gen_txt.rfind("Thought:");
   size_t i = gen_txt.rfind("\nAction:");
   size_t j = gen_txt.rfind("\nAction Input:");
   size_t k = gen_txt.rfind("\nObservation:");
-  if (h != std::string::npos && i != std::string::npos && j != std::string::npos) {
-    if (h < i && i < j) {           // If the text has `Action` and `Action input`,
-      if (k == std::string::npos) { // but does not contain `Observation`,
+
+  if (i != std::string::npos && j != std::string::npos) {
+    // Found `Thought:` before `Action:`.
+    std::string sub_str = gen_txt.substr(0, i);
+    size_t h1 = sub_str.rfind("\nThought:");
+    size_t h2 = sub_str.rfind("Thought:");
+    size_t h = std::string::npos;
+    if (h1 != std::string::npos && h2 != std::string::npos) {
+      h = std::max(h1, h2);
+    } else if (h1 != std::string::npos) {
+      h = h1;
+    } else if (h2 != std::string::npos) {
+      h = h2;
+    }
+
+    if (h != std::string::npos && h < i && i < j) { // If the text has `Action` and `Action input`,
+      if (k == std::string::npos) {                 // but does not contain `Observation`,
         // then it is likely that `Observation` is omitted by the LLM,
         // because the output text may have discarded the stop word.
         // gen_txt.append("\nObservation:");
         // k = gen_txt.rfind("\nObservation:");
         k = gen_txt.size();
       }
-      thought = gen_txt.substr(h + 8, i - h - 8);
+      thought = gen_txt.substr(h + 9, i - h - 9);
+      thought = thought.substr(thought.find_first_not_of(' ')); // strip left spaces
       func_name = gen_txt.substr(i + 8, j - i - 8);
       func_args = gen_txt.substr(j + 14, k - j - 14);
       // strip all spaces
@@ -312,9 +326,36 @@ std::string QwenStyler::ParseFunctionCall(const std::string& gen_txt,
     function.AddMember("arguments", rapidjson::Value(func_args.c_str(), allocator), allocator);
     return "tool_calls";
   } else {
-    size_t z = gen_txt.rfind("\nFinal Answer: ");
+    size_t y1 = gen_txt.rfind("\nThought:");
+    size_t y2 = gen_txt.rfind("Thought:");
+    size_t y = std::string::npos;
+    if (y1 != std::string::npos && y2 != std::string::npos) {
+      y = std::max(y1, y2);
+    } else if (y1 != std::string::npos) {
+      y = y1;
+    } else if (y2 != std::string::npos) {
+      y = y2;
+    }
+
+    size_t z1 = gen_txt.rfind("\nFinal Answer:");
+    size_t z2 = gen_txt.rfind("Final Answer:");
+    size_t z = std::string::npos;
+    if (z1 != std::string::npos && z2 != std::string::npos) {
+      z = std::max(z1, z2);
+    } else if (z1 != std::string::npos) {
+      z = z1;
+    } else if (z2 != std::string::npos) {
+      z = z2;
+    }
+
     if (z != std::string::npos) {
-      message.AddMember("content", rapidjson::Value(gen_txt.substr(z + 15).c_str(), allocator), allocator);
+      std::string final_answer = gen_txt.substr(z + 14);
+      final_answer = final_answer.substr(final_answer.find_first_not_of(' ')); // strip left spaces
+      message.AddMember("content", rapidjson::Value(final_answer.c_str(), allocator), allocator);
+    } else if (y != std::string::npos) { // Only have thought.
+      std::string thought_answer = gen_txt.substr(y + 9);
+      thought_answer = thought_answer.substr(thought_answer.find_first_not_of(' ')); // strip left spaces
+      message.AddMember("content", rapidjson::Value(thought_answer.c_str(), allocator), allocator);
     }
     return "stop";
   }

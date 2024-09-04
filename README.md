@@ -39,11 +39,11 @@
 
 支持的```LLM styler```家族：
 
-| llm_styler | chat | function_call |
-|------------|------|---------------|
-| qwen       | ✅    | ✅             |
-| chatglm3   | ✅    | ❎             |
-| glm4       | ✅    | ✅             |
+| llm_styler | chat | function_call | supported model                                                               |
+|------------|------|---------------|-------------------------------------------------------------------------------|
+| qwen       | ✅    | ✅             | qwen-chat, qwen1.5-chat, qwen1.5-moe-chat, qwen2-instruct, qwen2-moe-instruct |
+| chatglm3   | ✅    | ❌             | chatglm3                                                                      |
+| glm4       | ✅    | ✅             | glm4-chat, glm4-chat-1m                                                       |
 
 ## 2. 工程结构
 
