@@ -82,7 +82,7 @@
 
 ## 3. 本地开发与调试
 
-以qwen2-instruct为例。更多llm示例见[docs](./docs)。
+以qwen2-instruct为例。更多llm示例见[docs](./docs)，拉取代码与创建容器步骤相同。
 
 ### 3.1 拉取代码
 
@@ -210,14 +210,6 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
       {
         "role": "user",
         "content": "你好，你是谁？"
-      },
-      {
-        "role": "user",
-        "content": "你好，你是谁？"
-      },
-      {
-        "role": "user",
-        "content": "你好，你是谁？"
       }
     ]
   }'
@@ -334,6 +326,7 @@ docker build -t grps_trtllm_server:1.0.0 -f docker/Dockerfile .
 # 使用上面构建好的镜像启动docker容器
 # 注意挂载/tmp目录，因为构建的trtllm引擎文件在/tmp目录下
 # 映射服务端口9997
+# 注意如果使用多卡推理，需要使用mpi方式启动，--mpi_np参数为并行推理的GPU数量。
 docker run -itd --runtime=nvidia --name="grps_trtllm_server" --shm-size=2g --ulimit memlock=-1 \
 --ulimit stack=67108864 -v /tmp:/tmp -p 9997:9997 \
 grps_trtllm_server:1.0.0 grpst start server.mar
