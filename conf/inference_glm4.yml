@@ -1,0 +1,113 @@
+models:
+  - name: trtllm_model
+    version: 1.0.0
+    device: auto
+    inferer_type: customized
+    inferer_name: trtllm_inferer
+    inferer_path:
+    inferer_args: # more args of model inferer.
+      # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
+      # Current support {`qwen`, `chatglm3`, `glm4`}.
+      llm_style: glm4
+
+      # tokenizer config.
+      tokenizer_type: huggingface # can be `huggingface`, `sentencepiece`. Must be set.
+      # Use following command to convert tiktoken `tokenizer.model` to huggingface `tokenizer.json`.
+      # python3 ./tools/glm4_tiktoken_to_hf.py /tmp/glm-4-9b-chat/ /tmp/glm-4-9b-chat/
+      tokenizer_path: /tmp/glm-4-9b-chat/ # path of tokenizer. Must be set.
+      tokenizer_parallelism: 16 # tokenizers count for parallel tokenization. Will be set to 1 if not set.
+      end_token_id: 151329 # "<|endoftext|>"
+      pad_token_id: 151329 # "<|endoftext|>"
+      skip_special_tokens: # skip special tokens when decoding. Empty if not set.
+        - 151329 # "<|endoftext|>"
+        - 151330 # "[MASK]"
+        - 151331 # "[gMASK]"
+        - 151332 # "[sMASK]"
+        - 151333 # "<sop>"
+        - 151334 # "<eop>"
+        - 151335 # "<|system|>"
+        - 151336 # "<|user|>"
+        - 151337 # "<|assistant|>"
+        - 151338 # "<|observation|>"
+        - 151339 # "<|begin_of_image|>"
+        - 151340 # "<|end_of_image|>"
+        - 151341 # "<|begin_of_video|>"
+        - 151342 # "<|end_of_video|>"
+      force_tokens_dict: # will be used to force map tokens to ids when encode and decode. Empty if not set.
+        - token: "<|endoftext|>"
+          id: 151329
+        - token: "[MASK]"
+          id: 151330
+        - token: "[gMASK]"
+          id: 151331
+        - token: "[sMASK]"
+          id: 151332
+        - token: "<sop>"
+          id: 151333
+        - token: "<eop>"
+          id: 151334
+        - token: "<|system|>"
+          id: 151335
+        - token: "<|user|>"
+          id: 151336
+        - token: "<|assistant|>"
+          id: 151337
+        - token: "<|observation|>"
+          id: 151338
+        - token: "<|begin_of_image|>"
+          id: 151339
+        - token: "<|end_of_image|>"
+          id: 151340
+        - token: "<|begin_of_video|>"
+          id: 151341
+        - token: "<|end_of_video|>"
+          id: 151342
+
+      prefix_tokens_id: # prefix tokens id will be added to the beginning of the input ids. Empty if not set.
+      suffix_tokens_id: # suffix tokens id will be added to the end of the input ids. Empty if not set.
+
+      # trtllm config.
+      gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
+      gpt_model_path: /tmp/glm-4-9b-chat/trt_engines/ # path of decoder model. Must be set.
+      encoder_model_path: # path of encoder model. Null if not set.
+      stop_words: # additional stop words. Empty if not set.
+        - "<|endoftext|>"
+        - "<|user|>"
+        - "<|observation|>"
+      bad_words: # additional bad words. Empty if not set.
+      max_tokens_in_paged_kv_cache: # use default if not set.
+      max_attention_window_size: # use default (i.e. max_sequence_length) if not set.
+      sink_token_length: # use default if not set.
+      batch_scheduler_policy: guaranteed_no_evict # must be `max_utilization` or `guaranteed_no_evict`.
+      kv_cache_free_gpu_mem_fraction: 0.9 # will be set to 0.9 or `max_tokens_in_paged_kv_cache` if not set.
+      kv_cache_host_memory_bytes: # will be set to 0 if not set.
+      kv_cache_onboard_blocks: # will be set to true if not set.
+      exclude_input_in_output: true # will be set to false if not set.
+      cancellation_check_period_ms: # will be set to 100 (ms) if not set.
+      stats_check_period_ms: # will be set to 100 (ms) if not set.
+      iter_stats_max_iterations: # will be set to 1000 if not set.
+      request_stats_max_iterations: # will be set to 0 if not set.
+      enable_kv_cache_reuse: # will be set to false if not set.
+      normalize_log_probs: # will be set to true if not set.
+      enable_chunked_context: # will be set to false if not set.
+      gpu_device_ids: # will be automatically set if not set.
+      lora_cache_optimal_adapter_size: # will be set to 8 if not set.
+      lora_cache_max_adapter_size: # will be set to 64 if not set.
+      lora_cache_gpu_memory_fraction: # will be set to 0.05 if not set.
+      lora_cache_host_memory_bytes: # will be set to 1073741824(1GB) if not set.
+      decoding_mode: # must be one of the {`top_k`, `top_p`, `top_k_top_p`, `beam_search`}. Use default: `top_k_top_p` if max_beam_width == 1, beam_search otherwise.
+      executor_worker_path: # will be set to `/opt/tritonserver/backends/tensorrtllm/trtllmExecutorWorker` if not set.
+      medusa_choices: # will be set to `mc_sim_7b_63` if not set.
+      gpu_weights_percent: # will be set to 1.0 if not set.
+    converter_type: none # only support `torch` (torch tensor converter), `tensorflow` (tf tensor converter), `tensorrt` (tensorrt tensor converter), `customized`  or `none`(no converter mode) now.
+    converter_name: # converter name that has registered in src/customized_converter.h. Not none when converter_type is `customized`.
+    converter_path: # path of converter.
+    converter_args: # more args of converter.
+
+dag:
+  type: sequential # only support `sequential` now.
+  name: your_dag # dag name.
+  nodes: # sequential mode will run node in the order of nodes.
+    - name: node-1
+      type: model # only support `model` now.
+      model: trtllm_model-1.0.0  # model(name-version format) that has been declared in models.

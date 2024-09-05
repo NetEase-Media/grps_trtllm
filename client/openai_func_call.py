@@ -32,7 +32,7 @@ tools = [
                         "enum": ["celsius", "fahrenheit"]
                     }
                 },
-                "required": ["location"]
+                "required": ["location", "unit"]
             }
         }
     }
@@ -65,7 +65,7 @@ function = tool_call.function
 if function.name == "get_current_weather":
     arguments = json.loads(function.arguments)
     location = arguments["location"]
-    unit = arguments["unit"]
+    unit = arguments.get("unit", "fahrenheit")
 
     print(
         f'Server response: thought: {res.choices[0].message.content}, call local function({function.name}) '

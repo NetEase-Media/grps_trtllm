@@ -47,36 +47,6 @@ std::string LoadBytesFromFile(const std::string& path) {
   return data;
 }
 
-jinja2::Value RapidJson2JinjaVal(const rapidjson::GenericValue<rapidjson::UTF8<>>& json_val) {
-  jinja2::Value jinja_val;
-  if (json_val.IsObject()) {
-    jinja2::ValuesMap map;
-    for (auto it = json_val.MemberBegin(); it != json_val.MemberEnd(); ++it) {
-      jinja2::Value value;
-      map[it->name.GetString()] = RapidJson2JinjaVal(it->value);
-    }
-    return map;
-  } else if (json_val.IsArray()) {
-    jinja2::ValuesList list;
-    for (auto it = json_val.Begin(); it != json_val.End(); ++it) {
-      jinja2::Value value;
-      list.push_back(RapidJson2JinjaVal(*it));
-    }
-    return list;
-  } else if (json_val.IsString()) {
-    return json_val.GetString();
-  } else if (json_val.IsInt()) {
-    return json_val.GetInt();
-  } else if (json_val.IsInt64()) {
-    return json_val.GetInt64();
-  } else if (json_val.IsDouble()) {
-    return json_val.GetDouble();
-  } else if (json_val.IsBool()) {
-    return json_val.GetBool();
-  }
-  return {};
-}
-
 void SetHttpResponse(GrpsContext& grps_ctx,
                      int status_code,
                      const std::string& content_type,
@@ -320,7 +290,7 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   if (json_body.HasMember("tools") && !llm_styler->support_func_call()) {
     throw std::invalid_argument("Function call is not supported for this llm.");
   }
-  auto [func_call, prompt] = llm_styler->BuildPromptWrap(json_body, tokenizer->chat_templater());
+  auto [func_call, prompt] = llm_styler->BuildPrompt(json_body);
   // CLOG4(INFO, "Prompt: " << prompt);
   executor::VecTokens input_tokens = tokenizer->Encode(prompt);
 

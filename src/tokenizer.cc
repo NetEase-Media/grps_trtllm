@@ -9,7 +9,7 @@
 #include "logger/logger.h"
 #include "src/utils.h"
 
-#define TOKENIZER_DEBUG 0
+#define TOKENIZER_DEBUG 1
 namespace netease::grps {
 
 void MultiInstanceTokenizer::Load(const std::string& type,
@@ -41,6 +41,7 @@ void MultiInstanceTokenizer::Load(const std::string& type,
   cur_idx_ = 0;
 
   // Load chat template.
+  /*
   auto tokenizer_config_path = conf_path + "/tokenizer_config.json";
   if (std::filesystem::exists(tokenizer_config_path)) {
     auto blob = utils::LoadBytesFromFile(tokenizer_config_path);
@@ -53,6 +54,7 @@ void MultiInstanceTokenizer::Load(const std::string& type,
     chat_templater_ = std::make_unique<jinja2::Template>();
     chat_templater_->Load(chat_template_str_);
   }
+  */
 
   pad_token_id_ = pad_token_id;
   end_token_id_ = end_token_id;
