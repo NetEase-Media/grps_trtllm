@@ -123,7 +123,7 @@ cd third_party/TensorRT-LLM/examples/qwen
 # 转换ckpt
 rm -rf /tmp/Qwen2-7B-Instruct/tllm_checkpoint/
 python3 convert_checkpoint.py --model_dir /tmp/Qwen2-7B-Instruct \
---output_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint/ --dtype bfloat16
+--output_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint/ --dtype bfloat16 --load_model_on_cpu
 # 构建引擎
 rm -rf /tmp/Qwen2-7B-Instruct/trt_engines/
 trtllm-build --checkpoint_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint/ \
