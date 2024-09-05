@@ -412,23 +412,17 @@ std::string ChatGlm3Styler::ParseFunctionCall(const std::string& gen_txt,
 
       // convert str to json string
       // (location='Boston', unit='celsius') -> {"location": "Boston", "unit": "celsius"}
-      std::regex re(R"(\w+)");
-      std::smatch match;
-      std::string json_str = "{";
-      while (std::regex_search(func_args, match, re)) {
-        json_str += "\"" + match.str() + "\": ";
-        func_args = match.suffix();
-        std::cout << func_args << std::endl;
-        if (std::regex_search(func_args, match, re)) {
-          json_str += "\"" + match.str() + "\", ";
-          func_args = match.suffix();
-        }
-      }
-      json_str.pop_back();
-      json_str.pop_back();
-      json_str += "}";
-
-      func_args = std::move(json_str);
+      // strip all spaces.
+      func_args.erase(std::remove_if(func_args.begin(), func_args.end(), ::isspace), func_args.end());
+      // replace '(' -> '{', ')' -> '}'
+      func_args[0] = '{';
+      func_args[func_args.size() - 1] = '}';
+      // replace ' -> "
+      func_args = std::regex_replace(func_args, std::regex(R"(')"), "\"");
+      // replace ' = ' -> ': '
+      func_args = std::regex_replace(func_args, std::regex(R"(\s*=\s*)"), ":");
+      // replace param_name -> "param_name"
+      func_args = std::regex_replace(func_args, std::regex(R"((\w+):)"), R"("$1":)");
     }
   }
 
