@@ -129,6 +129,20 @@ ChatCompletionChunk(id='chatcmpl-4', choices=[Choice(delta=ChoiceDelta(content='
 ChatCompletionChunk(id='chatcmpl-4', choices=[Choice(delta=ChoiceDelta(content='我是一个', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1725527423, model='', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
 '
 
+# 输入32k长文本小说验证长文本的支持
+python3 client/openai_txt_cli.py 127.0.0.1:9997 ./data/32k_novel.txt "上面这篇小说作者是谁？" false
+# 返回如下：
+: '
+ChatCompletion(id='chatcmpl-3', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='根据您提供的小说内容，可以判断这篇小说的作者是弦三千。\n\n以下是我的判断依据：\n\n1. 文档开头明确标注了作者为“弦三千”。\n\n2. 文档中多次出现“弦三千”这个名字，例如“作者：弦三千”、“#书里的那个恶毒炮灰跟我同名# #恶毒炮灰竟是我自己？！！# 弦三千”。\n\n3. 文档内容与弦三千过往作品风格相符，例如《穿成炮灰后我成了神兽》等。\n\n综上所述，可以确定这篇小说的作者是弦三千。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1725529675, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=119, prompt_tokens=31166, total_tokens=31285))
+'
+
+# 输入32k长文本小说进行总结
+python3 client/openai_txt_cli.py 127.0.0.1:9997 ./data/32k_novel.txt "简述一下上面这篇小说的内容。" false
+# 返回如下：
+: '
+ChatCompletion(id='chatcmpl-8', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='这篇小说讲述了主角楚云霁穿成一只北极熊后，在北极荒野中生存的故事。\n\n**主要情节**：\n\n* 楚云霁穿成一只小北极熊，在暴风雪中艰难求生，经历了饥饿、寒冷和危险。\n* 他遇到了一只高冷的北极狼，并与其建立了友谊，共同捕猎，分享食物。\n* 楚云霁意外捡到一根钓鱼竿，并利用它捕鱼，改善了生活。\n* 他还遇到了其他动物，如海象、海豹、北极狐等，并与之互动。\n* 楚云霁逐渐适应了北极的生活，并享受着与白狼的友谊。\n\n**小说主题**：\n\n* 保护北极熊，爱护野生动物。\n* 生存与成长。\n* 友谊与陪伴。\n\n**小说特色**：\n\n* 萌宠题材，主角楚云霁是一只可爱的小北极熊，性格活泼可爱，让人忍不住想要保护它。\n* 野外求生元素，情节紧张刺激，展现了北极的恶劣环境和生存挑战。\n* 人物关系温馨感人，主角与白狼的友谊让人动容。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1725529877, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=239, prompt_tokens=31168, total_tokens=31407))
+'
+
 # openai_func_call.py进行function call模拟
 python3 client/openai_func_call.py 127.0.0.1:9997
 # 返回如下：
