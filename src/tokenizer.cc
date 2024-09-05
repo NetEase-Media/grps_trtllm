@@ -9,7 +9,7 @@
 #include "logger/logger.h"
 #include "src/utils.h"
 
-#define TOKENIZER_DEBUG 1
+#define TOKENIZER_DEBUG 0
 namespace netease::grps {
 
 void MultiInstanceTokenizer::Load(const std::string& type,
