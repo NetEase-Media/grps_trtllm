@@ -61,6 +61,7 @@
 |   |-- server.yml                      # 服务配置
 |-- data                                # 数据文件
 |-- docker                              # docker镜像构建
+|-- docs                                # 文档
 |-- second_party                        # 第二方依赖
 |   |-- grps-server-framework           # grps框架依赖
 |-- src                                 # 自定义源码
@@ -74,6 +75,8 @@
 |   |-- utils.cc/.h                     # 工具
 |   |-- main.cc                         # 本地单元测试
 |-- third_party                         # 第三方依赖
+|-- tools                               # 工具
+|   |-- glm4_tiktoken_to_hf.py          # glm4模型tiktoken tokenizer格式转换为huggingface格式
 |-- build.sh                            # 构建脚本
 |-- CMakelists.txt                      # 工程构建文件
 |-- .clang-format                       # 代码格式化配置文件
