@@ -190,7 +190,7 @@ target_link_libraries(grps-server-customized PRIVATE
         pthread
         boost_system
         boost_thread
-        jinja2cpp
+        # jinja2cpp
         dl
 )
 
@@ -259,7 +259,7 @@ target_link_libraries(unit_test PUBLIC
         pthread
         boost_system
         boost_thread
-        jinja2cpp
+        # jinja2cpp
         dl
 )
 if (CUDA_ENABLE)

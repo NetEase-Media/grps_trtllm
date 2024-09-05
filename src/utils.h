@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <jinja2cpp/template.h>
 #include <rapidjson/document.h>
 
 #include <chrono>
@@ -38,8 +37,6 @@ namespace utils {
 bool IsValidUTF8(const std::string& str);
 
 std::string LoadBytesFromFile(const std::string& path);
-
-jinja2::Value RapidJson2JinjaVal(const rapidjson::GenericValue<rapidjson::UTF8<>>& json_val);
 
 void SetHttpResponse(GrpsContext& grps_ctx,
                      int status_code,

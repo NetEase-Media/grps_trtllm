@@ -2,13 +2,13 @@
 
 #pragma once
 
-#include <jinja2cpp/template.h>
 #include <tokenizers_cpp.h>
 
 #include <atomic>
 #include <mutex>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -43,8 +43,6 @@ public:
   [[nodiscard]] const std::unordered_map<int32_t, std::string>& force_id2token_map() const { return force_id2token_; }
   [[nodiscard]] const std::vector<int32_t>& prefix_tokens_id_vec() const { return prefix_tokens_id_; }
   [[nodiscard]] const std::vector<int32_t>& suffix_tokens_id_vec() const { return suffix_tokens_id_; }
-  [[nodiscard]] const std::string& chat_template_str() const { return chat_template_str_; }
-  [[nodiscard]] jinja2::Template* chat_templater() const { return chat_templater_.get(); }
 
 private:
   tokenizers::Tokenizer* GetTokenizer();
@@ -61,8 +59,6 @@ private:
   std::unordered_map<int32_t, std::string> force_id2token_;
   std::vector<int32_t> prefix_tokens_id_;
   std::vector<int32_t> suffix_tokens_id_;
-  std::string chat_template_str_;                              // chat_template in tokenizer_config.json
-  std::unique_ptr<jinja2::Template> chat_templater_ = nullptr; // Jinja2 templater for chat_template
 };
 
 } // namespace netease::grps

@@ -7,6 +7,7 @@
 #include <rapidjson/writer.h>
 
 #include <algorithm>
+#include <regex>
 #include <unordered_set>
 #include <vector>
 
@@ -14,34 +15,6 @@
 #include "src/utils.h"
 
 namespace netease::grps {
-
-std::tuple<bool, std::string> LLMStyler::BuildPromptWithChatTemplate(const rapidjson::Document& json_body,
-                                                                     jinja2::Template* tpl) {
-  if (!tpl) {
-    throw std::invalid_argument("Jinja2 chat templater is null.");
-  }
-
-  jinja2::ValuesMap params;
-
-  // Parse messages.
-  if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
-    throw std::invalid_argument("`messages` not found or not an array");
-  }
-  params["messages"] = utils::RapidJson2JinjaVal(json_body["messages"]);
-
-  // Parse tools.
-  bool has_tools = false;
-  if (json_body.HasMember("tools") && json_body["tools"].IsArray()) {
-    has_tools = true;
-    params["tools"] = utils::RapidJson2JinjaVal(json_body["tools"]);
-  }
-
-  if (add_generation_prompt_) {
-    params["add_generation_prompt"] = true;
-  }
-
-  return {has_tools, tpl->RenderAsString(params).value()};
-}
 
 std::tuple<bool, std::string> LLMStyler::BuildPrompt(const rapidjson::Document& json_body) {
   throw std::runtime_error("BuildPrompt not implemented.");
@@ -362,6 +335,22 @@ std::string QwenStyler::ParseFunctionCall(const std::string& gen_txt,
 }
 
 std::tuple<bool, std::string> ChatGlm3Styler::BuildPrompt(const rapidjson::Document& json_body) {
+  std::string prompt;
+
+  // Parse tools.
+  bool has_tools = false;
+  if (json_body.HasMember("tools") && json_body["tools"].IsArray()) {
+    auto& tools = json_body["tools"];
+    rapidjson::StringBuffer buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+    writer.SetIndent(' ', 4);
+    tools.Accept(writer);
+    prompt += GetRole("system");
+    prompt += "\n ";
+    prompt += buffer.GetString();
+    has_tools = true;
+  }
+
   // Parse messages.
   if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
     throw std::invalid_argument("`messages` not found or not an array");
@@ -369,50 +358,144 @@ std::tuple<bool, std::string> ChatGlm3Styler::BuildPrompt(const rapidjson::Docum
   if (json_body["messages"].Empty()) {
     throw std::invalid_argument("`messages` is empty");
   }
-  jinja2::ValuesMap params;
-  params["messages"] = jinja2::ValuesList();
   for (auto& message : json_body["messages"].GetArray()) {
     if (!message.HasMember("role") || !message["role"].IsString()) {
       throw std::invalid_argument("`role` not found or not a string");
     }
     std::string role = message["role"].GetString();
+    if (role != "system" && role != "user" && role != "assistant" && role != "observation") {
+      throw std::invalid_argument("Unsupported message role: " + role);
+    }
+    role = GetRole(role);
     if (!message.HasMember("content") || !message["content"].IsString()) {
       throw std::invalid_argument("`content` not found or not a string");
     }
-    params["messages"].asList().emplace_back(jinja2::ValuesMap{
-      {"role", role},
-      {"content", message["content"].GetString()},
-    });
+    std::string content = message["content"].GetString();
+    prompt += role;
+    prompt += "\n ";
+    prompt += content;
   }
 
-  // Parse tools.
-  std::string tools_str;
-  if (json_body.HasMember("tools") && json_body["tools"].IsArray()) {
-    // To string.
-    rapidjson::StringBuffer buffer;
-    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-    writer.SetIndent(' ', 4);
-    json_body["tools"].Accept(writer);
-    tools_str = buffer.GetString();
-  }
-  if (!tools_str.empty()) {
-    params["messages"].asList().front().asMap()["content"].asString().append("\n" + tools_str);
+  if (add_generation_prompt()) {
+    prompt += GetRole("assistant");
+    prompt += "\n";
   }
 
-  params["add_generation_prompt"] = true;
-
-  // jinja render to string.
-  return {!tools_str.empty(), chat_templater_.RenderAsString(params).value()};
+  return {has_tools, prompt};
 }
 
 std::string ChatGlm3Styler::ParseFunctionCall(const std::string& gen_txt,
                                               int64_t req_id,
                                               rapidjson::GenericValue<rapidjson::UTF8<>>& message,
                                               rapidjson::MemoryPoolAllocator<>& allocator) {
-  return "";
+  // The user wants to know the weather in Boston today. The function 'get_current_weather' can be used to retrieve the
+  // weather information.get_current_weather
+  //  ```python
+  // tool_call(location='Boston', unit='celsius')
+  // ```
+
+  std::string func_name, func_args;
+  size_t j = gen_txt.rfind("\n ```python");
+  if (j != std::string::npos) {
+    std::string sub_str = gen_txt.substr(0, j);
+    size_t i = sub_str.rfind(".");
+    if (i != std::string::npos) {
+      func_name = sub_str.substr(i + 1);
+      // strip all spaces
+      func_name.erase(std::remove_if(func_name.begin(), func_name.end(), ::isspace), func_name.end());
+    }
+
+    size_t k = gen_txt.rfind(")");
+    size_t l = gen_txt.rfind("(");
+    if (k != std::string::npos && l != std::string::npos && l < k) {
+      func_args = gen_txt.substr(l, k - l + 1);
+
+      // convert str to json string
+      // (location='Boston', unit='celsius') -> {"location": "Boston", "unit": "celsius"}
+      std::regex re(R"(\w+)");
+      std::smatch match;
+      std::string json_str = "{";
+      while (std::regex_search(func_args, match, re)) {
+        json_str += "\"" + match.str() + "\": ";
+        func_args = match.suffix();
+        std::cout << func_args << std::endl;
+        if (std::regex_search(func_args, match, re)) {
+          json_str += "\"" + match.str() + "\", ";
+          func_args = match.suffix();
+        }
+      }
+      json_str.pop_back();
+      json_str.pop_back();
+      json_str += "}";
+
+      func_args = std::move(json_str);
+    }
+  }
+
+  if (!func_name.empty()) {
+    message.AddMember("content", rapidjson::Value(gen_txt.c_str(), allocator), allocator);
+    message.AddMember("tool_calls", rapidjson::Value(rapidjson::kArrayType), allocator);
+    auto& tool_calls = message["tool_calls"];
+    tool_calls.PushBack(rapidjson::Value(rapidjson::kObjectType), allocator);
+    auto& tool_call = tool_calls[0];
+    std::string call_id = std::string("call_") + std::to_string(req_id);
+    tool_call.AddMember("id", rapidjson::Value(call_id.c_str(), allocator), allocator);
+    tool_call.AddMember("type", rapidjson::Value("function", allocator), allocator);
+    tool_call.AddMember("function", rapidjson::Value(rapidjson::kObjectType), allocator);
+    auto& function = tool_call["function"];
+    function.AddMember("name", rapidjson::Value(func_name.c_str(), allocator), allocator);
+    function.AddMember("arguments", rapidjson::Value(func_args.c_str(), allocator), allocator);
+    return "tool_calls";
+  } else {
+    message.AddMember("content", rapidjson::Value(gen_txt.c_str(), allocator), allocator);
+    return "stop";
+  }
 }
 
 std::tuple<bool, std::string> Glm4Styler::BuildPrompt(const rapidjson::Document& json_body) {
+  std::string prompt = "[gMASK]<sop>";
+
+  // Parse tools.
+  bool has_tools = false;
+  if (json_body.HasMember("tools") && json_body["tools"].IsArray()) {
+    auto& tools = json_body["tools"];
+    std::string content =
+      "你是一个名为 GhatGLM 的人工智能助手。你是基于智谱AI训练的语言模型 GLM-4 "
+      "模型开发的，你的任务是针对用户的问题和要求提供适当的答复和支持。";
+    content += "\n\n# 可用工具";
+    for (auto& tool : tools.GetArray()) {
+      if (!tool.HasMember("type") || !tool["type"].IsString()) {
+        throw std::invalid_argument("`type` not found or not a string");
+      }
+      std::string type = tool["type"].GetString();
+      if (type == "function") {
+        if (!tool.HasMember("function") || !tool["function"].IsObject()) {
+          throw std::invalid_argument("tool `function` not found or not an object");
+        }
+        auto& function = tool["function"];
+        if (!function.HasMember("name") || !function["name"].IsString()) {
+          throw std::invalid_argument("tool function `name` not found or not a string");
+        }
+        const auto& name = function["name"].GetString();
+        content += "\n\n## ";
+        content += name;
+        content += "\n\n";
+        rapidjson::StringBuffer buffer;
+        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+        writer.SetIndent(' ', 4);
+        function.Accept(writer);
+        content += buffer.GetString();
+        content += "\n在调用上述函数时，请使用 Json 格式表示调用的参数。";
+      } else {
+        throw std::invalid_argument("Unsupported tool type: " + type + ", only support `function` now.");
+      }
+    }
+    prompt += GetRole("system");
+    prompt += "\n ";
+    prompt += content;
+    has_tools = true;
+  }
+
   // Parse messages.
   if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
     throw std::invalid_argument("`messages` not found or not an array");
@@ -420,63 +503,70 @@ std::tuple<bool, std::string> Glm4Styler::BuildPrompt(const rapidjson::Document&
   if (json_body["messages"].Empty()) {
     throw std::invalid_argument("`messages` is empty");
   }
-  jinja2::ValuesMap params;
-  params["messages"] = jinja2::ValuesList();
   for (auto& message : json_body["messages"].GetArray()) {
-    if (!message.HasMember("role") || !message["role"].IsString()) {
-      throw std::invalid_argument("`role` not found or not a string");
-    }
-    std::string role = message["role"].GetString();
-    if (!message.HasMember("content") || !message["content"].IsString()) {
-      throw std::invalid_argument("`content` not found or not a string");
-    }
-    params["messages"].asList().emplace_back(jinja2::ValuesMap{
-      {"role", role},
-      {"content", message["content"].GetString()},
-    });
-  }
-
-  bool has_tools;
-  // Parse tools, if there is tools, will insert to first `message`.
-  if (json_body.HasMember("tools") && json_body["tools"].IsArray()) {
-    has_tools = true;
-    auto& first_message = params["messages"].asList().front().asMap();
-    first_message["tools"] = jinja2::ValuesList();
-    for (auto& tool : json_body["tools"].GetArray()) {
-      if (tool.HasMember("type") && tool["type"].IsString()) {
-        if (std::string(tool["type"].GetString()) == "function") {
-          if (!tool.HasMember("function") || !tool["function"].IsObject()) {
-            throw std::invalid_argument("`function` not found or not an object");
-          }
-          auto& function = tool["function"];
-          if (!function.HasMember("name") || !function["name"].IsString()) {
-            throw std::invalid_argument("function `name` not found or not a string");
-          }
-
-          auto function_map = utils::RapidJson2JinjaVal(function);
-
-          jinja2::ValuesMap tool_map;
-          tool_map["type"] = "function";
-          tool_map["function"] = function_map;
-          first_message["tools"].asList().emplace_back(tool_map);
-        } else {
-          throw std::invalid_argument("Unsupported tool type: " + std::string(tool["type"].GetString()));
-        }
+    if (message.HasMember("content") && message["content"].IsString()) {
+      if (!message.HasMember("role") || !message["role"].IsString()) {
+        throw std::invalid_argument("`role` not found or not a string");
       }
+      std::string role = message["role"].GetString();
+      if (role != "system" && role != "user" && role != "assistant" && role != "observation") {
+        throw std::invalid_argument("Unsupported message role: " + role);
+      }
+      role = GetRole(role);
+      std::string content = message["content"].GetString();
+      prompt += GetRole(role);
+      prompt += "\n ";
+      prompt += content;
     }
   }
 
-  params["add_generation_prompt"] = true;
+  if (add_generation_prompt()) {
+    prompt += GetRole("assistant");
+    prompt += "\n";
+  }
 
-  // jinja render to string.
-  return {has_tools, chat_templater_.RenderAsString(params).value()};
+  return {has_tools, prompt};
 }
 
 std::string Glm4Styler::ParseFunctionCall(const std::string& gen_txt,
                                           int64_t req_id,
                                           rapidjson::GenericValue<rapidjson::UTF8<>>& message,
                                           rapidjson::MemoryPoolAllocator<>& allocator) {
-  return "";
+  // I can help you with that. I will use the 'get_current_weather_for_location' function to get the current weather in
+  // Boston.get_current_weather
+  // {"location": "Boston, MA"}
+
+  std::string func_name, func_args;
+  size_t j = gen_txt.rfind("\n{");
+  if (j != std::string::npos) {
+    func_args = gen_txt.substr(j + 1);
+    std::string sub_str = gen_txt.substr(0, j);
+    size_t i = sub_str.rfind(".");
+    if (i != std::string::npos) {
+      func_name = sub_str.substr(i + 1);
+      // strip all spaces
+      func_name.erase(std::remove_if(func_name.begin(), func_name.end(), ::isspace), func_name.end());
+    }
+  }
+
+  if (!func_name.empty()) {
+    message.AddMember("content", rapidjson::Value(gen_txt.c_str(), allocator), allocator);
+    message.AddMember("tool_calls", rapidjson::Value(rapidjson::kArrayType), allocator);
+    auto& tool_calls = message["tool_calls"];
+    tool_calls.PushBack(rapidjson::Value(rapidjson::kObjectType), allocator);
+    auto& tool_call = tool_calls[0];
+    std::string call_id = std::string("call_") + std::to_string(req_id);
+    tool_call.AddMember("id", rapidjson::Value(call_id.c_str(), allocator), allocator);
+    tool_call.AddMember("type", rapidjson::Value("function", allocator), allocator);
+    tool_call.AddMember("function", rapidjson::Value(rapidjson::kObjectType), allocator);
+    auto& function = tool_call["function"];
+    function.AddMember("name", rapidjson::Value(func_name.c_str(), allocator), allocator);
+    function.AddMember("arguments", rapidjson::Value(func_args.c_str(), allocator), allocator);
+    return "tool_calls";
+  } else {
+    message.AddMember("content", rapidjson::Value(gen_txt.c_str(), allocator), allocator);
+    return "stop";
+  }
 }
 
 std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& llm_style) {

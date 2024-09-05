@@ -31,7 +31,7 @@
 
 当前问题：
 
-* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.11.0```，具体见仓库的分支信息。
+* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.12.0```（主分支），具体见仓库的分支信息。
 * 由于不同家族系的```LLM```的```chat```和```function call```
   的```prompt```构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```
   ，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
@@ -42,8 +42,7 @@
 | llm_styler | chat | function_call | supported model                                                               |
 |------------|------|---------------|-------------------------------------------------------------------------------|
 | qwen       | ✅    | ✅             | qwen-chat, qwen1.5-chat, qwen1.5-moe-chat, qwen2-instruct, qwen2-moe-instruct |
-| chatglm3   | ✅    | ❌             | chatglm3                                                                      |
-| glm4       | ✅    | ✅             | glm4-chat, glm4-chat-1m                                                       |
+| chatglm3   | ✅    | ✅             | chatglm3                                                                      |
 
 ## 2. 工程结构
 
@@ -82,7 +81,7 @@
 
 ## 3. 本地开发与调试
 
-以qwen2-instruct为例。
+以qwen2-instruct为例。更多llm示例见[docs](./docs)，拉取代码与创建容器步骤相同。
 
 ### 3.1 拉取代码
 
@@ -117,19 +116,18 @@ git clone https://huggingface.co/Qwen/Qwen2-7B-Instruct /tmp/Qwen2-7B-Instruct
 
 # 进入TensorRT-LLM/examples/qwen目录，参考README进行构建trtllm引擎。
 cd third_party/TensorRT-LLM/examples/qwen
-# 这里以tp4为例进行构建，即使用4张卡进行tensor并行推理
 # 转换ckpt
 rm -rf /tmp/Qwen2-7B-Instruct/tllm_checkpoint/
 python3 convert_checkpoint.py --model_dir /tmp/Qwen2-7B-Instruct \
---output_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint/ --dtype bfloat16 --tp_size 4
+--output_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint/ --dtype bfloat16
 # 构建引擎
 rm -rf /tmp/Qwen2-7B-Instruct/trt_engines/
 trtllm-build --checkpoint_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint/ \
 --output_dir /tmp/Qwen2-7B-Instruct/trt_engines/ \
 --gemm_plugin bfloat16 --max_batch_size 16 --paged_kv_cache enable \
---max_input_len 32256 --max_output_len 512 --max_num_tokens 32256
+--max_input_len 32256 --max_seq_len 32768 --max_num_tokens 32256
 # 运行测试
-mpirun -n 4 --allow-run-as-root python3 ../run.py --input_text "你好，你是谁？" --max_output_len=50 \
+python3 ../run.py --input_text "你好，你是谁？" --max_output_len=50 \
 --tokenizer_dir /tmp/Qwen2-7B-Instruct/ \
 --engine_dir=/tmp/Qwen2-7B-Instruct/trt_engines/
 # 回到工程根目录
@@ -186,9 +184,11 @@ models:
 # 构建
 grpst archive .
 
-# 部署，注意如果使用多卡推理，需要使用mpi方式启动，参数为并行推理的GPU数量
-# 使用模型对应的inferer_conf配置文件启动服务
-grpst start ./server.mar --mpi_np 4 --inference_conf=conf/inference_qwen2.yml
+# 部署，
+# 通过--inference_conf参数指定模型对应的inference.yml配置文件启动服务。
+# 如需修改服务端口，并发限制等，可以修改conf/server.yml文件，然后启动时指定--server_conf参数指定新的server.yml文件。
+# 注意如果使用多卡推理，需要使用mpi方式启动，--mpi_np参数为并行推理的GPU数量。
+grpst start ./server.mar --inference_conf=conf/inference_qwen2.yml
 
 # 查看服务状态
 grpst ps
@@ -316,15 +316,19 @@ grpst stop my_grps
 ## 4. docker部署
 
 ```bash
+# 更新conf/inference.yml软链接为具体的inference*.yml配置文件
+rm -f conf/inference.yml
+ln -s conf/inference_qwen2.yml conf/inference.yml
 # 构建自定义工程docker镜像
 docker build -t grps_trtllm_server:1.0.0 -f docker/Dockerfile .
 
 # 使用上面构建好的镜像启动docker容器
 # 注意挂载/tmp目录，因为构建的trtllm引擎文件在/tmp目录下
 # 映射服务端口9997
+# 注意如果使用多卡推理，需要使用mpi方式启动，--mpi_np参数为并行推理的GPU数量。
 docker run -itd --runtime=nvidia --name="grps_trtllm_server" --shm-size=2g --ulimit memlock=-1 \
 --ulimit stack=67108864 -v /tmp:/tmp -p 9997:9997 \
-grps_trtllm_server:1.0.0 grpst start server.mar --mpi_np 4
+grps_trtllm_server:1.0.0 grpst start server.mar
 
 # 使用docker logs可以跟踪服务日志
 docker logs -f grps_trtllm_server
