@@ -88,6 +88,7 @@
 ```bash
 git clone https://github.com/NetEase-Media/grps_trtllm.git
 cd grps_trtllm
+git checkout -b v0.11.0 remotes/origin/v0.11.0
 git submodule update --init --recursive
 ```
 
