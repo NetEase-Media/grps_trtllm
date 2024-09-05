@@ -122,7 +122,7 @@ target_include_directories(
         ${3RDPARTY_DIR}/cutlass/include
         ${MPI_INCLUDE_PATH}
         ${COMMON_HEADER_DIRS}
-        ${jinja2cpp_INCLUDE_DIRS}
+        # ${jinja2cpp_INCLUDE_DIRS}
 )
 
 target_compile_features(grps-tensorrt-llm-common PRIVATE cxx_std_17)
