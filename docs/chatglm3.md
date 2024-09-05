@@ -15,7 +15,7 @@ cd third_party/TensorRT-LLM/examples/chatglm/
 # 转换ckpt
 rm -rf /tmp/chatglm3-6b/tllm_checkpoint/
 python3 convert_checkpoint.py --model_dir /tmp/chatglm3-6b \
---output_dir /tmp/chatglm3-6b/tllm_checkpoint/ --dtype float16 --load_model_on_cpu
+--output_dir /tmp/chatglm3-6b/tllm_checkpoint/ --dtype float16
 # 构建引擎
 rm -rf /tmp/chatglm3-6b/trt_engines/
 trtllm-build --checkpoint_dir /tmp/chatglm3-6b/tllm_checkpoint/ \
