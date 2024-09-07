@@ -19,7 +19,7 @@
 ## 1. 说明
 
 [grps](https://github.com/NetEase-Media/grps)接入[trtllm](https://github.com/NVIDIA/TensorRT-LLM)
-实现```LLM```服务，相比较[triton-trtllm](https://github.com/triton-inference-server/tensorrtllm_backend)
+实现更高性能的```LLM```服务，相比较[triton-trtllm](https://github.com/triton-inference-server/tensorrtllm_backend)
 实现服务。有如下优势：
 
 * 通过纯```C++```实现完整```LLM```服务，包含```tokenizer```部分。
