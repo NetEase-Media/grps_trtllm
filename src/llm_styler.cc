@@ -563,6 +563,60 @@ std::string Glm4Styler::ParseFunctionCall(const std::string& gen_txt,
   }
 }
 
+std::tuple<bool, std::string> Llama3Styler::BuildPrompt(const rapidjson::Document& json_body) {
+  // Parse messages.
+  if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
+    throw std::invalid_argument("`messages` not found or not an array");
+  }
+  if (json_body["messages"].Empty()) {
+    throw std::invalid_argument("`messages` is empty");
+  }
+
+  std::string prompt = "<|begin_of_text|>";
+
+  bool first = true;
+  for (auto& message : json_body["messages"].GetArray()) {
+    if (!message.HasMember("role") || !message["role"].IsString()) {
+      throw std::invalid_argument("`role` not found or not a string");
+    }
+    std::string role = message["role"].GetString();
+    if (!message.HasMember("content") || !message["content"].IsString()) {
+      throw std::invalid_argument("`content` not found or not a string");
+    }
+
+    if (first) {
+      first = false;
+      if (role != "system") {
+        prompt += "<|start_header_id|>system<|end_header_id|>\n\nYou are a helpful assistant.<|eot_id|>";
+      }
+    }
+
+    std::string content = "<|start_header_id|>";
+    content += role;
+    content += "<|end_header_id|>\n\n";
+    content += message["content"].GetString();
+    // ltrim and rtrim
+    content = content.substr(content.find_first_not_of(' '));
+    content.erase(std::find_if(content.rbegin(), content.rend(), [](int ch) { return !std::isspace(ch); }).base(),
+                  content.end());
+    content += "<|eot_id|>";
+    prompt += content;
+  }
+
+  if (add_generation_prompt()) {
+    prompt += "<|start_header_id|>assistant<|end_header_id|>\n\n";
+  }
+
+  return {false, prompt};
+}
+
+std::string Llama3Styler::ParseFunctionCall(const std::string& gen_txt,
+                                            int64_t req_id,
+                                            rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                            rapidjson::MemoryPoolAllocator<>& allocator) {
+  return "";
+}
+
 std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& llm_style) {
   if (llm_style == "qwen") {
     return std::make_unique<QwenStyler>();
@@ -570,6 +624,8 @@ std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& 
     return std::make_unique<ChatGlm3Styler>();
   } else if (llm_style == "glm4") {
     return std::make_unique<Glm4Styler>();
+  } else if (llm_style == "llama3") {
+    return std::make_unique<Llama3Styler>();
   } else {
     throw std::runtime_error("LLM style " + llm_style + " not supported now.");
   }

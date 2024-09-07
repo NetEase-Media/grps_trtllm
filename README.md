@@ -44,6 +44,7 @@
 | qwen       | ✅    | ✅             | qwen-chat, qwen1.5-chat, qwen1.5-moe-chat, qwen2-instruct, qwen2-moe-instruct |
 | chatglm3   | ✅    | ✅             | chatglm3                                                                      |
 | glm4       | ✅    | ✅             | glm4-chat, glm4-chat-1m                                                       |
+| llama3     | ✅    | ❌             | llama-3-instruct, llama-3.1-instruct                                          |
 
 ## 2. 工程结构
 
