@@ -53,7 +53,7 @@ todo：
 |-- client                              # 客户端样例
 |   |--openai_benchmark.py              # 通过OpenAI客户端进行benchmark
 |   |--openai_cli.py                    # 通过OpenAI客户端进行chat
-|   |--openai_func_call.py              # 通过OpenAI客户端进行function call
+|   |--openai_func_call*.py             # 通过OpenAI客户端进行function call
 |   |--openai_txt_cli.py                # 通过OpenAI客户端输入文本文件内容进行chat
 |   |--triton_benchmark.py              # Triton trtllm server benchmark脚本
 |   |--triton_cli.py                    # Triton trtllm server chat脚本
@@ -64,8 +64,7 @@ todo：
 |-- data                                # 数据文件
 |-- docker                              # docker镜像构建
 |-- docs                                # 文档
-|-- second_party                        # 第二方依赖
-|   |-- grps-server-framework           # grps框架依赖
+|-- second_party                        # grps框架依赖
 |-- src                                 # 自定义源码
 |   |-- constants.cc/.h                 # 常量定义
 |   |-- customized_inferer.cc/.h        # 自定义推理器
@@ -78,7 +77,6 @@ todo：
 |   |-- main.cc                         # 本地单元测试
 |-- third_party                         # 第三方依赖
 |-- tools                               # 工具
-|   |-- glm4_tiktoken_to_hf.py          # glm4模型tiktoken tokenizer格式转换为huggingface格式
 |-- build.sh                            # 构建脚本
 |-- CMakelists.txt                      # 工程构建文件
 |-- .clang-format                       # 代码格式化配置文件
@@ -304,6 +302,17 @@ Query server with question: What's the weather like in Boston today? ...
 Server response: thought: None, call local function(get_current_weather) with arguments: location=Boston, MA, unit=fahrenheit
 Send the result back to the server with function result(59.0) ...
 Final server response: The current temperature in Boston today is 59°F.
+'
+
+# openai_func_call2.py进行一次两个函数的function call模拟
+python3 client/openai_func_call2.py 127.0.0.1:9997
+# 返回如下：
+: '
+Query server with question: What's the postcode of Boston and what's the weather like in Boston today? ...
+Server response: thought: None, call local function(get_postcode) with arguments: location=Boston, MA
+Server response: thought: None, call local function(get_current_weather) with arguments: location=Boston, MA, unit=fahrenheit
+Send the result back to the server with function result ...
+Final server response: The postcode for Boston, MA is 02138. The current temperature in Boston today is 59.0°F.
 '
 ```
 
