@@ -59,6 +59,8 @@ res = client.chat.completions.create(
     stream=False
 )
 
+# print(res)
+
 # call function by name and parameters
 tool_call = res.choices[0].message.tool_calls[0]
 function = tool_call.function
@@ -88,9 +90,8 @@ if function.name == "get_current_weather":
                 "tool_calls": res.choices[0].message.tool_calls,
             },
             {
-                "role": "assistant",
+                "role": "tool",
                 "content": f"{weather}",
-                "tool_calls": [],
             }
         ],
         tools=tools,

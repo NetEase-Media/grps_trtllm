@@ -29,7 +29,7 @@
   和```function call```模式。
 * 通过测试，```grps-trtllm```相比较```triton-trtllm```性能有稳定的提升。
 
-当前问题：
+todo：
 
 * 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.12.0```（主分支），具体见仓库的分支信息。
 * 由于不同家族系的```LLM```的```chat```和```function call```
@@ -39,12 +39,13 @@
 
 支持的```LLM styler```家族：
 
-| llm_styler | chat | function_call | supported model                                                               |
-|------------|------|---------------|-------------------------------------------------------------------------------|
-| qwen       | ✅    | ✅             | qwen-chat, qwen1.5-chat, qwen1.5-moe-chat, qwen2-instruct, qwen2-moe-instruct |
-| chatglm3   | ✅    | ✅             | chatglm3                                                                      |
-| glm4       | ✅    | ✅             | glm4-chat, glm4-chat-1m                                                       |
-| llama3     | ✅    | ❌             | llama-3-instruct, llama-3.1-instruct                                          |
+| llm_styler | chat | function_call | supported model                                                    |
+|------------|------|---------------|--------------------------------------------------------------------|
+| qwen2.5    | ✅    | ✅             | qwen2.5-instruct                                                   |
+| qwen       | ✅    | ✅             | qwen1.5-chat, qwen1.5-moe-chat, qwen2-instruct, qwen2-moe-instruct |
+| chatglm3   | ✅    | ✅             | chatglm3                                                           |
+| glm4       | ✅    | ✅             | glm4-chat, glm4-chat-1m                                            |
+| llama3     | ✅    | ❌             | llama-3-instruct, llama-3.1-instruct                               |
 
 ## 2. 工程结构
 
@@ -114,27 +115,27 @@ docker exec -it grps_trtllm_dev bash
 ### 3.3 构建trtllm引擎
 
 ```bash
-# 下载Qwen2-7B-Instruct模型
+# 下载Qwen2.5-7B-Instruct模型
 apt update && apt install git-lfs
 git lfs install
-git clone https://huggingface.co/Qwen/Qwen2-7B-Instruct /tmp/Qwen2-7B-Instruct
+git clone https://huggingface.co/Qwen/Qwen2.5-7B-Instruct /tmp/Qwen2.5-7B-Instruct
 
 # 进入TensorRT-LLM/examples/qwen目录，参考README进行构建trtllm引擎。
 cd third_party/TensorRT-LLM/examples/qwen
 # 转换ckpt
-rm -rf /tmp/Qwen2-7B-Instruct/tllm_checkpoint/
-python3 convert_checkpoint.py --model_dir /tmp/Qwen2-7B-Instruct \
---output_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint/ --dtype bfloat16 --load_model_on_cpu
+rm -rf /tmp/Qwen2.5-7B-Instruct/tllm_checkpoint/
+python3 convert_checkpoint.py --model_dir /tmp/Qwen2.5-7B-Instruct \
+--output_dir /tmp/Qwen2.5-7B-Instruct/tllm_checkpoint/ --dtype bfloat16 --load_model_on_cpu
 # 构建引擎
-rm -rf /tmp/Qwen2-7B-Instruct/trt_engines/
-trtllm-build --checkpoint_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint/ \
---output_dir /tmp/Qwen2-7B-Instruct/trt_engines/ \
+rm -rf /tmp/Qwen2.5-7B-Instruct/trt_engines/
+trtllm-build --checkpoint_dir /tmp/Qwen2.5-7B-Instruct/tllm_checkpoint/ \
+--output_dir /tmp/Qwen2.5-7B-Instruct/trt_engines/ \
 --gemm_plugin bfloat16 --max_batch_size 16 --paged_kv_cache enable \
 --max_input_len 32256 --max_seq_len 32768 --max_num_tokens 32256
 # 运行测试
 python3 ../run.py --input_text "你好，你是谁？" --max_output_len=50 \
---tokenizer_dir /tmp/Qwen2-7B-Instruct/ \
---engine_dir=/tmp/Qwen2-7B-Instruct/trt_engines/
+--tokenizer_dir /tmp/Qwen2.5-7B-Instruct/ \
+--engine_dir=/tmp/Qwen2.5-7B-Instruct/trt_engines/
 # 回到工程根目录
 cd ../../../../
 ```
@@ -155,15 +156,16 @@ models:
 
       # tokenizer config.
       tokenizer_type: huggingface # can be `huggingface`, `sentencepiece`. Must be set.
-      tokenizer_path: /tmp/Qwen2-7B-Instruct/ # path of tokenizer. Must be set.
+      tokenizer_path: /tmp/Qwen2.5-7B-Instruct/ # path of tokenizer. Must be set.
       tokenizer_parallelism: 16 # tokenizers count for parallel tokenization. Will be set to 1 if not set.
-      end_token_id: 151643 # end token id of tokenizer. Null if not set.
+      end_token_id: 151645 # end token id of tokenizer. Null if not set.
       pad_token_id: 151643 # pad token id of tokenizer. Null if not set.
       skip_special_tokens: # skip special tokens when decoding. Empty if not set.
         - 151643 # "<|endoftext|>"
         - 151644 # "<|im_start|>"
         - 151645 # "<|im_end|>"
-      force_tokens_dict: # will be used to force map tokens to ids when encode and decode. Empty if not set.
+        ...
+      force_tokens_dict: # will be used to force map tokens to ids when encode and decode instead of using tokenizer. Empty if not set.
       #  - token: "<|endoftext|>"
       #    id: 151643
       prefix_tokens_id: # prefix tokens id will be added to the beginning of the input ids. Empty if not set.
@@ -171,7 +173,7 @@ models:
 
       # trtllm config.
       gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
-      gpt_model_path: /tmp/Qwen2-7B-Instruct/trt_engines/ # path of decoder model. Must be set.
+      gpt_model_path: /tmp/Qwen2.5-7B-Instruct/trt_engines/ # path of decoder model. Must be set.
       encoder_model_path: # path of encoder model. Null if not set.
       stop_words: # additional stop words. Empty if not set.
         - "<|im_start|>"
@@ -209,7 +211,7 @@ PORT(HTTP,RPC)      NAME                PID                 DEPLOY_PATH
 curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen2-instruct",
+    "model": "qwen2.5-instruct",
     "messages": [
       {
         "role": "user",
@@ -220,26 +222,26 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
 # 返回如下：
 : '
 {
- "id": "chatcmpl-737",
+ "id": "chatcmpl-7",
  "object": "chat.completion",
- "created": 1724291091,
- "model": "qwen2-instruct",
+ "created": 1726733862,
+ "model": "qwen2.5-instruct",
  "system_fingerprint": "grps-trtllm-server",
  "choices": [
   {
    "index": 0,
    "message": {
     "role": "assistant",
-    "content": "你好！我是阿里云开发的一款超大规模语言模型，我叫通义千问。作为一个AI助手，我的目标是帮助用户获得准确、有用的信息，解决他们的问题和困惑。我被设计成能够进行多轮对话、保持逻辑一致，并能够覆盖各种主题，包括但不限于科技、文化、生活常识等。无论是你需要学习知识、完成任务，还是只是想聊天解闷，我都在这里为你服务。请随时告诉我你需要什么帮助，我会尽力提供支持。"
+    "content": "你好！我是Qwen，由阿里云开发的人工智能模型。我被设计用来提供信息、回答问题和进行各种对话任务。有什么我可以帮助你的吗？"
    },
    "logprobs": null,
    "finish_reason": "stop"
   }
  ],
  "usage": {
-  "prompt_tokens": 24,
-  "completion_tokens": 24,
-  "total_tokens": 48
+  "prompt_tokens": 34,
+  "completion_tokens": 36,
+  "total_tokens": 70
  }
 }
 '
@@ -248,7 +250,7 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
 curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen2-instruct",
+    "model": "qwen2.5-instruct",
     "messages": [
       {
         "role": "user",
@@ -259,39 +261,39 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   }'
 # 返回如下：
 : '
-data: {"id":"chatcmpl-4","object":"chat.completion.chunk","created":1724295387,"model":"qwen2-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"role":"assistant","content":"你好"},"logprobs":null,"finish_reason":null}]}
-data: {"id":"chatcmpl-4","object":"chat.completion.chunk","created":1724295387,"model":"qwen2-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"！"},"logprobs":null,"finish_reason":null}]}
-data: {"id":"chatcmpl-4","object":"chat.completion.chunk","created":1724295387,"model":"qwen2-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"我是"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-8","object":"chat.completion.chunk","created":1726733878,"model":"qwen2.5-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"role":"assistant","content":"你好"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-8","object":"chat.completion.chunk","created":1726733878,"model":"qwen2.5-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"！"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-8","object":"chat.completion.chunk","created":1726733878,"model":"qwen2.5-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"我是"},"logprobs":null,"finish_reason":null}]}
 '
 
 # openai_cli.py 非stream请求
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" false
 # 返回如下：
 : '
-ChatCompletion(id='chatcmpl-5', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='你好！我是阿里云开发的一款超大规模语言模型，我叫通义千问。作为一个AI助手，我的目标是帮助用户获得准确、有用的信息，解决他们的问题和困惑。我被设计成能够进行多轮对话、保持逻辑一致，并能够覆盖各种主题，包括但不限于科技、文化、生活常识等。无论是你需要学习知识、完成任务，还是只是想聊天解闷，我都在这里为你服务。请随时告诉我你需要什么帮助，我会尽力提供支持。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1724295422, model='qwen2', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=102, prompt_tokens=24, total_tokens=126))
+ChatCompletion(id='chatcmpl-9', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='你好！我是Qwen，由阿里云开发的人工智能模型。我被设计用来提供信息、回答问题和进行各种对话任务。有什么我可以帮助你的吗？', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1726733895, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=36, prompt_tokens=34, total_tokens=70, completion_tokens_details=None))
 '
 
 # openai_cli.py stream请求
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" true
 # 返回如下：
 : '
-ChatCompletionChunk(id='chatcmpl-6', choices=[Choice(delta=ChoiceDelta(content='你好', function_call=None, refusal=None, role='assistant', tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724295460, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
-ChatCompletionChunk(id='chatcmpl-6', choices=[Choice(delta=ChoiceDelta(content='！', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724295460, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
-ChatCompletionChunk(id='chatcmpl-6', choices=[Choice(delta=ChoiceDelta(content='我是', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1724295460, model='qwen2', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-10', choices=[Choice(delta=ChoiceDelta(content='你好', function_call=None, refusal=None, role='assistant', tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1726733914, model='', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-10', choices=[Choice(delta=ChoiceDelta(content='！', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1726733914, model='', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-10', choices=[Choice(delta=ChoiceDelta(content='我是', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1726733914, model='', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
 '
 
 # 输入32k长文本小说验证长文本的支持
 python3 client/openai_txt_cli.py 127.0.0.1:9997 ./data/32k_novel.txt "上面这篇小说作者是谁？" false
 # 返回如下：
 : '
-ChatCompletion(id='chatcmpl-6', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='这篇小说的作者是弦三千。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1724685519, model='qwen2-instruct', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=8, prompt_tokens=31603, total_tokens=31611))
+ChatCompletion(id='chatcmpl-11', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='这篇小说的作者是弦三千。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1726733931, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=8, prompt_tokens=31615, total_tokens=31623, completion_tokens_details=None))
 '
 
 # 输入32k长文本小说进行总结
 python3 client/openai_txt_cli.py 127.0.0.1:9997 ./data/32k_novel.txt "简述一下上面这篇小说的前几章内容。" false
 # 返回如下：
 : '
-ChatCompletion(id='chatcmpl-5', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='这篇小说的前几章主要讲述了主角楚云霁意外穿成北极熊后的生活经历。以下是简述：\n\n1. 楚云霁在一次意外中穿成了一只北极熊，他刚穿过来时遇到了暴风雪，幸而及时躲进石头后才得以生存。暴风雪结束后，楚云霁在寻找食物时意外发现有人类队伍，他试图与他们交流，最终用一条鱼成功吸引了他们的注意。\n\n2. 楚云霁与科考队的成员们建立了初步的联系，他试图与他们一起生活，但科考队成员们对他的出现感到紧张和警惕。楚云霁通过友好的行为，如分享食物，逐渐赢得了他们的信任。\n\n3. 楚云霁在与科考队成员相处的过程中，发现自己的北极熊身份引起了不小的轰动，他的行为和外貌吸引了大量观众的关注，直播间的热度迅速上升。同时，他也开始探索自己的北极熊生活，尝试捕猎、寻找食物和适应野外环境。\n\n4. 楚云霁在一次捕猎时，意外救下了一只被其他动物追赶的海豹，这一行为让他与一只名为“白狼”的北极狼建立了联系。白狼似乎对楚云霁有某种保护或帮助的倾向，楚云霁也逐渐意识到白狼的存在对他的生存有着积极的影响。\n\n5. 楚云霁在与白狼的互动中，发现白狼不仅在捕猎方面有着高超的技巧，还展现出了一定的智慧和对他的关心。楚云霁也通过与白狼的相处，逐渐适应了北极熊的生活方式，开始尝试利用环境中的资源，如钓鱼竿等，来获取食物。\n\n6. 在一次偶然的机会中，楚云霁发现了一根被海浪冲到岸边的钓鱼竿，他尝试使用它来钓鱼，虽然方法简单，但意外地捕获了一些鱼。这一发现让他对北极熊的生活有了新的认识，也增加了他对探索周围环境的兴趣。\n\n7. 楚云霁在一次外出时，意外发现了一只偷吃他食物的海象，他试图报复，但最终被一只北极狼阻止。这只北极狼在楚云霁需要时帮助他，显示出了对他的保护倾向。楚云霁也通过这次事件，意识到与野生动物之间的复杂关系，以及在野外生存中需要的智慧和策略。\n\n8. 楚云霁在与北极狼的互动中，逐渐建立起了一种特殊的友谊，他开始尝试利用北极狼的智慧和力量来帮助自己更好地适应北极熊的生活，包括捕猎、寻找食物等。同时，他也开始思考如何利用自己的新身份，为保护野生动物和北极环境做出贡献。\n\n以上是这篇小说前几章的主要内容概要，讲述了楚云霁从穿成北极熊后，如何适应新环境、与野生动物建立联系，以及在野外生存中遇到的各种挑战和机遇。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1724685435, model='qwen2-instruct', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=618, prompt_tokens=31609, total_tokens=32227))
+ChatCompletion(id='chatcmpl-12', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='以下是《拜托，只想干饭的北极熊超酷的！》前几章的主要内容概述：\n\n1. **第一章**：楚云霁意外穿越成了一只北极熊，他发现了一群科考队，并用鱼与他们交流。楚云霁在暴风雪中艰难生存，通过抓鱼和捕猎海豹来获取食物。\n\n2. **第二章**：楚云霁在暴风雪后继续捕猎，遇到了一只北极白狼。白狼似乎对楚云霁很友好，甚至带他去捕猎海豹。楚云霁吃了一顿饱饭后，与白狼一起回到白狼的洞穴休息。\n\n3. **第三章**：楚云霁在白狼的洞穴中休息，醒来后发现白狼已经离开。他继续捕猎，遇到了一群海豹，但海豹很快被一只成年北极熊吓跑。楚云霁在冰面上发现了一群生蚝，但白狼对生蚝不感兴趣，楚云霁只好自己吃了。\n\n4. **第四章**：楚云霁在捕猎时遇到了一只成年北极熊，成年北极熊似乎在挑衅他。楚云霁和白狼一起捕猎了一只驯鹿，分享了食物。直播设备记录下了这一幕，引起了观众的热议。\n\n5. **第五章**：楚云霁和白狼一起捕猎了一只驯鹿，分享了食物。楚云霁在捕猎时遇到了一只北极狐，但北极狐被北极熊吓跑。楚云霁还遇到了一只海鸟，海鸟试图抢食，但被白狼赶走。楚云霁和白狼一起处理了一只驯鹿，白狼还帮助楚云霁取下了鹿角。\n\n6. **第六章**：楚云霁和白狼一起捕猎，楚云霁在冰面上睡觉时被冰面漂走。醒来后，楚云霁发现白狼还在身边，感到非常高兴。他们一起捕猎了一只海象，但海象偷走了鱼竿。楚云霁和白狼一起追捕海象，最终成功捕获了海象。\n\n7. **第七章**：楚云霁和白狼一起捕猎，楚云霁发现了一根鱼竿。他们一起用鱼竿钓鱼，但鱼竿被海象带走。楚云霁和白狼一起追捕海象，最终成功捕获了海象。楚云霁和白狼一起分享了海象肉。\n\n8. **第八章**：楚云霁和白狼一起捕猎，楚云霁发现了一根鱼竿。他们一起用鱼竿钓鱼，但鱼竿被海象带走。楚云霁和白狼一起追捕海象，最终成功捕获了海象。楚云霁和白狼一起分享了海象肉。\n\n9. **第九章**：楚云霁和白狼一起捕猎，楚云霁发现了一根鱼竿。他们一起用鱼竿钓鱼，但鱼竿被海象带走。楚云霁和白狼一起追捕海象，最终成功捕获了海象。楚云霁和白狼一起分享了海象肉。\n\n10. **第十章**：楚云霁和白狼一起捕猎，楚云霁发现了一根鱼竿。他们一起用鱼竿钓鱼，但鱼竿被海象带走。楚云霁和白狼一起追捕海象，最终成功捕获了海象。楚云霁和白狼一起分享了海象肉。\n\n11. **第十一章**：楚云霁在白狼的洞穴中发现了一个背包，背包里装满了各种食物和补给品。楚云霁和白狼一起分享了这些食物，包括罐头和海带。楚云霁还和白狼一起出去捕猎，但没有成功。\n\n12. **第十二章**：楚云霁和白狼一起出去捕猎，楚云霁发现了一根鱼竿。他们一起用鱼竿钓鱼，但鱼竿被海象带走。楚云霁和白狼一起追捕海象，最终成功捕获了海象。楚云霁和白狼一起分享了海象肉，并一起出去探索周围的环境。楚云霁还发现了一个背包，背包里装满了各种食物和补给品。楚云霁和白狼一起分享了这些食物，包括罐头和海带。楚云霁还和白狼一起出去捕猎，但没有成功。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1726733966, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=959, prompt_tokens=31621, total_tokens=32580, completion_tokens_details=None))
 '
 
 # openai_func_call.py进行function call模拟
@@ -299,9 +301,9 @@ python3 client/openai_func_call.py 127.0.0.1:9997
 # 返回如下：
 : '
 Query server with question: What's the weather like in Boston today? ...
-Server response: thought:  I need to use the get_current_weather API to find out the current weather in Boston., call local function(get_current_weather) with arguments: location=Boston,MA, unit=fahrenheit
+Server response: thought: None, call local function(get_current_weather) with arguments: location=Boston, MA, unit=fahrenheit
 Send the result back to the server with function result(59.0) ...
-Final server response: The current weather in Boston is 59 degrees Fahrenheit.
+Final server response: The current temperature in Boston today is 59°F.
 '
 ```
 
@@ -323,7 +325,7 @@ grpst stop my_grps
 ```bash
 # 更新conf/inference.yml软链接为具体的inference*.yml配置文件
 rm -f conf/inference.yml
-ln -s conf/inference_qwen2.yml conf/inference.yml
+ln -s conf/inference_qwen2.5.yml conf/inference.yml
 # 构建自定义工程docker镜像
 docker build -t grps_trtllm_server:1.0.0 -f docker/Dockerfile .
 

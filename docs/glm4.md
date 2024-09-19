@@ -151,7 +151,7 @@ Query server with question: What's the weather like in Boston today? ...
 Server response: thought: Sure, I can help with that. Let me check the current weather in Boston.get_current_weather
 {"location": "Boston, MA", "unit": "fahrenheit"}, call local function(get_current_weather) with arguments: location=Boston, MA, unit=fahrenheit
 Send the result back to the server with function result(59.0) ...
-Final server response:  The current temperature in Boston is 59.0 degrees Fahrenheit.
+Final server response: The current weather in Boston is 59.0°F.
 '
 ```
 

@@ -22,7 +22,7 @@ models:
         - 128006 # "<|start_header_id|>"
         - 128007 # "<|end_header_id|>"
         - 128009 # "<|eot_id|>"
-      force_tokens_dict: # will be used to force map tokens to ids when encode and decode. Empty if not set.
+      force_tokens_dict: # will be used to force map tokens to ids when encode and decode instead of using tokenizer. Empty if not set.
       #  - token: "<|endoftext|>"
       #    id: 151643
       prefix_tokens_id: # prefix tokens id will be added to the beginning of the input ids. Empty if not set.

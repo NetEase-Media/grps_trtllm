@@ -14,13 +14,13 @@ models:
       tokenizer_type: huggingface # can be `huggingface`, `sentencepiece`. Must be set.
       tokenizer_path: /tmp/Qwen2-7B-Instruct/ # path of tokenizer. Must be set.
       tokenizer_parallelism: 16 # tokenizers count for parallel tokenization. Will be set to 1 if not set.
-      end_token_id: 151643 # end token id of tokenizer. Null if not set.
-      pad_token_id: 151643 # pad token id of tokenizer. Null if not set.
+      end_token_id: 151645 # "<|im_end|>"
+      pad_token_id: 151643 # "<|endoftext|>"
       skip_special_tokens: # skip special tokens when decoding. Empty if not set.
         - 151643 # "<|endoftext|>"
         - 151644 # "<|im_start|>"
         - 151645 # "<|im_end|>"
-      force_tokens_dict: # will be used to force map tokens to ids when encode and decode. Empty if not set.
+      force_tokens_dict: # will be used to force map tokens to ids when encode and decode instead of using tokenizer. Empty if not set.
       #  - token: "<|endoftext|>"
       #    id: 151643
       prefix_tokens_id: # prefix tokens id will be added to the beginning of the input ids. Empty if not set.

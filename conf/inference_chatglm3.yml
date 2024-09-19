@@ -29,7 +29,7 @@ models:
         - 64795 # "<|user|>"
         - 64796 # "<|assistant|>"
         - 64797 # "<|observation|>"
-      force_tokens_dict: # will be used to force map tokens to ids when encode and decode. Empty if not set.
+      force_tokens_dict: # will be used to force map tokens to ids when encode and decode instead of using tokenizer. Empty if not set.
         - token: "<unk>"
           id: 0
         - token: "<s>"

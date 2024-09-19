@@ -8,72 +8,43 @@ models:
     inferer_args: # more args of model inferer.
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
       # Current support {`qwen`, `chatglm3`, `glm4`}.
-      llm_style: glm4
+      llm_style: qwen2.5
 
       # tokenizer config.
       tokenizer_type: huggingface # can be `huggingface`, `sentencepiece`. Must be set.
-      # Use following command to convert tiktoken `tokenizer.model` to huggingface `tokenizer.json`.
-      # python3 ./tools/glm4_tiktoken_to_hf.py /tmp/glm-4-9b-chat/ /tmp/glm-4-9b-chat/
-      tokenizer_path: /tmp/glm-4-9b-chat/ # path of tokenizer. Must be set.
+      tokenizer_path: /tmp/Qwen2.5-7B-Instruct/ # path of tokenizer. Must be set.
       tokenizer_parallelism: 16 # tokenizers count for parallel tokenization. Will be set to 1 if not set.
-      end_token_id: 151329 # "<|endoftext|>"
-      pad_token_id: 151329 # "<|endoftext|>"
+      end_token_id: 151645 # "<|im_end|>"
+      pad_token_id: 151643 # "<|endoftext|>"
       skip_special_tokens: # skip special tokens when decoding. Empty if not set.
-        - 151329 # "<|endoftext|>"
-        - 151330 # "[MASK]"
-        - 151331 # "[gMASK]"
-        - 151332 # "[sMASK]"
-        - 151333 # "<sop>"
-        - 151334 # "<eop>"
-        - 151335 # "<|system|>"
-        - 151336 # "<|user|>"
-        - 151337 # "<|assistant|>"
-        - 151338 # "<|observation|>"
-        - 151339 # "<|begin_of_image|>"
-        - 151340 # "<|end_of_image|>"
-        - 151341 # "<|begin_of_video|>"
-        - 151342 # "<|end_of_video|>"
+        - 151643 # "<|endoftext|>"
+        - 151644 # "<|im_start|>"
+        - 151645 # "<|im_end|>"
+        - 151646 # "<|object_ref_start|>"
+        - 151647 # "<|object_ref_end|>"
+        - 151648 # "<|box_start|>"
+        - 151649 # "<|box_end|>"
+        - 151650 # "<|quad_start|>"
+        - 151651 # "<|quad_end|>"
+        - 151652 # "<|vision_start|>"
+        - 151653 # "<|vision_end|>"
+        - 151654 # <|vision_pad|>"
+        - 151655 # "<|image_pad|>"
+        - 151656 # "<|video_pad|>"
       force_tokens_dict: # will be used to force map tokens to ids when encode and decode instead of using tokenizer. Empty if not set.
-        - token: "<|endoftext|>"
-          id: 151329
-        - token: "[MASK]"
-          id: 151330
-        - token: "[gMASK]"
-          id: 151331
-        - token: "[sMASK]"
-          id: 151332
-        - token: "<sop>"
-          id: 151333
-        - token: "<eop>"
-          id: 151334
-        - token: "<|system|>"
-          id: 151335
-        - token: "<|user|>"
-          id: 151336
-        - token: "<|assistant|>"
-          id: 151337
-        - token: "<|observation|>"
-          id: 151338
-        - token: "<|begin_of_image|>"
-          id: 151339
-        - token: "<|end_of_image|>"
-          id: 151340
-        - token: "<|begin_of_video|>"
-          id: 151341
-        - token: "<|end_of_video|>"
-          id: 151342
-
+      #  - token: "<|endoftext|>"
+      #    id: 151643
       prefix_tokens_id: # prefix tokens id will be added to the beginning of the input ids. Empty if not set.
       suffix_tokens_id: # suffix tokens id will be added to the end of the input ids. Empty if not set.
 
       # trtllm config.
       gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
-      gpt_model_path: /tmp/glm-4-9b-chat/trt_engines/ # path of decoder model. Must be set.
+      gpt_model_path: /tmp/Qwen2.5-7B-Instruct/trt_engines/ # path of decoder model. Must be set.
       encoder_model_path: # path of encoder model. Null if not set.
       stop_words: # additional stop words. Empty if not set.
+        - "<|im_start|>"
+        - "<|im_end|>"
         - "<|endoftext|>"
-        - "<|user|>"
-        - "<|observation|>"
       bad_words: # additional bad words. Empty if not set.
       max_tokens_in_paged_kv_cache: # use default if not set.
       max_attention_window_size: # use default (i.e. max_sequence_length) if not set.

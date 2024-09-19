@@ -89,9 +89,42 @@ private:
 class QwenStyler : public LLMStyler {
 public:
   QwenStyler()
-      : LLMStyler(
-          "qwen", "You are a helpful assistant.", {"system", "user", "assistant"}, true, "Observation:", false) {}
+      : LLMStyler("qwen", "You are a helpful assistant.", {"system", "user", "assistant"}, true, "Observation:", true) {
+  }
   ~QwenStyler() override = default;
+
+  /**
+   * @brief Build prompt for model input from OpenAI interface json body request.
+   * @param json_body: Json body from client.
+   * @return <if_function_call, prompt>: if_function_call is true if the prompt contains function call.
+   */
+  std::tuple<bool, std::string> BuildPrompt(const rapidjson::Document& json_body) override;
+
+  /**
+   * @brief Parse function call response from generated text and build content and tool_calls array of message
+   * member of OpenAI interface response.
+   * @param gen_txt: Generated text.
+   * @param req_id: Request id.
+   * @param message: Message member of OpenAI interface response format.
+   * @param allocator: Json allocator.
+   * @return stop reason.
+   */
+  std::string ParseFunctionCall(const std::string& gen_txt,
+                                int64_t req_id,
+                                rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                rapidjson::MemoryPoolAllocator<>& allocator) override;
+};
+
+class Qwen25Styler : public LLMStyler {
+public:
+  Qwen25Styler()
+      : LLMStyler("qwen2.5",
+                  "You are Qwen, created by Alibaba Cloud. You are a helpful assistant.",
+                  {"system", "user", "assistant"},
+                  true,
+                  "",
+                  true) {}
+  ~Qwen25Styler() override = default;
 
   /**
    * @brief Build prompt for model input from OpenAI interface json body request.
