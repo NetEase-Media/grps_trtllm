@@ -89,8 +89,8 @@ private:
 class QwenStyler : public LLMStyler {
 public:
   QwenStyler()
-      : LLMStyler(
-          "qwen", "You are a helpful assistant.", {"system", "user", "assistant"}, true, "Observation:", false) {}
+      : LLMStyler("qwen", "You are a helpful assistant.", {"system", "user", "assistant"}, true, "Observation:", true) {
+  }
   ~QwenStyler() override = default;
 
   /**

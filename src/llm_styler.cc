@@ -240,7 +240,9 @@ std::tuple<bool, std::string> QwenStyler::BuildPrompt(const rapidjson::Document&
     }
   }
 
-  prompt.append("<|im_start|>assistant\n");
+  if (add_generation_prompt()) {
+    prompt.append("<|im_start|>assistant\n");
+  }
   return {has_tools, prompt};
 }
 
@@ -363,6 +365,9 @@ std::tuple<bool, std::string> ChatGlm3Styler::BuildPrompt(const rapidjson::Docum
       throw std::invalid_argument("`role` not found or not a string");
     }
     std::string role = message["role"].GetString();
+    if (role == "tool") {
+      role = "user";
+    }
     if (role != "system" && role != "user" && role != "assistant" && role != "observation") {
       throw std::invalid_argument("Unsupported message role: " + role);
     }
@@ -503,6 +508,9 @@ std::tuple<bool, std::string> Glm4Styler::BuildPrompt(const rapidjson::Document&
         throw std::invalid_argument("`role` not found or not a string");
       }
       std::string role = message["role"].GetString();
+      if (role == "tool") {
+        role = "user";
+      }
       if (role != "system" && role != "user" && role != "assistant" && role != "observation") {
         throw std::invalid_argument("Unsupported message role: " + role);
       }
