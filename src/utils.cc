@@ -87,7 +87,12 @@ void HttpRespondWithOpenAi(GrpsContext& grps_ctx,
   message.AddMember("role", "assistant", json_body.GetAllocator());
   std::string finish_reason = "stop";
   if (func_call) {
-    finish_reason = llm_styler->ParseFunctionCall(generated_text, request_id, message, json_body.GetAllocator());
+    try {
+      finish_reason = llm_styler->ParseFunctionCall(generated_text, request_id, message, json_body.GetAllocator());
+    } catch (const std::exception& e) {
+      CLOG4(ERROR, "Parse function call failed: " << e.what());
+      HttpRespondErrorWithOpenAi(grps_ctx, 500, "Parse function call failed: " + std::string(e.what()));
+    }
   } else {
     message.AddMember("content", rapidjson::Value(generated_text.c_str(), json_body.GetAllocator()),
                       json_body.GetAllocator());
@@ -142,7 +147,12 @@ void HttpStreamingRespondWithOpenAi(GrpsContext& grps_ctx,
       message.AddMember("role", "assistant", json_body.GetAllocator());
       message.AddMember("content", "", json_body.GetAllocator());
     } else {
-      finish_reason = llm_styler->ParseFunctionCall(generated_text, request_id, message, json_body.GetAllocator());
+      try {
+        finish_reason = llm_styler->ParseFunctionCall(generated_text, request_id, message, json_body.GetAllocator());
+      } catch (const std::exception& e) {
+        CLOG4(ERROR, "Parse function call failed: " << e.what());
+        HttpStreamingRespondErrorWithOpenAi(grps_ctx, "Parse function call failed: " + std::string(e.what()));
+      }
     }
     choice.AddMember("logprobs", rapidjson::Value(), json_body.GetAllocator());
     if (finish_reason.empty()) {
