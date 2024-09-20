@@ -528,14 +528,19 @@ std::string Qwen25Styler::ParseFunctionCall(const std::string& gen_txt,
         throw std::invalid_argument("`name` not found in `tool_call` or not a string");
       }
       func_doc.AddMember("name", rapidjson::Value(tool_call_doc["name"].GetString(), allocator), allocator);
-      if (!tool_call_doc.HasMember("arguments") || !tool_call_doc["arguments"].IsObject()) {
-        throw std::invalid_argument("`arguments` not found in `tool_call` or not an object");
+      if (!tool_call_doc.HasMember("arguments") && !tool_call_doc["arguments"].IsObject() &&
+          !tool_call_doc["arguments"].IsString()) {
+        throw std::invalid_argument("`arguments` not found in `tool_call` or not an json object or not an string");
       }
-      // arguments to json str.
-      rapidjson::StringBuffer buffer;
-      rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-      tool_call_doc["arguments"].Accept(writer);
-      func_doc.AddMember("arguments", rapidjson::Value(buffer.GetString(), allocator), allocator);
+      if (tool_call_doc["arguments"].IsString()) {
+        func_doc.AddMember("arguments", rapidjson::Value(tool_call_doc["arguments"].GetString(), allocator), allocator);
+      } else {
+        // arguments to json str.
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        tool_call_doc["arguments"].Accept(writer);
+        func_doc.AddMember("arguments", rapidjson::Value(buffer.GetString(), allocator), allocator);
+      }
 
       tool_call_json.AddMember("function", func_doc, allocator);
     }
