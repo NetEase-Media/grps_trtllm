@@ -366,9 +366,9 @@ std::tuple<bool, std::string> ChatGlm3Styler::BuildPrompt(const rapidjson::Docum
     }
     std::string role = message["role"].GetString();
     if (role == "tool") {
-      role = "user";
+      role = "<|observation|>";
     }
-    if (role != "system" && role != "user" && role != "assistant" && role != "observation") {
+    if (role != "system" && role != "user" && role != "assistant" && role != "<|observation|>") {
       throw std::invalid_argument("Unsupported message role: " + role);
     }
     role = GetRole(role);
@@ -509,9 +509,9 @@ std::tuple<bool, std::string> Glm4Styler::BuildPrompt(const rapidjson::Document&
       }
       std::string role = message["role"].GetString();
       if (role == "tool") {
-        role = "user";
+        role = "<|observation|>";
       }
-      if (role != "system" && role != "user" && role != "assistant" && role != "observation") {
+      if (role != "system" && role != "user" && role != "assistant" && role != "<|observation|>") {
         throw std::invalid_argument("Unsupported message role: " + role);
       }
       role = GetRole(role);
