@@ -528,9 +528,9 @@ std::string Qwen25Styler::ParseFunctionCall(const std::string& gen_txt,
         throw std::invalid_argument("`name` not found in `tool_call` or not a string");
       }
       func_doc.AddMember("name", rapidjson::Value(tool_call_doc["name"].GetString(), allocator), allocator);
-      if (!tool_call_doc.HasMember("arguments") && !tool_call_doc["arguments"].IsObject() &&
-          !tool_call_doc["arguments"].IsString()) {
-        throw std::invalid_argument("`arguments` not found in `tool_call` or not an json object or not an string");
+      if (!tool_call_doc.HasMember("arguments") ||
+          (!tool_call_doc["arguments"].IsObject() && !tool_call_doc["arguments"].IsString())) {
+        throw std::invalid_argument("`arguments` not found in `tool_call` or not an json object or an string");
       }
       if (tool_call_doc["arguments"].IsString()) {
         func_doc.AddMember("arguments", rapidjson::Value(tool_call_doc["arguments"].GetString(), allocator), allocator);
