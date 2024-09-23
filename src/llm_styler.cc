@@ -522,14 +522,15 @@ std::string Qwen25Styler::ParseFunctionCall(const std::string& gen_txt,
       rapidjson::Document tool_call_doc;
       tool_call_doc.Parse(tool_call.c_str());
       if (tool_call_doc.HasParseError()) {
-        throw std::invalid_argument("Parse tool call failed, tool_call: " + tool_call);
+        // throw std::invalid_argument("Parse tool call failed, tool_call: " + tool_call);
+        CLOG4(ERROR, "Parse tool call failed, tool_call: " << tool_call);
+        continue;
       }
       if (!tool_call_doc.HasMember("name") || !tool_call_doc["name"].IsString()) {
         throw std::invalid_argument("`name` not found in `tool_call` or not a string");
       }
       func_doc.AddMember("name", rapidjson::Value(tool_call_doc["name"].GetString(), allocator), allocator);
-      if (!tool_call_doc.HasMember("arguments") ||
-          (!tool_call_doc["arguments"].IsObject() && !tool_call_doc["arguments"].IsString())) {
+      if (!tool_call_doc.HasMember("arguments")) {
         throw std::invalid_argument("`arguments` not found in `tool_call` or not an json object or an string");
       }
       if (tool_call_doc["arguments"].IsString()) {
