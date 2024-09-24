@@ -22,7 +22,7 @@
 实现更高性能的```LLM```服务，相比较[triton-trtllm](https://github.com/triton-inference-server/tensorrtllm_backend)
 实现服务。有如下优势：
 
-* 通过纯```C++```实现完整```LLM```服务，包含```tokenizer```部分。
+* 通过纯```C++```实现完整```LLM```服务。包含```tokenizer```部分，支持`huggingface`, `sentencepiece`tokenizer。
 * 不存在```triton_server <--> tokenizer_backend <--> trtllm_backend```之间的进程间通信。
 * 通过```grps```的自定义```http```功能实现```OpenAI```接口协议，支持```chat```和```function call```模式。
 * 支持扩展不同```LLM```的```prompt```构建风格以及生成结果的解析风格，以实现不同```LLM```的```chat```
