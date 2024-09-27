@@ -371,8 +371,8 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
     } else if (json_body[InputFieldsNames::kStopWords].IsArray()) {
       for (auto& stop : json_body[InputFieldsNames::kStopWords].GetArray()) {
         if (stop.IsString()) {
-          auto stop_words_str = stop.GetString();
-          if (!stop_words_list.empty()) {
+          std::string stop_words_str = stop.GetString();
+          if (!stop_words_str.empty()) {
             auto words_id = tokenizer->Encode(stop_words_str, false, false);
             stop_words_list.emplace_back(words_id);
           }

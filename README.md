@@ -265,6 +265,46 @@ data: {"id":"chatcmpl-8","object":"chat.completion.chunk","created":1726733878,"
 data: {"id":"chatcmpl-8","object":"chat.completion.chunk","created":1726733878,"model":"qwen2.5-instruct","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"我是"},"logprobs":null,"finish_reason":null}]}
 '
 
+# 测试stop参数
+curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "qwen2.5-instruct",
+    "messages": [
+      {
+        "role": "user",
+        "content": "重复1234#END#5678"
+      }
+    ],
+    "stop": ["#END#"]
+  }'
+# 返回如下：
+: '
+{
+ "id": "chatcmpl-2",
+ "object": "chat.completion",
+ "created": 1727433345,
+ "model": "qwen2.5-instruct",
+ "system_fingerprint": "grps-trtllm-server",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "1234#END#"
+   },
+   "logprobs": null,
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 41,
+  "completion_tokens": 7,
+  "total_tokens": 48
+ }
+}
+'
+
 # openai_cli.py 非stream请求
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" false
 # 返回如下：
