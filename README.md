@@ -19,14 +19,14 @@
 ## 1. 说明
 
 [grps](https://github.com/NetEase-Media/grps)接入[trtllm](https://github.com/NVIDIA/TensorRT-LLM)
-实现更高性能的```LLM```服务，相比较[triton-trtllm](https://github.com/triton-inference-server/tensorrtllm_backend)
+实现更高性能的、支持```OpenAI```模式访问的```LLM```服务，相比较[triton-trtllm](https://github.com/triton-inference-server/tensorrtllm_backend)
 实现服务。有如下优势：
 
 * 通过纯```C++```实现完整```LLM```服务。包含```tokenizer```部分，支持`huggingface`, `sentencepiece`tokenizer。
 * 不存在```triton_server <--> tokenizer_backend <--> trtllm_backend```之间的进程间通信。
 * 通过```grps```的自定义```http```功能实现```OpenAI```接口协议，支持```chat```和```function call```模式。
 * 支持扩展不同```LLM```的```prompt```构建风格以及生成结果的解析风格，以实现不同```LLM```的```chat```
-  和```function call```模式。
+  和```function call```模式，支持```llama-index ai agent```。
 * 通过测试，```grps-trtllm```相比较```triton-trtllm```性能有稳定的提升。
 
 todo：
@@ -51,6 +51,7 @@ todo：
 
 ```text
 |-- client                              # 客户端样例
+|   |--llamaindex_ai_agent.py           # 通过LlamaIndex实现AI Agent
 |   |--openai_benchmark.py              # 通过OpenAI客户端进行benchmark
 |   |--openai_cli.py                    # 通过OpenAI客户端进行chat
 |   |--openai_func_call*.py             # 通过OpenAI客户端进行function call
@@ -215,7 +216,8 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
         "role": "user",
         "content": "你好，你是谁？"
       }
-    ]
+    ],
+    "stop": "阿里云"
   }'
 # 返回如下：
 : '
@@ -313,6 +315,20 @@ Server response: thought: None, call local function(get_postcode) with arguments
 Server response: thought: None, call local function(get_current_weather) with arguments: location=Boston, MA, unit=fahrenheit
 Send the result back to the server with function result ...
 Final server response: The postcode for Boston, MA is 02138. The current temperature in Boston today is 59.0°F.
+'
+
+# llama-index ai agent模拟
+python3 client/llamaindex_ai_agent.py 127.0.0.1:9997
+# 返回如下：
+: '
+Query: What is the weather in Boston today?
+Added user message to memory: What is the weather in Boston today?
+=== Calling Function ===
+Calling function: get_weather with args: {"location":"Boston, MA","unit":"fahrenheit"}
+Got output: 59.0
+========================
+
+Response: The current temperature in Boston is 59.0 degrees Fahrenheit.
 '
 ```
 

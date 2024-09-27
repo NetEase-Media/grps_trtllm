@@ -153,6 +153,20 @@ Server response: thought: Sure, I can help with that. Let me check the current w
 Send the result back to the server with function result(59.0) ...
 Final server response: The current weather in Boston is 59.0°F.
 '
+
+# llama-index ai agent模拟
+python3 client/llamaindex_ai_agent.py 127.0.0.1:9997
+# 返回如下：
+: '
+Query: What is the weather in Boston today?
+Added user message to memory: What is the weather in Boston today?
+=== Calling Function ===
+Calling function: get_weather with args: {"location":"Boston, MA","unit":"fahrenheit"}
+Got output: 59.0
+========================
+
+Response: The current temperature in Boston is 59.0 degrees Fahrenheit.
+'
 ```
 
 ## 关闭服务

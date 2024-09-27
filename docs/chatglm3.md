@@ -139,6 +139,20 @@ tool_call(location='Boston', unit='celsius')
 Send the result back to the server with function result(59.0) ...
 Final server response: According to the weather API, the current temperature in Boston is 59 degrees Celsius.
 '
+
+# llama-index ai agent模拟
+python3 client/llamaindex_ai_agent.py 127.0.0.1:9997
+# 返回如下：
+: '
+Query: What is the weather in Boston today?
+Added user message to memory: What is the weather in Boston today?
+=== Calling Function ===
+Calling function: get_weather with args: {"location":"Boston","unit":"celsius"}
+Got output: 59.0
+========================
+
+Response: The weather in Boston today is 59 degrees Celsius.
+'
 ```
 
 ## 关闭服务
