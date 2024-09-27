@@ -216,8 +216,7 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
         "role": "user",
         "content": "你好，你是谁？"
       }
-    ],
-    "stop": "阿里云"
+    ]
   }'
 # 返回如下：
 : '
