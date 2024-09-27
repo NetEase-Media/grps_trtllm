@@ -86,7 +86,7 @@ todo：
 
 ## 3. 本地开发与调试
 
-以qwen2-instruct为例。更多llm示例见[docs](./docs)，拉取代码与创建容器步骤相同。
+以qwen2.5-instruct为例。更多llm示例见[docs](./docs)，拉取代码与创建容器步骤相同。
 
 ### 3.1 拉取代码
 
