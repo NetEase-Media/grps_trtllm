@@ -26,7 +26,7 @@
 * 不存在```triton_server <--> tokenizer_backend <--> trtllm_backend```之间的进程间通信。
 * 通过```grps```的自定义```http```功能实现```OpenAI```接口协议，支持```chat```和```function call```模式。
 * 支持扩展不同```LLM```的```prompt```构建风格以及生成结果的解析风格，以实现不同```LLM```的```chat```
-  和```function call```模式，支持```llama-index ai agent```。
+  和```function call```模式，支持[llama-index](https://github.com/run-llama/llama_index)```ai-agent```。
 * 通过测试，```grps-trtllm```相比较```triton-trtllm```性能有稳定的提升。
 
 todo：
