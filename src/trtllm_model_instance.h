@@ -52,13 +52,15 @@ struct Timestamps {
 struct RequestData {
   std::string model;
   uint64_t trtllm_req_id;
-  uint64_t created_timestamp;
+  uint64_t created_timestamp; // timestamp with second unit.
   size_t input_tokens_size;
+  size_t output_tokens_size;
   bool func_call; // If request is function call.
   GrpsContext* grps_ctx;
   std::promise<void>* promise;
   std::vector<int32_t> history_tokens; // For fix garbled test case.
   size_t last_tokens;                  // last tokens count for streaming mode.
+  uint64_t begin_time_us;
 };
 
 // TrtLlmModelInstance

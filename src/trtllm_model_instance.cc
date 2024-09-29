@@ -472,14 +472,20 @@ void TrtLlmModelInstance::EnqueueAndWait(GrpsContext& grps_ctx, const std::strin
       throw std::runtime_error(err);
     }
 
-    // Get unix timestamp in seconds.
-    uint64_t created_timestamp =
-      std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-
-    trtllm_request_id_to_request_data_.emplace(
-      trtllm_request_id,
-      RequestData{
-        model, trtllm_request_id, created_timestamp, input_tokens_size, func_call, &grps_ctx, &promise, {}, 0});
+    uint64_t begin_time_us =
+      std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+        .count();
+    trtllm_request_id_to_request_data_.emplace(trtllm_request_id, RequestData{model,
+                                                                              trtllm_request_id,
+                                                                              begin_time_us / 1000000,
+                                                                              input_tokens_size,
+                                                                              0,
+                                                                              func_call,
+                                                                              &grps_ctx,
+                                                                              &promise,
+                                                                              {},
+                                                                              0,
+                                                                              begin_time_us});
   }
 
   future.wait();
@@ -538,6 +544,7 @@ void TrtLlmModelInstance::WaitForResponse() {
       auto [res, tokens, is_final, error] = ParseTrtllmResponse(response, *request_data);
       // CLOG4(INFO, "res: " << res);
       auto generated_tokens_size = tokens.size();
+      request_data->output_tokens_size += generated_tokens_size;
 
       if (grps_ctx->IfStreaming() && !is_final && !utils::IsValidUTF8(res)) {
         request_data->history_tokens = std::move(tokens);
@@ -576,6 +583,19 @@ void TrtLlmModelInstance::WaitForResponse() {
             MONITOR_INC("tp(token/s)", generated_tokens_size);
           }
         }
+
+        uint64_t finish_time_us =
+          std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+            .count();
+        CLOG4(INFO, "Finished request: " << request_data->trtllm_req_id << ", model: " << request_data->model
+                                         << ", if func call: " << request_data->func_call
+                                         << ", if streaming: " << grps_ctx->IfStreaming()
+                                         << ", input tokens count: " << request_data->input_tokens_size
+                                         << ", output tokens count: " << request_data->output_tokens_size
+                                         << ", total tokens count: "
+                                         << request_data->input_tokens_size + request_data->output_tokens_size
+                                         << ", used time: " << (finish_time_us - request_data->begin_time_us) / 1000
+                                         << "ms");
 
         // Clean up request data and notify the waiting thread
         {
