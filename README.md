@@ -19,7 +19,8 @@
 ## 1. 说明
 
 [grps](https://github.com/NetEase-Media/grps)接入[trtllm](https://github.com/NVIDIA/TensorRT-LLM)
-实现更高性能的、支持```OpenAI```模式访问的```LLM```服务，相比较[triton-trtllm](https://github.com/triton-inference-server/tensorrtllm_backend)
+实现更高性能的、支持```OpenAI```模式访问的```LLM```
+服务，相比较[triton-trtllm](https://github.com/triton-inference-server/tensorrtllm_backend)
 实现服务。有如下优势：
 
 * 通过纯```C++```实现完整```LLM```服务。包含```tokenizer```部分，支持`huggingface`, `sentencepiece`tokenizer。
@@ -31,7 +32,8 @@
 
 todo：
 
-* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.12.0```（主分支），具体见仓库的分支信息。
+* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.12.0```
+  （主分支），具体见仓库的分支信息。由于人力受限，一些bug不能及时在每一个分支修复，请尽量使用最新版本分支。
 * 由于不同家族系的```LLM```的```chat```和```function call```
   的```prompt```构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```
   ，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
@@ -41,7 +43,7 @@ todo：
 
 | llm_styler | chat | function_call | supported model                                                    |
 |------------|------|---------------|--------------------------------------------------------------------|
-| qwen2.5    | ✅    | ✅             | qwen2.5-instruct                                                   |
+| qwen2.5    | ✅    | ✅             | qwen2.5-instruct, qwen2.5-coder-instruct                           |
 | qwen       | ✅    | ✅             | qwen1.5-chat, qwen1.5-moe-chat, qwen2-instruct, qwen2-moe-instruct |
 | chatglm3   | ✅    | ✅             | chatglm3                                                           |
 | glm4       | ✅    | ✅             | glm4-chat, glm4-chat-1m                                            |
