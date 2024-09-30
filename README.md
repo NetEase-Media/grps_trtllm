@@ -38,6 +38,7 @@ todo：
   的```prompt```构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```
   ，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
   不同家族的```styler```持续开发中...。
+* 多模态LLM支持。
 
 支持的```LLM styler```家族：
 
