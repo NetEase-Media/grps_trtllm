@@ -364,14 +364,18 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   if (json_body.HasMember(InputFieldsNames::kStopWords)) {
     if (json_body[InputFieldsNames::kStopWords].IsString()) {
       std::string stop_words_str = json_body[InputFieldsNames::kStopWords].GetString();
-      auto words_id = tokenizer->Encode(stop_words_str, false, false);
-      stop_words_list.emplace_back(words_id);
+      if (!stop_words_str.empty()) {
+        auto words_id = tokenizer->Encode(stop_words_str, false, false);
+        stop_words_list.emplace_back(words_id);
+      }
     } else if (json_body[InputFieldsNames::kStopWords].IsArray()) {
       for (auto& stop : json_body[InputFieldsNames::kStopWords].GetArray()) {
         if (stop.IsString()) {
-          auto stop_words_str = stop.GetString();
-          auto words_id = tokenizer->Encode(stop_words_str, false, false);
-          stop_words_list.emplace_back(words_id);
+          std::string stop_words_str = stop.GetString();
+          if (!stop_words_str.empty()) {
+            auto words_id = tokenizer->Encode(stop_words_str, false, false);
+            stop_words_list.emplace_back(words_id);
+          }
         } else {
           throw std::invalid_argument("`stop` is not a string or an array of strings");
         }
@@ -383,7 +387,8 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   for (auto& stop_word : stop_words) {
     stop_words_list.emplace_back(tokenizer->Encode(stop_word, false, false));
   }
-  if (func_call) { // Add function call observation words to early stop.
+  if (func_call &&
+      !llm_styler->func_call_observation_words().empty()) { // Add function call observation words to early stop.
     stop_words_list.emplace_back(tokenizer->Encode(llm_styler->func_call_observation_words(), false, false));
   }
 
