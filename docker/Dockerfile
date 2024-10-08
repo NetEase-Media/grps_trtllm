@@ -21,8 +21,6 @@ RUN cd /my_grps && \
 FROM registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.5_cudnn9.2_trtllm0.12.0_py3.10
 ENV LD_LIBRARY_PATH /usr/local/cuda/compat/lib.real:$LD_LIBRARY_PATH
 
-RUN ln -s /usr/local/cuda/compat/lib.real /usr/local/cuda/compat/lib
-
 WORKDIR /my_grps
 COPY --from=build /my_grps/server.mar /my_grps/server.mar
 ENV LANG C.UTF-8
