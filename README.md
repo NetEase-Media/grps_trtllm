@@ -154,8 +154,8 @@ models:
     ...
     inferer_args:
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
-      # Current support {`qwen2.5`, `qwen`, `chatglm3`, `glm4`}.
-      llm_style: qwen
+      # Current support {`qwen2.5`, `qwen`, `chatglm3`, `glm4`, `internlm2`}.
+      llm_style: qwen2.5
 
       # tokenizer config.
       tokenizer_type: huggingface # can be `huggingface`, `sentencepiece`. Must be set.
