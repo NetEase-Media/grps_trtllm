@@ -236,6 +236,43 @@ public:
                                 rapidjson::MemoryPoolAllocator<>& allocator) override;
 };
 
+class Internlm2Styler : public LLMStyler {
+public:
+  Internlm2Styler()
+      : LLMStyler("internlm2",
+                  "You are an AI assistant whose name is InternLM (书生·浦语).\n"
+                  "- InternLM (书生·浦语) is a conversational language model that is developed by Shanghai AI "
+                  "Laboratory (上海人工智能实验室). It is designed to be helpful, honest, and harmless.\n"
+                  "- InternLM (书生·浦语) can understand and communicate fluently in the language chosen by the user "
+                  "such as English and 中文.",
+                  {"system", "user", "assistant"},
+                  true,
+                  "Observation:",
+                  true) {}
+  ~Internlm2Styler() override = default;
+
+  /**
+   * @brief Build prompt for model input from OpenAI interface json body request.
+   * @param json_body: Json body from client.
+   * @return <if_function_call, prompt>: if_function_call is true if the prompt contains function call.
+   */
+  std::tuple<bool, std::string> BuildPrompt(const rapidjson::Document& json_body) override;
+
+  /**
+   * @brief Parse function call response from generated text and build content and tool_calls array of message
+   * member of OpenAI interface response.
+   * @param gen_txt: Generated text.
+   * @param req_id: Request id.
+   * @param message: Message member of OpenAI interface response format.
+   * @param allocator: Json allocator.
+   * @return stop reason.
+   */
+  std::string ParseFunctionCall(const std::string& gen_txt,
+                                int64_t req_id,
+                                rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                rapidjson::MemoryPoolAllocator<>& allocator) override;
+};
+
 class LLMStylerFactory {
 public:
   LLMStylerFactory() = default;
