@@ -198,7 +198,7 @@ grpst archive .
 # 通过--inference_conf参数指定模型对应的inference.yml配置文件启动服务。
 # 如需修改服务端口，并发限制等，可以修改conf/server.yml文件，然后启动时指定--server_conf参数指定新的server.yml文件。
 # 注意如果使用多卡推理，需要使用mpi方式启动，--mpi_np参数为并行推理的GPU数量。
-grpst start ./server.mar --inference_conf=conf/inference_qwen2.yml
+grpst start ./server.mar --inference_conf=conf/inference_qwen2.5.yml
 
 # 查看服务状态
 grpst ps
