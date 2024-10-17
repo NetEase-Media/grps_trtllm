@@ -315,8 +315,9 @@ executor::ExecutorConfig TrtLlmModelInstance::GetExecutorConfigFromParams() {
 
 TrtLlmModelInstance::TrtLlmModelInstance(TrtLlmModelState* model_state,
                                          LLMStyler* llm_styler,
-                                         MultiInstanceTokenizer* tokenizer)
-    : model_state_(model_state), llm_styler_(llm_styler), tokenizer_(tokenizer) {
+                                         MultiInstanceTokenizer* tokenizer,
+                                         VIT* vit)
+    : model_state_(model_state), llm_styler_(llm_styler), tokenizer_(tokenizer), vit_(vit) {
   std::string decoder_model_path;
   try {
     decoder_model_path = model_state_->GetParameter<std::string>("gpt_model_path");
@@ -328,7 +329,7 @@ TrtLlmModelInstance::TrtLlmModelInstance(TrtLlmModelState* model_state,
     decoder_model_path = "";
   }
 
-  auto model_conf_bytes = utils::LoadBytesFromFile(decoder_model_path + "config.json");
+  auto model_conf_bytes = utils::LoadBytesFromFile<std::string>(decoder_model_path + "config.json");
   rapidjson::Document model_conf_doc;
   model_conf_doc.Parse(model_conf_bytes.data(), model_conf_bytes.size());
   if (model_conf_doc.HasParseError()) {
@@ -448,7 +449,7 @@ TrtLlmModelInstance::TrtLlmModelInstance(TrtLlmModelState* model_state,
 void TrtLlmModelInstance::EnqueueAndWait(GrpsContext& grps_ctx, const std::string& http_body) {
   auto [func_call, model, executor_request] = utils::CreateRequestFromOpenAiHttpBody(
     http_body, instance_specific_config.exclude_input_from_output, grps_ctx.IfStreaming(), llm_styler_, tokenizer_,
-    stop_words_, bad_words_, max_output_len_, model_type_);
+    vit_, stop_words_, bad_words_, max_output_len_, model_type_);
   size_t input_tokens_size = executor_request.getInputTokenIds().size();
   if (input_tokens_size > max_input_len_) {
     std::string err = "Input tokens size " + std::to_string(input_tokens_size) + " exceeds max input length " +
@@ -472,9 +473,7 @@ void TrtLlmModelInstance::EnqueueAndWait(GrpsContext& grps_ctx, const std::strin
       throw std::runtime_error(err);
     }
 
-    uint64_t begin_time_us =
-      std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-        .count();
+    uint64_t begin_time_us = GET_SYS_TME_US();
     trtllm_request_id_to_request_data_.emplace(trtllm_request_id, RequestData{model,
                                                                               trtllm_request_id,
                                                                               begin_time_us / 1000000,
@@ -584,9 +583,7 @@ void TrtLlmModelInstance::WaitForResponse() {
           }
         }
 
-        uint64_t finish_time_us =
-          std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-            .count();
+        uint64_t finish_time_us = GET_SYS_TME_US();
         CLOG4(INFO, "Finished request: " << request_data->trtllm_req_id << ", model: " << request_data->model
                                          << ", if func call: " << request_data->func_call
                                          << ", if streaming: " << grps_ctx->IfStreaming()

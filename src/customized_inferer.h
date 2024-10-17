@@ -6,6 +6,7 @@
 #include "src/tokenizer.h"
 #include "src/trtllm_model_instance.h"
 #include "src/trtllm_model_state.h"
+#include "src/vit/vit.h"
 
 namespace netease::grps {
 class TrtllmInferer : public ModelInferer {
@@ -50,6 +51,7 @@ private:
   std::unique_ptr<TrtLlmModelState> model_state_ = nullptr;
   std::unique_ptr<TrtLlmModelInstance> trtllm_instance_ = nullptr;
   std::unique_ptr<LLMStyler> llm_styler_ = nullptr;
+  std::unique_ptr<VIT> vit_ = nullptr;
   std::unique_ptr<MultiInstanceTokenizer> tokenizer_ = nullptr;
 };
 

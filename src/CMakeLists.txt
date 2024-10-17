@@ -53,7 +53,7 @@ set_ifndef(TRT_LIB_DIR
         /usr/local/tensorrt/targets/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu/lib)
 set_ifndef(
         TRT_INCLUDE_DIR
-        /usr/local/tensorrt/targets/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu/include)
+        /usr/local/tensorrt/include)
 
 set(TRT_LIB nvinfer)
 find_library_create_target(${TRT_LIB} nvinfer SHARED ${TRT_LIB_DIR})
@@ -82,6 +82,8 @@ message(
         STATUS
         "Building for TensorRT version: ${TRT_VERSION}, library version: ${TRT_SOVERSION}"
 )
+include_directories(${TRT_INCLUDE_DIR})
+message(STATUS "TRT_INCLUDE_DIR: ${TRT_INCLUDE_DIR}, TRT_LIB_DIR: ${TRT_LIB_DIR}, TRT_LIB: ${TRT_LIB}")
 
 if (${TRT_MAJOR} GREATER_EQUAL 10)
     add_definitions("-DTRT_LLM_USE_DIM64")
@@ -107,6 +109,9 @@ set(COMMON_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/trtllm_model_state.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/trtllm_model_instance.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/tensorrt/trt_inferer.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/vit/vit.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/vit/internvl2_vit.cc
 )
 
 add_library(grps-tensorrt-llm-common SHARED ${COMMON_SRCS})
@@ -159,7 +164,12 @@ target_link_libraries(grps-tensorrt-llm-common PUBLIC
         ${MPI_LIBRARIES}
         ${CUDA_LIBRARIES}
         nvinfer
-        nvinfer_plugin_tensorrt_llm)
+        nvinfer_plugin_tensorrt_llm
+        opencv_core
+        opencv_imgproc
+        opencv_highgui
+        opencv_imgcodecs
+)
 
 set_target_properties(
         grps-tensorrt-llm-common PROPERTIES POSITION_INDEPENDENT_CODE ON

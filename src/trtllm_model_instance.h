@@ -13,6 +13,7 @@
 #include "src/llm_styler.h"
 #include "src/tokenizer.h"
 #include "src/trtllm_model_state.h"
+#include "src/vit/vit.h"
 #include "tensorrt_llm/batch_manager/BatchManager.h"
 #include "tensorrt_llm/batch_manager/GptManager.h"
 #include "tensorrt_llm/batch_manager/callbacks.h"
@@ -78,7 +79,10 @@ public:
   static constexpr executor::SizeType32 kPeftCacheNumPutWorkers = 4;
 
   /// @brief Constructor
-  explicit TrtLlmModelInstance(TrtLlmModelState* model_state, LLMStyler* llm_styler, MultiInstanceTokenizer* tokenizer);
+  explicit TrtLlmModelInstance(TrtLlmModelState* model_state,
+                               LLMStyler* llm_styler,
+                               MultiInstanceTokenizer* tokenizer,
+                               VIT* vit);
 
   virtual ~TrtLlmModelInstance() {
     stop_wait_for_response_ = true;
@@ -128,6 +132,8 @@ private:
   LLMStyler* llm_styler_;
 
   MultiInstanceTokenizer* tokenizer_;
+
+  VIT* vit_;
 
   std::unordered_set<std::string> stop_words_;
   std::unordered_set<std::string> bad_words_;

@@ -2,6 +2,10 @@
 
 Qwen2-7B-Instruct模型的部署示例。
 
+## 开发环境
+
+见[本地开发与调试](../README.md#3-本地开发与调试)。
+
 ## 构建trtllm引擎
 
 ```bash

@@ -20,23 +20,28 @@ void MultiInstanceTokenizer::Load(const std::string& type,
                                   const std::vector<int32_t>& skip_special_tokens,
                                   const std::unordered_map<std::string, int32_t>& force_tokens_dict,
                                   const std::vector<int32_t>& prefix_tokens_id,
-                                  const std::vector<int32_t>& suffix_tokens_id) {
+                                  const std::vector<int32_t>& suffix_tokens_id,
+                                  const std::string& img_token,
+                                  int32_t img_begin_token_id) {
   CLOG4(INFO, "Loading tokenizer from: " << conf_path << " with type: " << type << ", instance_num: " << instance_num);
 
   // Load tokenizer.
+  if (instance_num < 1) {
+    throw std::runtime_error("tokenizer_parallelism should be greater than 0.");
+  }
   for (int i = 0; i < instance_num; ++i) {
     if (type == "huggingface") {
-      auto blob = utils::LoadBytesFromFile(conf_path + "/tokenizer.json");
+      auto blob = utils::LoadBytesFromFile<std::string>(conf_path + "/tokenizer.json");
       tokenizers_.emplace_back(tokenizers::Tokenizer::FromBlobJSON(blob));
     } else if (type == "sentencepiece") {
-      auto blob = utils::LoadBytesFromFile(conf_path + "/tokenizer.model");
+      auto blob = utils::LoadBytesFromFile<std::string>(conf_path + "/tokenizer.model");
       tokenizers_.emplace_back(tokenizers::Tokenizer::FromBlobSentencePiece(blob));
     } else {
       throw std::runtime_error("Unsupported tokenizer type: " + type);
     }
     tokenizers_mtxs_.emplace_back(std::make_unique<std::mutex>());
   }
-  CLOG4(INFO, "Load tokenizer success.");
+  CLOG4(INFO, "Load tokenizer success, vocab size: " << tokenizers_[0]->GetVocabSize());
   type_ = type;
   cur_idx_ = 0;
 
@@ -44,7 +49,7 @@ void MultiInstanceTokenizer::Load(const std::string& type,
   /*
   auto tokenizer_config_path = conf_path + "/tokenizer_config.json";
   if (std::filesystem::exists(tokenizer_config_path)) {
-    auto blob = utils::LoadBytesFromFile(tokenizer_config_path);
+    auto blob = utils::LoadBytesFromFile<std::string>(tokenizer_config_path);
     rapidjson::Document tokenizer_config_doc;
     tokenizer_config_doc.Parse(reinterpret_cast<const char*>(blob.data()), blob.size());
     if (tokenizer_config_doc.HasParseError()) {
@@ -61,6 +66,9 @@ void MultiInstanceTokenizer::Load(const std::string& type,
   skip_special_tokens_.insert(skip_special_tokens.begin(), skip_special_tokens.end());
 
   for (auto& [k, v] : force_tokens_dict) {
+    if (k.empty()) {
+      throw std::runtime_error("Force token can not be empty.");
+    }
     for (auto& [k1, v1] : force_token2id_) {
       if (k1.find(k) != std::string::npos || k.find(k1) != std::string::npos) {
         throw std::runtime_error("Force tokens can not be substring of each other: " + k + ", " + k1);
@@ -77,6 +85,12 @@ void MultiInstanceTokenizer::Load(const std::string& type,
 
   prefix_tokens_id_ = prefix_tokens_id;
   suffix_tokens_id_ = suffix_tokens_id;
+
+  img_token_ = img_token;
+  img_begin_token_id_ = img_begin_token_id;
+  if (!img_token_.empty() && img_begin_token_id < int32_t(tokenizers_[0]->GetVocabSize())) {
+    throw std::runtime_error("img_begin_token_id should not smaller than vocab size.");
+  }
 }
 
 std::vector<int32_t> MultiInstanceTokenizer::Encode(const std::string& text, bool add_prefix, bool add_suffix) {
@@ -89,7 +103,7 @@ std::vector<int32_t> MultiInstanceTokenizer::Encode(const std::string& text, boo
   tokenizers::Tokenizer* tokenizer = GetTokenizer();
   if (!force_token2id_.empty()) {
     // Split text by force tokens.
-    std::vector<std::pair<int, std::string>> splits; // <begin_idx, token>
+    std::vector<std::pair<size_t, std::string>> splits; // <begin_idx, token>
     for (auto& [token, id] : force_token2id_) {
       size_t pos = 0;
       while ((pos = text.find(token, pos)) != std::string::npos) {
@@ -97,12 +111,21 @@ std::vector<int32_t> MultiInstanceTokenizer::Encode(const std::string& text, boo
         pos += token.size();
       }
     }
+    // Split text by image token.
+    if (!img_token_.empty()) {
+      size_t pos = 0;
+      while ((pos = text.find(img_token_, pos)) != std::string::npos) {
+        splits.emplace_back(pos, img_token_);
+        pos += img_token_.size();
+      }
+    }
 
     if (splits.empty()) {
       std::lock_guard<std::mutex> lock(*tokenizers_mtxs_[cur_idx_]);
       ids = tokenizer->Encode(text);
     } else {
-      // Encode all sub texts split by force tokens.
+      // Encode all sub texts split by force tokens and image tokens.
+      int32_t cur_img_id = img_begin_token_id_;
       std::lock_guard<std::mutex> lock(*tokenizers_mtxs_[cur_idx_]);
       std::sort(splits.begin(), splits.end());
       size_t begin_idx = 0;
@@ -112,7 +135,11 @@ std::vector<int32_t> MultiInstanceTokenizer::Encode(const std::string& text, boo
           auto sub_ids = tokenizer->Encode(sub_text);
           ids.insert(ids.end(), sub_ids.begin(), sub_ids.end());
         }
-        ids.push_back(force_token2id_[token]);
+        if (!img_token_.empty() && token == img_token_) {
+          ids.push_back(cur_img_id++);
+        } else {
+          ids.push_back(force_token2id_[token]);
+        }
         begin_idx = idx + token.size();
       }
       if (begin_idx < text.size()) {

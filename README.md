@@ -19,7 +19,7 @@
 ## 1. 说明
 
 [grps](https://github.com/NetEase-Media/grps)接入[trtllm](https://github.com/NVIDIA/TensorRT-LLM)
-实现更高性能的、支持```OpenAI```模式访问的```LLM```
+实现更高性能的、支持```OpenAI```模式访问、支持多模态的```LLM```
 服务，相比较[triton-trtllm](https://github.com/triton-inference-server/tensorrtllm_backend)
 实现服务。有如下优势：
 
@@ -28,9 +28,27 @@
 * 通过```grps```的自定义```http```功能实现```OpenAI```接口协议，支持```chat```和```function call```模式。
 * 支持扩展不同```LLM```的```prompt```构建风格以及生成结果的解析风格，以实现不同```LLM```的```chat```
   和```function call```模式，支持[llama-index](https://github.com/run-llama/llama_index)```ai-agent```。
+* 通过集成```tensorrt```推理后端与```opencv```库，支持多模态```LLM```。
 * 通过测试，```grps-trtllm```相比较```triton-trtllm```性能有稳定的提升。
 
-todo：
+支持的```LLM styler```家族：
+
+| llm_styler | chat | function_call | supported model                                                    | doc                                                                      |
+|------------|------|---------------|--------------------------------------------------------------------|--------------------------------------------------------------------------|
+| qwen2.5    | ✅    | ✅             | qwen2.5-instruct, qwen2.5-coder-instruct                           | [qwen2.5-instruct](./README.md)，[qwen2.5-coder](docs%2Fqwen2.5-coder.md) |
+| qwen       | ✅    | ✅             | qwen1.5-chat, qwen1.5-moe-chat, qwen2-instruct, qwen2-moe-instruct | [qwen2](docs%2Fqwen2.md)                                                 |
+| chatglm3   | ✅    | ✅             | chatglm3                                                           | [chatglm3](docs%2Fchatglm3.md)                                           |
+| glm4       | ✅    | ✅             | glm4-chat, glm4-chat-1m                                            | [glm4](docs%2Fglm4.md)                                                   |
+| internlm2  | ✅    | ✅             | internlm2_5-chat, internlm2-chat                                   | [internlm2.5](docs%2Finternlm2.5.md)                                     |
+| llama3     | ✅    | ❌             | llama-3-instruct, llama-3.1-instruct                               | [llama3](docs%2Fllama3.md)                                               |
+
+支持多模态LLM：
+
+| llm_styler | vit       | chat | function_call | supported model                           | doc                              |
+|------------|-----------|------|---------------|-------------------------------------------|----------------------------------|
+| internvl2  | internvl2 | ✅    | ❌             | InternVL2-2B, InternVL2-8B, InternVL2-26B | [internvl2](docs%2Finternvl2.md) |
+
+TODO：
 
 * 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.12.0```
   （主分支），具体见仓库的分支信息。由于人力受限，一些bug不能及时在每一个分支修复，请尽量使用最新版本分支。
@@ -38,18 +56,10 @@ todo：
   的```prompt```构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```
   ，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
   不同家族的```styler```持续开发中...。
-* 多模态LLM支持。
-
-支持的```LLM styler```家族：
-
-| llm_styler | chat | function_call | supported model                                                    |
-|------------|------|---------------|--------------------------------------------------------------------|
-| qwen2.5    | ✅    | ✅             | qwen2.5-instruct, qwen2.5-coder-instruct                           |
-| qwen       | ✅    | ✅             | qwen1.5-chat, qwen1.5-moe-chat, qwen2-instruct, qwen2-moe-instruct |
-| chatglm3   | ✅    | ✅             | chatglm3                                                           |
-| glm4       | ✅    | ✅             | glm4-chat, glm4-chat-1m                                            |
-| internlm2  | ✅    | ✅             | internlm2_5-chat, internlm2-chat                                   |
-| llama3     | ✅    | ❌             | llama-3-instruct, llama-3.1-instruct                               |
+* 不同多模态模型的```vit```实现不同，见```src/vit```，用户可以自行扩展。拓展后需要修改```conf/inference.yml```
+  的```vit_type```为对应的类型名。
+  不同多模态模型的```vit```持续开发中...。
+* 书写用户自定义拓展```llm_styler```与```vit```开发文档。
 
 ## 2. 工程结构
 
@@ -60,9 +70,6 @@ todo：
 |   |--openai_cli.py                    # 通过OpenAI客户端进行chat
 |   |--openai_func_call*.py             # 通过OpenAI客户端进行function call
 |   |--openai_txt_cli.py                # 通过OpenAI客户端输入文本文件内容进行chat
-|   |--triton_benchmark.py              # Triton trtllm server benchmark脚本
-|   |--triton_cli.py                    # Triton trtllm server chat脚本
-|   |--triton_txt_cli.py                # Triton trtllm server输入文本文件内容进行chat
 |-- conf                                # 配置文件
 |   |-- inference*.yml                  # 各类llm推理配置
 |   |-- server.yml                      # 服务配置
@@ -71,9 +78,10 @@ todo：
 |-- docs                                # 文档
 |-- second_party                        # grps框架依赖
 |-- src                                 # 自定义源码
+|   |-- tensorrt                        # tensorrt推理后端
+|   |-- vit                             # vit实现
 |   |-- constants.cc/.h                 # 常量定义
 |   |-- customized_inferer.cc/.h        # 自定义推理器
-|   |-- grps_server_customized.cc/.h    # 自定义库初始化
 |   |-- llm_styler.cc/.h                # LLM风格定义，prompt构建，结果解析
 |   |-- tokenizer.cc/.h                 # Tokenizer实现
 |   |-- trtllm_model_instance.cc/.h     # TensorRT-LLM模型实例
@@ -154,7 +162,7 @@ models:
     ...
     inferer_args:
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
-      # Current support {`qwen2.5`, `qwen`, `chatglm3`, `glm4`, `internlm2`}.
+      # Current support {`qwen2.5`, `qwen`, `chatglm3`, `glm4`, `internlm2`, `internvl2`}.
       llm_style: qwen2.5
 
       # tokenizer config.
@@ -210,7 +218,7 @@ PORT(HTTP,RPC)      NAME                PID                 DEPLOY_PATH
 ### 3.6 模拟请求
 
 ```bash
-# curl命令非stream请求
+# curl命令非stream请求``
 curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
@@ -378,6 +386,7 @@ Response: The current temperature in Boston is 59.0 degrees Fahrenheit.
 ### 3.7 指标观测
 
 通过访问```http://ip:9997/``` 可以查看服务的指标信息。如下指标：
+
 ![metrics_0.png](data/metrics_0.png)<br>
 ![metrics_1.png](data/metrics_1.png)
 

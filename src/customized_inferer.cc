@@ -4,6 +4,7 @@
 
 #include <rapidjson/document.h>
 
+#include "config/global_config.h"
 #include "logger/logger.h"
 #include "utils.h"
 
@@ -18,6 +19,7 @@ void TrtllmInferer::Init(const std::string& path, const std::string& device, con
 }
 
 void TrtllmInferer::Load() {
+  // 1. Load tokenizer.
   try {
     tokenizer_ = std::make_unique<MultiInstanceTokenizer>();
 
@@ -30,11 +32,11 @@ void TrtllmInferer::Load() {
       throw std::invalid_argument("tokenizer_path is not specified.");
     }
 
-    int instance_num = 1;
+    int instance_num = 8;
     try {
       instance_num = model_state_->GetParameter<int32_t>("tokenizer_parallelism");
     } catch (const std::exception& e) {
-      CLOG4(WARN, "tokenizer_parallelism is not specified, will use default value of 1.");
+      CLOG4(WARN, "tokenizer_parallelism is not specified, will use default value of 8.");
     }
 
     std::optional<int32_t> end_token_id = std::nullopt;
@@ -90,16 +92,64 @@ void TrtllmInferer::Load() {
       CLOG4(WARN, "suffix_tokens_id is not specified, will use default value of empty.");
     }
 
+    std::string img_token;
+    try {
+      img_token = model_state_->GetParameter<std::string>("img_token");
+    } catch (const std::exception& e) {
+    }
+
+    int32_t img_begin_token_id = 0;
+    try {
+      img_begin_token_id = model_state_->GetParameter<int32_t>("img_begin_token_id");
+    } catch (const std::exception& e) {
+    }
+
     tokenizer_->Load(tokenizer_type, tokenizer_path, instance_num, pad_token_id, end_token_id, skip_special_tokens,
-                     force_tokens_dict, prefix_tokens_id, suffix_tokens_id);
+                     force_tokens_dict, prefix_tokens_id, suffix_tokens_id, img_token, img_begin_token_id);
   } catch (const std::exception& e) {
     throw InfererException("Load tokenizer failed: " + std::string(e.what()));
   }
 
+  // 2. Load llm styler.
   std::string llm_style = model_state_->GetParameter<std::string>("llm_style");
   llm_styler_ = LLMStylerFactory::CreateLLMStyler(llm_style);
 
-  trtllm_instance_ = std::make_unique<TrtLlmModelInstance>(model_state_.get(), llm_styler_.get(), tokenizer_.get());
+  // 3. Load vit if multi-modal model.
+  std::string vit_type;
+  try {
+    vit_type = model_state_->GetParameter<std::string>("vit_type");
+  } catch (const std::exception& e) {
+  }
+  std::string vit_path;
+  try {
+    vit_path = model_state_->GetParameter<std::string>("vit_path");
+  } catch (const std::exception& e) {
+  }
+  int vit_worker_tp = 8;
+  try {
+    vit_worker_tp = model_state_->GetParameter<int>("vit_worker_tp");
+  } catch (const std::exception& e) {
+    CLOG4(WARN, "vit_worker_tp is not specified, will use default value of 8.");
+  }
+  YAML::Node vit_trt_args;
+  try {
+    vit_trt_args = model_state_->GetModelConfig()["vit_trt_args"];
+  } catch (const std::exception& e) {
+  }
+  if (!vit_type.empty()) {
+    vit_ = VITFactory::CreateVIT(vit_type);
+    if (vit_ == nullptr) {
+      throw InfererException("Unsupported vit type: " + vit_type);
+    }
+    vit_->Init(vit_path, vit_worker_tp, "gpu:0", vit_trt_args);
+    if (GlobalConfig::Instance().mpi().world_rank == 0) { // Only rank 0 load vit when using MPI.
+      vit_->Load();
+    }
+  }
+
+  // 4. Load trtllm instance.
+  trtllm_instance_ =
+    std::make_unique<TrtLlmModelInstance>(model_state_.get(), llm_styler_.get(), tokenizer_.get(), vit_.get());
   CLOG4(INFO, "TrtllmInferer load success.");
 }
 

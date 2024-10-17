@@ -7,7 +7,7 @@ models:
     inferer_path:
     inferer_args: # more args of model inferer.
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
-      # Current support {`qwen2.5`, `qwen`, `chatglm3`, `glm4`, `internlm2`}.
+      # Current support {`qwen2.5`, `qwen`, `chatglm3`, `glm4`, `internlm2`, `internvl2`}.
       llm_style: internlm2
 
       # tokenizer config.
@@ -55,6 +55,7 @@ models:
       stop_words: # additional stop words. Empty if not set.
         - "<|im_start|>"
         - "<|im_end|>"
+        - "</s>"
       bad_words: # additional bad words. Empty if not set.
       max_tokens_in_paged_kv_cache: # use default if not set.
       max_attention_window_size: # use default (i.e. max_sequence_length) if not set.

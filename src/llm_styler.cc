@@ -16,7 +16,7 @@
 
 namespace netease::grps {
 
-std::tuple<bool, std::string> LLMStyler::BuildPrompt(const rapidjson::Document& json_body) {
+std::tuple<bool, std::string, std::vector<std::string>> LLMStyler::BuildPrompt(const rapidjson::Document& json_body) {
   throw std::runtime_error("BuildPrompt not implemented.");
 }
 
@@ -27,7 +27,7 @@ std::string LLMStyler::ParseFunctionCall(const std::string& gen_txt,
   throw std::runtime_error("ParseFunctionCall not implemented.");
 }
 
-std::tuple<bool, std::string> QwenStyler::BuildPrompt(const rapidjson::Document& json_body) {
+std::tuple<bool, std::string, std::vector<std::string>> QwenStyler::BuildPrompt(const rapidjson::Document& json_body) {
   std::string prompt;
 
   // Parse tools.
@@ -243,7 +243,7 @@ std::tuple<bool, std::string> QwenStyler::BuildPrompt(const rapidjson::Document&
   if (add_generation_prompt()) {
     prompt.append("<|im_start|>assistant\n");
   }
-  return {has_tools, prompt};
+  return {has_tools, prompt, {}};
 }
 
 std::string QwenStyler::ParseFunctionCall(const std::string& gen_txt,
@@ -336,7 +336,8 @@ std::string QwenStyler::ParseFunctionCall(const std::string& gen_txt,
   }
 }
 
-std::tuple<bool, std::string> Qwen25Styler::BuildPrompt(const rapidjson::Document& json_body) {
+std::tuple<bool, std::string, std::vector<std::string>> Qwen25Styler::BuildPrompt(
+  const rapidjson::Document& json_body) {
   std::string prompt;
 
   // Parse tools.
@@ -467,7 +468,7 @@ std::tuple<bool, std::string> Qwen25Styler::BuildPrompt(const rapidjson::Documen
   if (add_generation_prompt()) {
     prompt.append("<|im_start|>assistant\n");
   }
-  return {has_tools, prompt};
+  return {has_tools, prompt, {}};
 }
 
 std::string Qwen25Styler::ParseFunctionCall(const std::string& gen_txt,
@@ -552,7 +553,8 @@ std::string Qwen25Styler::ParseFunctionCall(const std::string& gen_txt,
   }
 }
 
-std::tuple<bool, std::string> ChatGlm3Styler::BuildPrompt(const rapidjson::Document& json_body) {
+std::tuple<bool, std::string, std::vector<std::string>> ChatGlm3Styler::BuildPrompt(
+  const rapidjson::Document& json_body) {
   std::string prompt;
 
   // Parse tools.
@@ -602,7 +604,7 @@ std::tuple<bool, std::string> ChatGlm3Styler::BuildPrompt(const rapidjson::Docum
     prompt += "\n";
   }
 
-  return {has_tools, prompt};
+  return {has_tools, prompt, {}};
 }
 
 std::string ChatGlm3Styler::ParseFunctionCall(const std::string& gen_txt,
@@ -667,7 +669,7 @@ std::string ChatGlm3Styler::ParseFunctionCall(const std::string& gen_txt,
   }
 }
 
-std::tuple<bool, std::string> Glm4Styler::BuildPrompt(const rapidjson::Document& json_body) {
+std::tuple<bool, std::string, std::vector<std::string>> Glm4Styler::BuildPrompt(const rapidjson::Document& json_body) {
   std::string prompt = "[gMASK]<sop>";
 
   // Parse tools.
@@ -743,7 +745,7 @@ std::tuple<bool, std::string> Glm4Styler::BuildPrompt(const rapidjson::Document&
     prompt += "\n";
   }
 
-  return {has_tools, prompt};
+  return {has_tools, prompt, {}};
 }
 
 std::string Glm4Styler::ParseFunctionCall(const std::string& gen_txt,
@@ -787,7 +789,8 @@ std::string Glm4Styler::ParseFunctionCall(const std::string& gen_txt,
   }
 }
 
-std::tuple<bool, std::string> Llama3Styler::BuildPrompt(const rapidjson::Document& json_body) {
+std::tuple<bool, std::string, std::vector<std::string>> Llama3Styler::BuildPrompt(
+  const rapidjson::Document& json_body) {
   // Parse messages.
   if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
     throw std::invalid_argument("`messages` not found or not an array");
@@ -831,7 +834,7 @@ std::tuple<bool, std::string> Llama3Styler::BuildPrompt(const rapidjson::Documen
     prompt += "<|start_header_id|>assistant<|end_header_id|>\n\n";
   }
 
-  return {false, prompt};
+  return {false, prompt, {}};
 }
 
 std::string Llama3Styler::ParseFunctionCall(const std::string& gen_txt,
@@ -841,7 +844,8 @@ std::string Llama3Styler::ParseFunctionCall(const std::string& gen_txt,
   return "";
 }
 
-std::tuple<bool, std::string> Internlm2Styler::BuildPrompt(const rapidjson::Document& json_body) {
+std::tuple<bool, std::string, std::vector<std::string>> Internlm2Styler::BuildPrompt(
+  const rapidjson::Document& json_body) {
   std::string prompt;
 
   // Parse tools.
@@ -1057,7 +1061,7 @@ std::tuple<bool, std::string> Internlm2Styler::BuildPrompt(const rapidjson::Docu
   if (add_generation_prompt()) {
     prompt.append("<|im_start|>assistant\n");
   }
-  return {has_tools, prompt};
+  return {has_tools, prompt, {}};
 }
 
 std::string Internlm2Styler::ParseFunctionCall(const std::string& gen_txt,
@@ -1150,6 +1154,133 @@ std::string Internlm2Styler::ParseFunctionCall(const std::string& gen_txt,
   }
 }
 
+std::tuple<bool, std::string, std::vector<std::string>> Internvl2Styler::BuildPrompt(
+  const rapidjson::Document& json_body) {
+  std::string prompt;
+
+  // Parse messages.
+  if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
+    throw std::invalid_argument("`messages` not found or not an array");
+  }
+  if (json_body["messages"].Empty()) {
+    throw std::invalid_argument("`messages` is empty");
+  }
+
+  bool skip_first = false;
+  // System message.
+  if (json_body["messages"][0].HasMember("role") && json_body["messages"][0]["role"].IsString() &&
+      std::string(json_body["messages"][0]["role"].GetString()) == "system") {
+    // If the first message is a system message, use it as the system prompt.
+    if (!json_body["messages"][0].HasMember("content") || !json_body["messages"][0]["content"].IsString()) {
+      throw std::invalid_argument("`content` not found or not a string");
+    }
+    prompt = "<s><|im_start|>system\n";
+    prompt.append(json_body["messages"][0]["content"].GetString());
+    prompt.append("<|im_end|>");
+    skip_first = true;
+  } else {
+    // If the first message is not a system message, add a system message.
+    prompt = "<s><|im_start|>system\n";
+    prompt.append(system_prompt());
+    prompt.append("<|im_end|>");
+  }
+  // Following messages.
+  bool first_user_msg = true;
+  // Parse images urls.
+  std::vector<std::string> image_urls;
+  for (auto& message : json_body["messages"].GetArray()) {
+    if (skip_first) {
+      skip_first = false;
+      continue;
+    }
+
+    if (!message.HasMember("role") || !message["role"].IsString()) {
+      throw std::invalid_argument("`role` not found or not a string");
+    }
+    std::string role = GetRole(message["role"].GetString());
+    if (!message.HasMember("content")) {
+      throw std::invalid_argument("`content` not found or not a string");
+    }
+
+    std::string content;
+    if (message["content"].IsString()) {
+      content = message["content"].GetString();
+    } else if (message["content"].IsArray()) {
+      //  "content": [
+      //           {
+      //             "type": "text",
+      //             "text": "<image>\nWhat'\''s in this image?"
+      //           },
+      //           {
+      //             "type": "image_url",
+      //             "image_url": {
+      //               "url": "https://**"
+      //             }
+      //           }
+      //         ]
+      std::vector<std::string> cur_img_urls;
+      for (auto& item : message["content"].GetArray()) {
+        if (!item.HasMember("type") || !item["type"].IsString()) {
+          throw std::invalid_argument("`type` not found or not a string");
+        }
+        std::string type = item["type"].GetString();
+        if (type == "text") {
+          if (!item.HasMember("text") || !item["text"].IsString()) {
+            throw std::invalid_argument("`text` not found or not a string");
+          }
+          content.append(item["text"].GetString());
+        } else if (type == "image_url") {
+          if (!item.HasMember("image_url") || !item["image_url"].IsObject()) {
+            throw std::invalid_argument("`image_url` not found or not an object");
+          }
+          auto& image_url = item["image_url"];
+          if (!image_url.HasMember("url") || !image_url["url"].IsString()) {
+            throw std::invalid_argument("`url` not found or not a string");
+          }
+          cur_img_urls.emplace_back(image_url["url"].GetString());
+        } else {
+          throw std::invalid_argument("Unsupported content type: " + type);
+        }
+      }
+      size_t img_count = utils::GetWordCount(content, "<image>");
+      if (img_count != cur_img_urls.size()) {
+        throw std::invalid_argument("The number of <image> tokens does not match the number of image urls");
+      }
+
+      image_urls.insert(image_urls.end(), cur_img_urls.begin(), cur_img_urls.end());
+    }
+
+    if (!content.empty()) {
+      // content.lstrip("\n")
+      content = content.substr(content.find_first_not_of('\n'));
+      // content.rstrip()
+      content.erase(std::find_if(content.rbegin(), content.rend(), [](int ch) { return !std::isspace(ch); }).base(),
+                    content.end());
+      prompt.append("<|im_start|>");
+      prompt.append(role);
+      prompt.append("\n");
+      prompt.append(content);
+      prompt.append("<|im_end|>");
+    } else {
+      prompt.append("<|im_start|>");
+      prompt.append(role);
+      prompt.append("\n");
+    }
+  }
+
+  if (add_generation_prompt()) {
+    prompt.append("<|im_start|>assistant\n");
+  }
+  return {false, prompt, image_urls};
+}
+
+std::string Internvl2Styler::ParseFunctionCall(const std::string& gen_txt,
+                                               int64_t req_id,
+                                               rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                               rapidjson::MemoryPoolAllocator<>& allocator) {
+  return "";
+}
+
 std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& llm_style) {
   if (llm_style == "qwen") {
     return std::make_unique<QwenStyler>();
@@ -1163,8 +1294,11 @@ std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& 
     return std::make_unique<Llama3Styler>();
   } else if (llm_style == "internlm2") {
     return std::make_unique<Internlm2Styler>();
+  } else if (llm_style == "internvl2") {
+    return std::make_unique<Internvl2Styler>();
   } else {
     throw std::runtime_error("LLM style " + llm_style + " not supported now.");
   }
 }
+
 } // namespace netease::grps

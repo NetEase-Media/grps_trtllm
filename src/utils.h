@@ -12,9 +12,11 @@
 #include <unordered_set>
 
 #include "context/context.h"
-#include "model_infer/tensor_wrapper.h"
 #include "src/constants.h"
 #include "src/llm_styler.h"
+#include "src/tokenizer.h"
+#include "src/types.h"
+#include "src/vit/vit.h"
 #include "tensorrt_llm/batch_manager/inferenceRequest.h"
 #include "tensorrt_llm/common/logger.h"
 #include "tensorrt_llm/runtime/tllmLogger.h"
@@ -33,11 +35,46 @@ namespace netease::grps {
   uint64_t TS_NS;             \
   SET_TIMESTAMP(TS_NS);
 
+#define GET_SYS_TME_US() \
+  std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count()
+
+#define GET_SYS_TIME_MS() \
+  std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()
+
 namespace utils {
+// --------------------------------------- String utils [BEGIN] ---------------------------------------
 bool IsValidUTF8(const std::string& str);
+// Get word count in string.
+size_t GetWordCount(const std::string& str, const std::string& word);
+/**
+ * Replace word to new word in string.
+ * @param str: string to replace.
+ * @param word: word to replace.
+ * @param replace: new word.
+ * @param beg_pos: begin position.
+ * @param count: replace count.
+ * @return final position.
+ */
+size_t ReplaceWorld(
+  std::string& str, const std::string& word, const std::string& replace, size_t beg_pos = 0, size_t count = 1);
 
+// --------------------------------------- Http utils [BEGIN] ---------------------------------------
+template <typename T>
+T DownloadFile(const std::string& url, int timeout_s = 10);
+template <>
+std::string DownloadFile(const std::string& url, int timeout_s);
+template <>
+std::vector<char> DownloadFile(const std::string& url, int timeout_s);
+
+// --------------------------------------- File utils [BEGIN] ---------------------------------------
+template <typename T>
+T LoadBytesFromFile(const std::string& path);
+template <>
 std::string LoadBytesFromFile(const std::string& path);
+template <>
+std::vector<char> LoadBytesFromFile(const std::string& path);
 
+// --------------------------------------- OpenAI http interface [BEGIN] ---------------------------------------
 void SetHttpResponse(GrpsContext& grps_ctx,
                      int status_code,
                      const std::string& content_type,
@@ -83,6 +120,7 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   bool streaming,
   LLMStyler* llm_styler,
   MultiInstanceTokenizer* tokenizer,
+  VIT* vit,
   const std::unordered_set<std::string>& stop_words,
   const std::unordered_set<std::string>& bad_words,
   size_t max_output_len,

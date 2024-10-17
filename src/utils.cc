@@ -4,6 +4,11 @@
 
 #include "utils.h"
 
+#include <NvInferRuntime.h>
+#include <glog/logging.h>
+// brpc include after glog
+#include <brpc/channel.h>
+#include <brpc/controller.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
@@ -28,6 +33,83 @@ bool IsValidUTF8(const std::string& str) {
   }
 }
 
+size_t GetWordCount(const std::string& str, const std::string& word) {
+  size_t count = 0;
+  size_t pos = 0;
+  while ((pos = str.find(word, pos)) != std::string::npos) {
+    count++;
+    pos += word.length();
+  }
+  return count;
+}
+
+size_t ReplaceWorld(
+  std::string& str, const std::string& word, const std::string& replace, size_t beg_pos, size_t count) {
+  size_t pos = beg_pos;
+  while (count > 0 && (pos = str.find(word, pos)) != std::string::npos) {
+    str.replace(pos, word.length(), replace);
+    pos += replace.length();
+    count--;
+  }
+  return pos;
+}
+
+template <>
+std::string DownloadFile(const std::string& url, int timeout_s) {
+  brpc::Channel channel;
+  brpc::ChannelOptions options;
+  options.protocol = "http";
+  options.timeout_ms = timeout_s * 1000;
+  options.connect_timeout_ms = 3000;
+
+  if (channel.Init(url.c_str(), &options) != 0) {
+    CLOG4(ERROR, "Fail to initialize channel to " + url);
+    throw std::runtime_error("Fail to initialize channel to " + url);
+  }
+
+  brpc::Controller cntl;
+  cntl.http_request().uri() = url;
+  cntl.http_request().set_method(brpc::HTTP_METHOD_GET);
+
+  channel.CallMethod(nullptr, &cntl, nullptr, nullptr, nullptr);
+  if (cntl.Failed()) {
+    CLOG4(ERROR, "Fail to call " + url + ", error: " + cntl.ErrorText());
+    throw std::runtime_error("Fail to call " + url + ", error: " + cntl.ErrorText());
+  }
+
+  return cntl.response_attachment().to_string();
+}
+
+template <>
+std::vector<char> DownloadFile(const std::string& url, int timeout_s) {
+  brpc::Channel channel;
+  brpc::ChannelOptions options;
+  options.protocol = "http";
+  options.timeout_ms = timeout_s * 1000;
+  options.connect_timeout_ms = 3000;
+
+  if (channel.Init(url.c_str(), &options) != 0) {
+    CLOG4(ERROR, "Fail to initialize channel to " + url);
+    throw std::runtime_error("Fail to initialize channel to " + url);
+  }
+
+  brpc::Controller cntl;
+  cntl.http_request().uri() = url;
+  cntl.http_request().set_method(brpc::HTTP_METHOD_GET);
+
+  channel.CallMethod(nullptr, &cntl, nullptr, nullptr, nullptr);
+  if (cntl.Failed()) {
+    CLOG4(ERROR, "Fail to call " + url + ", error: " + cntl.ErrorText());
+    throw std::runtime_error("Fail to call " + url + ", error: " + cntl.ErrorText());
+  }
+
+  std::vector<char> data(cntl.response_attachment().size());
+  cntl.response_attachment().copy_to_cstr(data.data(), data.size());
+
+  return data;
+}
+
+template <>
 std::string LoadBytesFromFile(const std::string& path) {
   if (std::filesystem::exists(path) == false) {
     CLOG4(ERROR, "File not found: " + path);
@@ -39,6 +121,26 @@ std::string LoadBytesFromFile(const std::string& path) {
     throw std::invalid_argument("Cannot open" + path);
   }
   std::string data;
+  fs.seekg(0, std::ios::end);
+  size_t size = static_cast<size_t>(fs.tellg());
+  fs.seekg(0, std::ios::beg);
+  data.resize(size);
+  fs.read(data.data(), long(size));
+  return data;
+}
+
+template <>
+std::vector<char> LoadBytesFromFile(const std::string& path) {
+  if (std::filesystem::exists(path) == false) {
+    CLOG4(ERROR, "File not found: " + path);
+    throw std::invalid_argument("File not found: " + path);
+  }
+  std::ifstream fs(path, std::ios::in | std::ios::binary);
+  if (fs.fail()) {
+    CLOG4(ERROR, "Cannot open " + path);
+    throw std::invalid_argument("Cannot open" + path);
+  }
+  std::vector<char> data;
   fs.seekg(0, std::ios::end);
   size_t size = static_cast<size_t>(fs.tellg());
   fs.seekg(0, std::ios::beg);
@@ -270,12 +372,33 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
                                   presence_penalty, frequency_penalty, length_penalty, early_stopping);
 }
 
+static std::optional<executor::PromptTuningConfig> BuildPromptTuningForImages(const std::vector<std::string>& img_urls,
+                                                                              VIT* vit,
+                                                                              std::string& prompt) {
+  if (img_urls.empty()) {
+    return std::nullopt;
+  }
+  if (vit == nullptr) {
+    throw std::invalid_argument("There is no vit model.");
+  }
+  std::shared_ptr<NamedTensor> vit_embeddings = vit->Encode(img_urls, prompt);
+  if (vit_embeddings == nullptr) {
+    throw std::runtime_error("Encode image to embeddings failed.");
+  }
+  auto e_tensor = executor::detail::ofITensor(vit_embeddings->tensor);
+  // CLOG4(INFO, "e_tensor shape: [" << e_tensor.getShape()[0] << ", " << e_tensor.getShape()[1]
+  //                                 << "], dtype: " << int(e_tensor.getDataType()) << ", size: " <<
+  //                                 e_tensor.getSize());
+  return executor::PromptTuningConfig(std::move(e_tensor));
+}
+
 std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody(
   const std::string& http_body,
   bool exclude_input_from_output,
   bool streaming,
   LLMStyler* llm_styler,
   MultiInstanceTokenizer* tokenizer,
+  VIT* vit,
   const std::unordered_set<std::string>& stop_words,
   const std::unordered_set<std::string>& bad_words,
   size_t max_output_len,
@@ -300,9 +423,7 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   if (json_body.HasMember("tools") && !llm_styler->support_func_call()) {
     throw std::invalid_argument("Function call is not supported for this llm.");
   }
-  auto [func_call, prompt] = llm_styler->BuildPrompt(json_body);
-  // CLOG4(INFO, "Prompt: " << prompt);
-  executor::VecTokens input_tokens = tokenizer->Encode(prompt);
+  auto [func_call, prompt, image_urls] = llm_styler->BuildPrompt(json_body);
 
   // Output config.
   executor::OutputConfig out_config = utils::GetOutputConfigFromJsonBody(json_body);
@@ -322,14 +443,6 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   // End and pad id.
   std::optional<executor::SizeType32> end_id = tokenizer->end_token_id();
   std::optional<executor::SizeType32> pad_id = tokenizer->pad_token_id();
-
-  std::optional<executor::VecTokens> encoder_input_tokens{std::nullopt};
-  if (model_type == executor::ModelType::kENCODER_ONLY || model_type == executor::ModelType::kENCODER_DECODER) {
-    encoder_input_tokens = std::move(input_tokens);
-    if (!pad_id) {
-      input_tokens = {pad_id.value()};
-    }
-  }
 
   // Sampling config.
   auto sampling_config = utils::GetSamplingConfigFromJsonBody(json_body, model);
@@ -394,9 +507,20 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
 
   // [TODO]: Support embedding_bias, p_tuning_config, lora_config, external_draft_tokens_config
   std::optional<executor::Tensor> embedding_bias{std::nullopt};
-  std::optional<executor::PromptTuningConfig> p_tuning_config{std::nullopt};
+  auto p_tuning_config = BuildPromptTuningForImages(image_urls, vit, prompt);
   std::optional<executor::LoraConfig> lora_config{std::nullopt};
   std::optional<executor::ExternalDraftTokensConfig> external_draft_tokens_config{std::nullopt};
+
+  // CLOG4(INFO, "Final prompt: " << prompt);
+  executor::VecTokens input_tokens = tokenizer->Encode(prompt);
+  std::optional<executor::VecTokens> encoder_input_tokens{std::nullopt};
+
+  if (model_type == executor::ModelType::kENCODER_ONLY || model_type == executor::ModelType::kENCODER_DECODER) {
+    encoder_input_tokens = input_tokens;
+    if (!pad_id) {
+      input_tokens = {pad_id.value()};
+    }
+  }
 
   return {
     func_call, std::move(model),
