@@ -299,7 +299,7 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
         "content": [
           {
             "type": "text",
-            "text": "Frame1:<image>\nFrame2:<image>\nFrame3:<image>\nFrame4:<image>\nFrame5:<image>\nFrame6:<image>\n简述一下视频的内容。不要重复。"
+            "text": "Frame1:<image>\nFrame2:<image>\nFrame3:<image>\nFrame4:<image>\nFrame5:<image>\nFrame6:<image>\n描述一下视频的内容。不要重复。"
           },
           {
             "type": "image_url",
@@ -355,7 +355,7 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
    "index": 0,
    "message": {
     "role": "assistant",
-    "content": "视频展示了两只大熊猫在户外活动。第一只大熊猫坐在树枝上，用爪子抓住树枝，身体悬挂在树枝上。第二只大熊猫在地上，用爪子抓住树枝，身体悬挂在树枝上。两只大熊猫都表现出它们独特的黑白相间的毛色，非常可爱。"
+    "content": "视频展示了两只红熊猫在户外活动。第一只红熊猫坐在树枝上，用爪子抓住树枝，身体悬挂在树枝上，显得非常灵活。第二只红熊猫在地上，用爪子抓住树枝，身体悬挂在树枝上，显得非常可爱。两只红熊猫都显得非常活泼，动作灵活，显得非常可爱。"
    },
    "logprobs": null,
    "finish_reason": "stop"
