@@ -287,6 +287,88 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
 }
 '
 
+# 测试视频帧
+cp -r ./data/frames /tmp/InternVL2-8B/examples/
+curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "InternVL2",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Frame1:<image>\nFrame2:<image>\nFrame3:<image>\nFrame4:<image>\nFrame5:<image>\nFrame6:<image>\n简述一下视频的内容。不要重复。"
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "file:///tmp/InternVL2-8B/examples/frames/frame_0.jpg"
+            }
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "file:///tmp/InternVL2-8B/examples/frames/frame_1.jpg"
+            }
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "file:///tmp/InternVL2-8B/examples/frames/frame_2.jpg"
+            }
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "file:///tmp/InternVL2-8B/examples/frames/frame_3.jpg"
+            }
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "file:///tmp/InternVL2-8B/examples/frames/frame_4.jpg"
+            }
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "file:///tmp/InternVL2-8B/examples/frames/frame_5.jpg"
+            }
+          }
+        ]
+      }
+    ],
+    "max_tokens": 256
+  }'
+# 返回如下：
+: '
+{
+ "id": "chatcmpl-11",
+ "object": "chat.completion",
+ "created": 1729245156,
+ "model": "InternVL2",
+ "system_fingerprint": "grps-trtllm-server",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "视频展示了两只大熊猫在户外活动。第一只大熊猫坐在树枝上，用爪子抓住树枝，身体悬挂在树枝上。第二只大熊猫在地上，用爪子抓住树枝，身体悬挂在树枝上。两只大熊猫都表现出它们独特的黑白相间的毛色，非常可爱。"
+   },
+   "logprobs": null,
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 9306,
+  "completion_tokens": 63,
+  "total_tokens": 9369
+ }
+}
+'
+
 # 通过openai api进行请求
 python3 client/openai_cli.py 0.0.0.0:9997 "<image>\n简述一下这张图片的内容。" false "https://i2.hdslb.com/bfs/archive/7172d7a46e2703e0bd5eabda22f8d8ac70025c76.jpg"
 # 返回如下：
