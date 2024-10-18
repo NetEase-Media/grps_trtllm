@@ -42,7 +42,7 @@
 | internlm2  | ✅    | ✅             | internlm2_5-chat, internlm2-chat                                   | [internlm2.5](docs%2Finternlm2.5.md)                                     |
 | llama3     | ✅    | ❌             | llama-3-instruct, llama-3.1-instruct                               | [llama3](docs%2Fllama3.md)                                               |
 
-支持多模态LLM：
+支持的多模态LLM：
 
 | llm_styler | vit       | chat | function_call | supported model                           | doc                              |
 |------------|-----------|------|---------------|-------------------------------------------|----------------------------------|

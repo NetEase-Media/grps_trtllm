@@ -176,7 +176,7 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
         "content": [
           {
             "type": "text",
-            "text": "图片-1: <image>\n图片-2: <image>\n描述一下两张图片细节。"
+            "text": "Image-1: <image>\nImage-2: <image>\n描述一下两张图片的不同。"
           },
           {
             "type": "image_url",
@@ -208,7 +208,7 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
    "index": 0,
    "message": {
     "role": "assistant",
-    "content": "这两张图片展示了两个可爱的动物，它们分别是红熊猫和黑白熊猫。\n\n图片-1：\n红熊猫\n红熊猫是一种非常可爱的动物，它们有着红棕色的毛发和白色的面部。红熊猫的毛发非常柔软，看起来非常舒适。它们的眼睛很大，看起来非常可爱。红熊猫通常生活在竹林中，它们喜欢吃竹子。\n\n图片-2：\n黑白熊猫\n黑白熊猫是一种非常可爱的动物，它们有着黑白相间的毛发和黑色的面部。黑白熊猫的毛发非常柔软，看起来非常舒适。它们的眼睛很大，看起来非常可爱。黑白熊猫通常生活在竹林中，它们喜欢吃竹子。"
+    "content": "这两张图片展示了两种不同的动物，分别是红熊猫和熊猫。\n\n1. 红熊猫：\n红熊猫是一种非常罕见的动物，它们通常生活在南美洲的安第斯山脉。红熊猫的毛色主要是红色和白色，它们的体型较小，通常只有20-30厘米高。红熊猫是杂食性动物，它们的食物包括水果、昆虫、小型哺乳动物等。红熊猫的栖息地通常是高海拔的山地，它们喜欢生活在树木上。\n\n2. 熊猫：\n熊猫是一种非常受欢迎的动物，它们通常生活在亚洲的竹林中。熊猫的毛色主要是黑白相间，它们的体型较大，通常有100-150厘米高。熊猫是草食性动物，它们的食物主要是竹子。熊猫的栖息地通常是低海拔的竹林，它们喜欢生活在地面上。\n\n这两张图片展示了两种不同的动物，分别是红熊猫和熊猫。"
    },
    "logprobs": null,
    "finish_reason": "stop"
@@ -218,6 +218,71 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   "prompt_tokens": 11844,
   "completion_tokens": 60,
   "total_tokens": 11904
+ }
+}
+'
+
+# 测试多轮对话
+curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "InternVL2",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Image-1: <image>\nImage-2: <image>\n描述一下两张图片的不同。"
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "file:///tmp/InternVL2-8B/examples/image1.jpg"
+            }
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "file:///tmp/InternVL2-8B/examples/image2.jpg"
+            }
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": "这两张图片展示了两种不同的动物，分别是红熊猫和熊猫。\n\n1. 红熊猫：\n红熊猫是一种非常罕见的动物，它们通常生活在南美洲的安第斯山脉。红熊猫的毛色主要是红色和白色，它们的体型较小，通常只有20-30厘米高。红熊猫是杂食性动物，它们的食物包括水果、昆虫、小型哺乳动物等。红熊猫的栖息地通常是高海拔的山地，它们喜欢生活在树木上。\n\n2. 熊猫：\n熊猫是一种非常受欢迎的动物，它们通常生活在亚洲的竹林中。熊猫的毛色主要是黑白相间，它们的体型较大，通常有100-150厘米高。熊猫是草食性动物，它们的食物主要是竹子。熊猫的栖息地通常是低海拔的竹林，它们喜欢生活在地面上。\n\n这两张图片展示了两种不同的动物，分别是红熊猫和熊猫。"
+      },
+      {
+        "role": "user",
+        "content": "描述一下图片-2中的熊猫所在的环境。"
+      }
+    ],
+    "max_tokens": 256
+  }'
+# 返回如下：
+: '
+{
+ "id": "chatcmpl-13",
+ "object": "chat.completion",
+ "created": 1729235382,
+ "model": "InternVL2",
+ "system_fingerprint": "grps-trtllm-server",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "图片-2中的熊猫所在的环境是一个竹林。竹林是熊猫的主要栖息地，它们喜欢生活在低海拔的竹林中。竹林中有大量的竹子，这是熊猫的主要食物来源。竹林的环境通常比较湿润，因为竹子需要大量的水分才能生长。竹林中的温度也比较适宜，因为熊猫是温血动物，它们需要保持一定的体温。竹林中的光线也比较柔和，因为竹子可以遮挡一部分阳光。竹林的环境非常适合熊猫生活，因为它们可以在竹林中自由地活动，并且有足够的食物来源。"
+   },
+   "logprobs": null,
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 11947,
+  "completion_tokens": 9,
+  "total_tokens": 11956
  }
 }
 '
