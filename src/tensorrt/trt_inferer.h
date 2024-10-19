@@ -271,6 +271,8 @@ public:
   void Infer(const std::vector<std::pair<std::string, std::shared_ptr<TrtHostBinding>>>& inputs,
              std::vector<std::pair<std::string, std::shared_ptr<tensorrt_llm::batch_manager::NamedTensor>>>& outputs);
 
+  [[nodiscard]] const std::unordered_map<std::string, nvinfer1::DataType> binding_type() const { return binding_type_; }
+
 private:
   struct Instance {
     TrtUniquePtr<nvinfer1::ICudaEngine> engine_;
@@ -287,5 +289,6 @@ private:
   int dla_cores_ = -1;
   int streams_ = 1;
   std::atomic<int> cur_stream_ = 0; // Current stream index.
+  std::unordered_map<std::string, nvinfer1::DataType> binding_type_;
 };
 } // namespace netease::grps

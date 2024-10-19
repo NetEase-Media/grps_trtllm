@@ -38,7 +38,7 @@ python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2
 --imagePath /tmp/InternVL2-8B/examples/image1.jpg \
 --onnxFile /tmp/InternVL2-8B/vision_encoder_bfp16.onnx \
 --trtFile /tmp/InternVL2-8B/vision_encoder_bfp16.trt \
---minBS 1 --optBS 13 --maxBS 26
+--dtype bfloat16 --minBS 1 --optBS 13 --maxBS 26
 ```
 
 ## 构建与部署

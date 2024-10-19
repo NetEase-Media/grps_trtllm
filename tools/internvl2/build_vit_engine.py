@@ -303,6 +303,11 @@ def parse_arguments():
     parser.add_argument('--onlyTrt',
                         action='store_true',
                         help='Run only convert the onnx to TRT engine.')
+    parser.add_argument('--dtype',
+                        type=str,
+                        default='bfloat16',
+                        help='The dtype of the model.',
+                        choices=['bfloat16', 'float16'])
     parser.add_argument('--minBS', type=int, default=1)
     parser.add_argument('--optBS', type=int, default=13)
     parser.add_argument('--maxBS', type=int, default=4 * 13)
@@ -322,12 +327,12 @@ if __name__ == '__main__':
     hf_model = AutoModelForCausalLM.from_pretrained(
         args.pretrainedModelPath,
         device_map='cpu',
-        torch_dtype=str_dtype_to_torch("bfloat16"),
+        torch_dtype=str_dtype_to_torch(args.dtype),
         trust_remote_code=True,
     ).eval()
     vision_encoder = (VisionEncoderWrapper(hf_model.vision_model, hf_model.mlp1, select_layer=-1).to('cpu'))
 
-    image = load_image(args.imagePath).to('cpu').to(str_dtype_to_torch("bfloat16"))
+    image = load_image(args.imagePath).to('cpu').to(str_dtype_to_torch(args.dtype))
 
     onnx_trt_obj = ONNX_TRT()
 

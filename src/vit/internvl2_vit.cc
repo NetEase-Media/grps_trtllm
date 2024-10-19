@@ -136,21 +136,25 @@ VitModelInputType Internvl2VIT::Preprocess(const std::vector<std::vector<char>>&
     // CLOG4(INFO, "Load image success, image index: " << i << ", patches count: " << images_mats[i].size());
   }
 
-  auto inp_tensor = std::make_shared<TrtHostBinding>("input", nvinfer1::Dims4(int64_t(batch_size), 3, 448, 448),
-                                                     nvinfer1::DataType::kBF16);
+  auto dtype = inferer_->binding_type().at("input");
+  auto inp_tensor = std::make_shared<TrtHostBinding>("input", nvinfer1::Dims4(int64_t(batch_size), 3, 448, 448), dtype);
 
   // Replace `<image>` with `<img><IMG_CONTEXT>*patches*256</img>` in prompt.
   // Copy data from images_mat to inp_tensor(batch_size, channels, height, width).
   auto buffer = inp_tensor->buffer().Get();
   size_t pos = 0;
   size_t buff_idx = 0;
-  for (auto & images_mat : images_mats) { // Images count.
+  for (auto& images_mat : images_mats) { // Images count.
     std::string replace = "<img>";
     for (auto img : images_mat) { // Per image patches count.
       for (int c = 0; c < img.channels(); ++c) {
         for (int h = 0; h < img.rows; ++h) {
           for (int w = 0; w < img.cols; ++w) {
-            reinterpret_cast<bf16*>(buffer)[buff_idx++] = Float32ToBfloat16(img.at<cv::Vec3f>(h, w)[c]);
+            if (dtype == nvinfer1::DataType::kBF16) {
+              reinterpret_cast<nv_bfloat16*>(buffer)[buff_idx++] = static_cast<nv_bfloat16>(img.at<cv::Vec3f>(h, w)[c]);
+            } else if (dtype == nvinfer1::DataType::kHALF) {
+              reinterpret_cast<half*>(buffer)[buff_idx++] = static_cast<half>(img.at<cv::Vec3f>(h, w)[c]);
+            }
           }
         }
       }

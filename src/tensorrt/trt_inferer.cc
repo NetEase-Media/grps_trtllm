@@ -203,6 +203,7 @@ void TrtModelInferer::Load() {
       auto dtype = instance->engine_->getTensorDataType(name);
       auto vec_dim = instance->engine_->getTensorVectorizedDim(name);
       auto comps = instance->engine_->getTensorComponentsPerElement(name);
+      binding_type_[name] = dtype;
       instance->bindings_.emplace_back(name, dims, max_dims, dtype, vec_dim, comps, is_input_binding, is_shape_binding);
 
       if (is_shape_binding) {

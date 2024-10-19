@@ -15,7 +15,6 @@
 #include "src/constants.h"
 #include "src/llm_styler.h"
 #include "src/tokenizer.h"
-#include "src/types.h"
 #include "src/vit/vit.h"
 #include "tensorrt_llm/batch_manager/inferenceRequest.h"
 #include "tensorrt_llm/common/logger.h"
