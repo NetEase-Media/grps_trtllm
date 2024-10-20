@@ -44,9 +44,9 @@
 
 支持的多模态LLM：
 
-| llm_styler | vit       | chat | function_call | supported model                           | doc                              |
-|------------|-----------|------|---------------|-------------------------------------------|----------------------------------|
-| internvl2  | internvl2 | ✅    | ❌             | InternVL2-2B, InternVL2-8B, InternVL2-26B | [internvl2](docs%2Finternvl2.md) |
+| llm_styler | vit       | chat | function_call | supported model | doc                              |
+|------------|-----------|------|---------------|-----------------|----------------------------------|
+| internvl2  | internvl2 | ✅    | ❌             | InternVL2-8B    | [internvl2](docs%2Finternvl2.md) |
 
 TODO：
 

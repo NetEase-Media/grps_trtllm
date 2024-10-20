@@ -84,7 +84,7 @@ def load_image(image_file, input_size=448, max_num=12):
 path = '/tmp/InternVL2-8B'
 model = AutoModel.from_pretrained(
     path,
-    device_map='cpu',
+    device_map='cuda',
     torch_dtype=torch.bfloat16,
     low_cpu_mem_usage=True,
     use_flash_attn=True,
@@ -113,8 +113,8 @@ response, history = model.chat(tokenizer, pixel_values, question, generation_con
 print(f'User: {question}\nAssistant: {response}')
 
 # multi-image multi-round conversation, separate images (多图多轮对话，独立图像)
-pixel_values1 = load_image('./data/image1.jpg', max_num=12).to(torch.bfloat16)
-pixel_values2 = load_image('./data/image2.jpg', max_num=12).to(torch.bfloat16)
+pixel_values1 = load_image('./data/image1.jpg', max_num=12).to(torch.bfloat16).cuda()
+pixel_values2 = load_image('./data/image2.jpg', max_num=12).to(torch.bfloat16).cuda()
 pixel_values = torch.cat((pixel_values1, pixel_values2), dim=0)
 num_patches_list = [pixel_values1.size(0), pixel_values2.size(0)]
 
