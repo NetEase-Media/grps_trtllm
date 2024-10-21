@@ -90,9 +90,9 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
 # 返回如下：
 : '
 {
- "id": "chatcmpl-6",
+ "id": "chatcmpl-1",
  "object": "chat.completion",
- "created": 1729151382,
+ "created": 1729523520,
  "model": "InternVL2",
  "system_fingerprint": "grps-trtllm-server",
  "choices": [
@@ -107,14 +107,14 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   }
  ],
  "usage": {
-  "prompt_tokens": 5175,
-  "completion_tokens": 77,
-  "total_tokens": 5252
+  "prompt_tokens": 2615,
+  "completion_tokens": 233,
+  "total_tokens": 2848
  }
 }
 '
 
-# 测试通过https从网络上下载的一张图片
+# 测试通过https从网络上下载的一张图片，解读其中的文字内容
 curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
@@ -130,20 +130,20 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
           {
             "type": "image_url",
             "image_url": {
-              "url": "https://i0.hdslb.com/bfs/archive/dd8dfe1126b847e00573dbda617180da77a38a06.jpg"
+              "url": "https://pic3.zhimg.com/v2-5904ffb96cf191bde40b91e4b7804d92_r.jpg"
             }
           }
         ]
       }
     ],
-    "max_tokens": 256
+    "max_tokens": 512
   }'
 # 返回如下：
 : '
 {
- "id": "chatcmpl-7",
+ "id": "chatcmpl-4",
  "object": "chat.completion",
- "created": 1729151405,
+ "created": 1729523694,
  "model": "InternVL2",
  "system_fingerprint": "grps-trtllm-server",
  "choices": [
@@ -151,16 +151,16 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
    "index": 0,
    "message": {
     "role": "assistant",
-    "content": "这张图片展示了一只可爱的红熊猫。红熊猫的身体覆盖着厚厚的棕色和白色毛发，脸部有明显的白色斑纹，耳朵和眼睛周围是白色的，而身体其他部分则是棕色的。它的眼睛大而圆，显得非常可爱。红熊猫的嘴巴微微张开，露出粉红色的舌头，显得非常活泼和好奇。\n\n红熊猫通常生活在竹林中，以竹子为主要食物。它们是夜行动物，白天通常会睡觉，晚上活动。红熊猫是濒危物种，主要分布在中国的四川、陕西和甘肃等地区。\n\n背景中可以看到一些绿色的植物，可能是竹叶，这与红熊猫的栖息地相符。此外，背景中还有一些木质的结构，可能是红熊猫生活环境的组成部分。\n\n通过这张图片，我们可以感受到红熊猫的可爱和独特之处，同时也能了解一些关于它们的生活习性和栖息地的知识。"
+    "content": "这是一张包含新闻简报的图片。图片顶部有一个蓝色的标题栏，标题栏上写着“星期六”，并配有三个星星的图案。标题栏下方是一段文字，内容是：“短短的一生，我们最终都会失去，你不妨大胆一些。爱一个人，攀一座山，追一个梦。”\n\n接下来是“早安读世界 今日简报”的标题，下面有“GOOD MORNING”的字样。\n\n图片的主要部分是每日资讯简报，日期是2024年3月23日，星期六，农历二月十四，早安！\n\n简报内容如下：\n\n1. 四川甘孜州官方：“3·15”雅江森林火灾原因初步查明：系施工动火作业引发，突遇极端大风造成扩散；\n2. 最高检表态：对未成年人实施的故意杀人、故意伤害，致人死亡等严重犯罪，符合核准追诉条件的，要依法追究刑事责任；\n3. 游族网络董事长林奇被毒杀一案，被告许旺一审被判无期，据悉其因管理经营矛盾，有预谋的在被害人食物中投毒致其死亡；\n4. 武汉地铁就“无臂男子免费乘地铁被要求出示残疾证”一事致歉，当时男子：没必要道歉，希望制度更人性化；\n5. 3月22日我国首个无人驾驶吨级电动垂直起降航空器获批合格证，据悉其载重可达400公斤，主要用于低空物流以及紧急物资运输与应急救援；\n6. 我国网民数量达到10.92亿人，互联网普及率达77.5%；\n7. 国家林草局：我国成为全球森林资源增长最多的国家，近20年来为全球贡献了约1/4的新增绿化面积；\n8. 河南郑州：2024年3月22日至4月30日，八区联合开展购车补贴活动，新能源车每台补贴不高于5000元，燃油车每台不高于3000元；\n9. 国台办披露：福建海警救起的两名海钓人员，其中一人为台军方现役人员，其编造虚假职业隐瞒身份还需进一步核实，另一人于3月22日送返金门；\n10. 因甘肃天水麻辣烫火出圈，清明小长假部分到天水的火车票已售罄，天水酒店预订量创近三年来单周预订量新高；\n11. 外媒：加拿大3月21日宣布，拟减少临时居留人数。今年1月加拿大称将在两年内减少留学签证数量，并限制毕业后申请工作签证；\n12. 外媒：以色列22日宣布，没收8平方公里约旦河西岸的巴勒斯坦土地归以色列所有；\n13. 外媒：美国一所医院成功完成一例将基因编辑猪肾移植到患者体内的手术，当地媒体称患者恢复良好，不日将出院；\n14. 外媒：美国得州边境墙附近，有上百名非法移民冲破铁丝网试图非法进入美国；\n15. 俄媒：3月22日，俄罗斯对乌克兰能源设施发动大规模无人机和导弹袭击。"
    },
    "logprobs": null,
    "finish_reason": "stop"
   }
  ],
  "usage": {
-  "prompt_tokens": 4663,
-  "completion_tokens": 68,
-  "total_tokens": 4731
+  "prompt_tokens": 3383,
+  "completion_tokens": 686,
+  "total_tokens": 4069
  }
 }
 '
@@ -198,9 +198,9 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
 # 返回如下：
 : '
 {
- "id": "chatcmpl-8",
+ "id": "chatcmpl-5",
  "object": "chat.completion",
- "created": 1729151468,
+ "created": 1729523749,
  "model": "InternVL2",
  "system_fingerprint": "grps-trtllm-server",
  "choices": [
@@ -215,9 +215,9 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   }
  ],
  "usage": {
-  "prompt_tokens": 11844,
-  "completion_tokens": 60,
-  "total_tokens": 11904
+  "prompt_tokens": 5955,
+  "completion_tokens": 220,
+  "total_tokens": 6175
  }
 }
 '
@@ -263,9 +263,9 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
 # 返回如下：
 : '
 {
- "id": "chatcmpl-13",
+ "id": "chatcmpl-6",
  "object": "chat.completion",
- "created": 1729235382,
+ "created": 1729523814,
  "model": "InternVL2",
  "system_fingerprint": "grps-trtllm-server",
  "choices": [
@@ -280,9 +280,9 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   }
  ],
  "usage": {
-  "prompt_tokens": 11947,
-  "completion_tokens": 9,
-  "total_tokens": 11956
+  "prompt_tokens": 6193,
+  "completion_tokens": 241,
+  "total_tokens": 6434
  }
 }
 '
@@ -345,9 +345,9 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
 # 返回如下：
 : '
 {
- "id": "chatcmpl-11",
+ "id": "chatcmpl-7",
  "object": "chat.completion",
- "created": 1729245156,
+ "created": 1729523848,
  "model": "InternVL2",
  "system_fingerprint": "grps-trtllm-server",
  "choices": [
@@ -362,9 +362,9 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   }
  ],
  "usage": {
-  "prompt_tokens": 9306,
-  "completion_tokens": 63,
-  "total_tokens": 9369
+  "prompt_tokens": 4697,
+  "completion_tokens": 367,
+  "total_tokens": 5064
  }
 }
 '
@@ -373,7 +373,7 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
 python3 client/openai_cli.py 0.0.0.0:9997 "<image>\n简述一下这张图片的内容。" false "https://i2.hdslb.com/bfs/archive/7172d7a46e2703e0bd5eabda22f8d8ac70025c76.jpg"
 # 返回如下：
 : '
-ChatCompletion(id='chatcmpl-11', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='这张图片展示了一只猫。猫的身体大部分是白色的，背部和头部有黑色的斑点。猫的耳朵竖起，眼睛半闭，似乎在打盹。猫的胡须清晰可见，鼻子和嘴巴也清晰可见。猫的身体蜷缩在地面上，地面是灰色的，看起来像是水泥或沥青。\n\n从猫的姿态和表情来看，它处于一种放松和舒适的状态。猫的毛发看起来非常柔软，整体给人一种宁静的感觉。\n\n通过观察猫的特征，可以推断出这只猫可能是一只家猫，因为它的毛发整洁，而且看起来非常健康。家猫通常喜欢在温暖和安静的地方休息，这与图片中的环境相符。\n\n总结来说，这张图片展示了一只白色的猫，背部和头部有黑色斑点，它正躺在灰色的地面上打盹，表现出一种放松和舒适的状态。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1729162343, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=45, prompt_tokens=4663, total_tokens=4708, completion_tokens_details=None, prompt_tokens_details=None))
+ChatCompletion(id='chatcmpl-8', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='这张图片展示了一只猫。猫的身体大部分是白色的，背部和头部有黑色的斑点。猫的耳朵竖起，眼睛半闭，似乎在打盹。猫的胡须清晰可见，鼻子和嘴巴也清晰可见。猫的身体蜷缩在地面上，地面是灰色的，看起来像是水泥或沥青。\n\n从猫的姿态和表情来看，它处于一种放松和舒适的状态。猫的毛发看起来非常柔软，整体给人一种宁静的感觉。\n\n通过观察猫的特征，可以推断出这只猫可能是一只家猫，因为它的毛发整洁，而且看起来非常健康。家猫通常喜欢在温暖和安静的地方休息，这与图片中的环境相符。\n\n总结来说，这张图片展示了一只白色的猫，背部和头部有黑色斑点，它正躺在灰色的地面上打盹，表现出一种放松和舒适的状态。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1729523881, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=172, prompt_tokens=2359, total_tokens=2531, completion_tokens_details=None, prompt_tokens_details=None))
 '
 ```
 
