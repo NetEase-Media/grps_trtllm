@@ -105,6 +105,10 @@ std::vector<int32_t> MultiInstanceTokenizer::Encode(const std::string& text, boo
     // Split text by force tokens.
     std::vector<std::pair<size_t, std::string>> splits; // <begin_idx, token>
     for (auto& [token, id] : force_token2id_) {
+      if (!img_token_.empty() && token == img_token_) { // Skip image token.
+        continue;
+      }
+
       size_t pos = 0;
       while ((pos = text.find(token, pos)) != std::string::npos) {
         splits.emplace_back(pos, token);
