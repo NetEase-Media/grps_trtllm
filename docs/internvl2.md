@@ -4,20 +4,20 @@ InternVL2多模态LLM模型的部署示例。由于InternVL2不同尺寸对应�
 ```Phi3```作为LLM模型的尺寸，即1B、2B、4B、8B、26B。
 具体不同尺寸的vit和llm组合如下表格：
 
-|      Model Name      |                                     Vision Part                                     |                                        Language Part                                         |                             HF Link                              |                                MS Link                                 |
-|:--------------------:|:-----------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|:----------------------------------------------------------------:|:----------------------------------------------------------------------:|
+| Model Name           | Vision Part                                                                         | Language Part                                                                                | HF Link                                                          | MS Link                                                                |
+|----------------------|-------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------------|
 |
-     InternVL2-1B     |    [InternViT-300M-448px](https://huggingface.co/OpenGVLab/InternViT-300M-448px)    |            [Qwen2-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2-0.5B-Instruct)            |     [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-1B)     |     [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-1B)     |
+ InternVL2-1B         | [InternViT-300M-448px](https://huggingface.co/OpenGVLab/InternViT-300M-448px)       | [Qwen2-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2-0.5B-Instruct)                       | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-1B)         | [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-1B)         |
 |
-     InternVL2-2B     |    [InternViT-300M-448px](https://huggingface.co/OpenGVLab/InternViT-300M-448px)    |          [internlm2-chat-1_8b](https://huggingface.co/internlm/internlm2-chat-1_8b)          |     [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-2B)     |     [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-2B)     |
+ InternVL2-2B         | [InternViT-300M-448px](https://huggingface.co/OpenGVLab/InternViT-300M-448px)       | [internlm2-chat-1_8b](https://huggingface.co/internlm/internlm2-chat-1_8b)                   | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-2B)         | [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-2B)         |
 |
-     InternVL2-4B     |    [InternViT-300M-448px](https://huggingface.co/OpenGVLab/InternViT-300M-448px)    |    [Phi-3-mini-128k-instruct](https://huggingface.co/microsoft/Phi-3-mini-128k-instruct)     |     [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-4B)     |     [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-4B)     |
+ InternVL2-4B         | [InternViT-300M-448px](https://huggingface.co/OpenGVLab/InternViT-300M-448px)       | [Phi-3-mini-128k-instruct](https://huggingface.co/microsoft/Phi-3-mini-128k-instruct)        | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-4B)         | [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-4B)         |
 |
-     InternVL2-8B     |    [InternViT-300M-448px](https://huggingface.co/OpenGVLab/InternViT-300M-448px)    |          [internlm2_5-7b-chat](https://huggingface.co/internlm/internlm2_5-7b-chat)          |     [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-8B)     |     [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-8B)     |
+ InternVL2-8B         | [InternViT-300M-448px](https://huggingface.co/OpenGVLab/InternViT-300M-448px)       | [internlm2_5-7b-chat](https://huggingface.co/internlm/internlm2_5-7b-chat)                   | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-8B)         | [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-8B)         |
 |
-    InternVL2-26B     | [InternViT-6B-448px-V1-5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V1-5) |           [internlm2-chat-20b](https://huggingface.co/internlm/internlm2-chat-20b)           |    [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-26B)     |    [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-26B)     |
+ InternVL2-26B        | [InternViT-6B-448px-V1-5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V1-5) | [internlm2-chat-20b](https://huggingface.co/internlm/internlm2-chat-20b)                     | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-26B)        | [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-26B)        |
 |
-    InternVL2-40B     | [InternViT-6B-448px-V1-5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V1-5) |       [Nous-Hermes-2-Yi-34B](https://huggingface.co/NousResearch/Nous-Hermes-2-Yi-34B)       |    [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-40B)     |    [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-40B)     |
+ InternVL2-40B        | [InternViT-6B-448px-V1-5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V1-5) | [Nous-Hermes-2-Yi-34B](https://huggingface.co/NousResearch/Nous-Hermes-2-Yi-34B)             | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-40B)        | [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-40B)        |
 |
  InternVL2-Llama3-76B | [InternViT-6B-448px-V1-5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V1-5) | [Hermes-2-Theta-Llama-3-70B](https://huggingface.co/NousResearch/Hermes-2-Theta-Llama-3-70B) | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-Llama3-76B) | [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-Llama3-76B) |
 
@@ -63,7 +63,8 @@ python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2
 --dtype bfloat16 --minBS 1 --optBS 13 --maxBS 26
 ```
 
-# 1B模型
+### 1B模型
+
 1B模型转为trtllm后容易输出重复内容，可以尝试在访问服务时将```repetition_penalty```参数调大，例如设置为1.2。
 
 ```bash
