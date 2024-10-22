@@ -1,13 +1,18 @@
 import time
-
+import sys
 import torch
 import torchvision.transforms as T
 from PIL import Image
 from torchvision.transforms.functional import InterpolationMode
 from transformers import AutoModel, AutoTokenizer
 
+if len(sys.argv) != 2:
+    print(f'Usage: python {sys.argv[0]} <model_path>')
+    exit(1)
+
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STD = (0.229, 0.224, 0.225)
+
 
 def build_transform(input_size):
     MEAN, STD = IMAGENET_MEAN, IMAGENET_STD
@@ -18,6 +23,7 @@ def build_transform(input_size):
         T.Normalize(mean=MEAN, std=STD)
     ])
     return transform
+
 
 def find_closest_aspect_ratio(aspect_ratio, target_ratios, width, height, image_size):
     best_ratio_diff = float('inf')
@@ -33,6 +39,7 @@ def find_closest_aspect_ratio(aspect_ratio, target_ratios, width, height, image_
             if area > 0.5 * image_size * image_size * ratio[0] * ratio[1]:
                 best_ratio = ratio
     return best_ratio
+
 
 def dynamic_preprocess(image, min_num=1, max_num=12, image_size=448, use_thumbnail=False):
     orig_width, orig_height = image.size
@@ -72,6 +79,7 @@ def dynamic_preprocess(image, min_num=1, max_num=12, image_size=448, use_thumbna
         processed_images.append(thumbnail_img)
     return processed_images
 
+
 def load_image(image_file, input_size=448, max_num=12):
     image = Image.open(image_file).convert('RGB')
     transform = build_transform(input_size=input_size)
@@ -80,8 +88,9 @@ def load_image(image_file, input_size=448, max_num=12):
     pixel_values = torch.stack(pixel_values)
     return pixel_values
 
+
 # If you want to load a model using multiple GPUs, please refer to the `Multiple GPUs` section.
-path = '/tmp/InternVL2-8B'
+path = sys.argv[1]
 model = AutoModel.from_pretrained(
     path,
     device_map='cuda',
@@ -95,7 +104,6 @@ begin = time.time()
 # set the max number of tiles in `max_num`
 pixel_values = load_image('./data/image1.jpg', max_num=12).to(torch.bfloat16).cuda()
 generation_config = dict(max_new_tokens=256, do_sample=True)
-#
 # single-image single-round conversation (单图单轮对话)
 question = '<image>\nPlease describe the image in detail.'
 response = model.chat(tokenizer, pixel_values, question, generation_config)
@@ -109,7 +117,8 @@ response, history = model.chat(tokenizer, pixel_values, question, generation_con
 print(f'User: {question}\nAssistant: {response}')
 
 question = 'Please write a poem according to the image.'
-response, history = model.chat(tokenizer, pixel_values, question, generation_config, history=history, return_history=True)
+response, history = model.chat(tokenizer, pixel_values, question, generation_config, history=history,
+                               return_history=True)
 print(f'User: {question}\nAssistant: {response}')
 
 # multi-image multi-round conversation, separate images (多图多轮对话，独立图像)
@@ -129,4 +138,3 @@ response, history = model.chat(tokenizer, pixel_values, question, generation_con
                                num_patches_list=num_patches_list,
                                history=history, return_history=True)
 print(f'User: {question}\nAssistant: {response}')
-

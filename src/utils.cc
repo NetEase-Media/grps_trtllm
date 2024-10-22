@@ -337,11 +337,25 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     temperature = json_body[InputFieldsNames::kTemperature].GetFloat();
   }
 
-  std::optional<float> length_penalty = 1.0f;
   std::optional<int32_t> early_stopping{std::nullopt};
-  std::optional<float> repetition_penalty = 1.0f;
   std::optional<int32_t> min_length{std::nullopt};
   std::optional<float> beam_search_diversity_rate{std::nullopt};
+
+  std::optional<float> length_penalty{std::nullopt};
+  if (json_body.HasMember(InputFieldsNames::kLengthPenalty)) {
+    if (!json_body[InputFieldsNames::kLengthPenalty].IsFloat()) {
+      throw std::invalid_argument("`length_penalty` is not a float");
+    }
+    length_penalty = json_body[InputFieldsNames::kLengthPenalty].GetFloat();
+  }
+
+  std::optional<float> repetition_penalty{std::nullopt};
+  if (json_body.HasMember(InputFieldsNames::kRepetitionPenalty)) {
+    if (!json_body[InputFieldsNames::kRepetitionPenalty].IsFloat()) {
+      throw std::invalid_argument("`repetition_penalty` is not a float");
+    }
+    repetition_penalty = json_body[InputFieldsNames::kRepetitionPenalty].GetFloat();
+  }
 
   std::optional<float> presence_penalty{std::nullopt};
   if (json_body.HasMember(InputFieldsNames::kPresencePenalty)) {

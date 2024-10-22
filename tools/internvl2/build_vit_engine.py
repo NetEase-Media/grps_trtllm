@@ -290,16 +290,19 @@ def parse_arguments():
                         help='')
     parser.add_argument('--onnxFile',
                         type=str,
-                        default='/tmp/InternVL2-8B/vision_encoder_bfp16.onnx',
-                        help='')
+                        default='',
+                        required=True,
+                        help='onnx file path')
     parser.add_argument('--pretrainedModelPath',
                         type=str,
-                        default='/tmp/InternVL2-8B',
-                        help='')
+                        default='',
+                        required=True,
+                        help='huggingface pretrained model path')
     parser.add_argument('--trtFile',
                         type=str,
-                        default='/tmp/InternVL2-8B/vision_encoder_bfp16.trt',
-                        help='')
+                        default='',
+                        required=True,
+                        help='trt file path')
     parser.add_argument('--onlyTrt',
                         action='store_true',
                         help='Run only convert the onnx to TRT engine.')

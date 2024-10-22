@@ -44,9 +44,11 @@
 
 支持的多模态LLM：
 
-| llm_styler | vit       | chat | function_call | supported model                           | doc                              |
-|------------|-----------|------|---------------|-------------------------------------------|----------------------------------|
-| internvl2  | internvl2 | ✅    | ❌             | InternVL2-2B, InternVL2-8B, InternVL2-26B | [internvl2](docs%2Finternvl2.md) |
+| llm_styler          | vit       | chat | function_call | supported model                         | doc                              |
+|---------------------|-----------|------|---------------|-----------------------------------------|----------------------------------|
+| internvl2-internlm2 | internvl2 | ✅    | ❌             | InternVL2-2B,InternVL2-8B,InternVL2-26B | [internvl2](docs%2Finternvl2.md) |
+| internvl2-qwen2     | internvl2 | ✅    | ❌             | InternVL2-1B                            | [internvl2](docs%2Finternvl2.md) |
+| internvl2-phi3      | internvl2 | ✅    | ❌             | InternVL2-4B                            | [internvl2](docs%2Finternvl2.md) |
 
 TODO：
 
@@ -112,7 +114,8 @@ git submodule update --init --recursive
 
 使用```registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.5_cudnn9.2_trtllm0.12.0_py3.10```镜像。
 这里挂载了当前目录用于构建工程并保留构建产物，挂载/tmp目录用于保存构建的trtllm引擎文件。参考```triton-trtllm```
-设置共享内存大小，解除物理内存锁定限制，设置栈大小，配置参数```--shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864```。
+设置共享内存大小，解除物理内存锁定限制，设置栈大小，配置参数
+```--shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864```。
 
 ```bash
 # 创建容器
@@ -162,7 +165,8 @@ models:
     ...
     inferer_args:
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
-      # Current support {`qwen2.5`, `qwen`, `chatglm3`, `glm4`, `internlm2`, `internvl2`}.
+      # Current support {`qwen2.5`, `qwen`, `chatglm3`, `glm4`, `internlm2`, `internvl2-internlm2`,
+      #  `internvl2-phi3`, `internvl2-qwen2`}.
       llm_style: qwen2.5
 
       # tokenizer config.

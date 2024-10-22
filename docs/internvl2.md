@@ -1,13 +1,35 @@
 # grps-trtllm
 
-InternVL2多模态LLM模型的部署示例。由于InternVL2不同尺寸对应的LLM可能不一样，目前支持了Internlm2作为LLM模型的尺寸，即InternVL2-2B,
-InternVL2-8B, InternVL2-26B。
+InternVL2多模态LLM模型的部署示例。由于InternVL2不同尺寸对应的LLM可能不一样，目前支持了```Internlm2```、```Qwen2```、
+```Phi3```作为LLM模型的尺寸，即1B、2B、4B、8B、26B。
+具体不同尺寸的vit和llm组合如下表格：
+
+|      Model Name      |                                     Vision Part                                     |                                        Language Part                                         |                             HF Link                              |                                MS Link                                 |
+|:--------------------:|:-----------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|:----------------------------------------------------------------:|:----------------------------------------------------------------------:|
+|
+     InternVL2-1B     |    [InternViT-300M-448px](https://huggingface.co/OpenGVLab/InternViT-300M-448px)    |            [Qwen2-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2-0.5B-Instruct)            |     [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-1B)     |     [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-1B)     |
+|
+     InternVL2-2B     |    [InternViT-300M-448px](https://huggingface.co/OpenGVLab/InternViT-300M-448px)    |          [internlm2-chat-1_8b](https://huggingface.co/internlm/internlm2-chat-1_8b)          |     [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-2B)     |     [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-2B)     |
+|
+     InternVL2-4B     |    [InternViT-300M-448px](https://huggingface.co/OpenGVLab/InternViT-300M-448px)    |    [Phi-3-mini-128k-instruct](https://huggingface.co/microsoft/Phi-3-mini-128k-instruct)     |     [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-4B)     |     [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-4B)     |
+|
+     InternVL2-8B     |    [InternViT-300M-448px](https://huggingface.co/OpenGVLab/InternViT-300M-448px)    |          [internlm2_5-7b-chat](https://huggingface.co/internlm/internlm2_5-7b-chat)          |     [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-8B)     |     [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-8B)     |
+|
+    InternVL2-26B     | [InternViT-6B-448px-V1-5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V1-5) |           [internlm2-chat-20b](https://huggingface.co/internlm/internlm2-chat-20b)           |    [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-26B)     |    [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-26B)     |
+|
+    InternVL2-40B     | [InternViT-6B-448px-V1-5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V1-5) |       [Nous-Hermes-2-Yi-34B](https://huggingface.co/NousResearch/Nous-Hermes-2-Yi-34B)       |    [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-40B)     |    [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-40B)     |
+|
+ InternVL2-Llama3-76B | [InternViT-6B-448px-V1-5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V1-5) | [Hermes-2-Theta-Llama-3-70B](https://huggingface.co/NousResearch/Hermes-2-Theta-Llama-3-70B) | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2-Llama3-76B) | [🤖 link](https://modelscope.cn/models/OpenGVLab/InternVL2-Llama3-76B) |
 
 ## 开发环境
 
 见[本地开发与调试](../README.md#3-本地开发与调试)。
 
 ## 构建trtllm引擎
+
+### 2B\8B\26B模型
+
+以8B模型为例，其他模型类似。
 
 ```bash
 # 下载InternVL2-8B模型
@@ -20,7 +42,7 @@ pip install -r ./tools/internvl2/requirements.txt
 
 # 转换ckpt
 rm -rf /tmp/InternVL2-8B/tllm_checkpoint/
-python3 tools/internvl2/convert_llm_ckpt.py --model_dir /tmp/InternVL2-8B/ \
+python3 tools/internvl2/convert_internlm2_ckpt.py --model_dir /tmp/InternVL2-8B/ \
 --output_dir /tmp/InternVL2-8B/tllm_checkpoint/ --dtype bfloat16
 
 # 构建llm引擎，根据具体显存情况可以配置不同。
@@ -41,6 +63,78 @@ python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2
 --dtype bfloat16 --minBS 1 --optBS 13 --maxBS 26
 ```
 
+# 1B模型
+1B模型转为trtllm后容易输出重复内容，可以尝试在访问服务时将```repetition_penalty```参数调大，例如设置为1.2。
+
+```bash
+# 下载InternVL2-1B模型
+apt update && apt install git-lfs
+git lfs install
+git clone https://huggingface.co/OpenGVLab/InternVL2-1B /tmp/InternVL2-1B
+# 拷贝缺失的tokenizer.json
+git clone https://huggingface.co/Qwen/Qwen2-0.5B-Instruct /tmp/Qwen2-0.5B-Instruct
+cp /tmp/Qwen2-0.5B-Instruct/tokenizer.json /tmp/InternVL2-1B/
+
+# 安装依赖
+pip install -r ./tools/internvl2/requirements.txt
+
+# 转换ckpt
+rm -rf /tmp/InternVL2-1B/tllm_checkpoint/
+python3 tools/internvl2/convert_qwen2_ckpt.py --model_dir /tmp/InternVL2-1B/ \
+--output_dir /tmp/InternVL2-1B/tllm_checkpoint/ --dtype bfloat16
+
+# 构建llm引擎，根据具体显存情况可以配置不同。
+# 这里设置支持最大batch_size为2，即支持2个并发同时推理，超过两个排队处理。
+# 设置每个请求最多输入26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
+# 即：max_multimodal_len=2（max_batch_size） * 26（图片最多产生patch个数） * 256（每个patch对应256个token） = 13312
+rm -rf /tmp/InternVL2-1B/trt_engines/
+trtllm-build --checkpoint_dir /tmp/InternVL2-1B/tllm_checkpoint/ \
+--output_dir /tmp/InternVL2-1B/trt_engines/ \
+--gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
+--max_input_len 32768 --max_seq_len 60416 --max_num_tokens 32768 --max_multimodal_len 13312
+
+# 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
+python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2-1B \
+--imagePath /tmp/InternVL2-1B/examples/image1.jpg \
+--onnxFile /tmp/InternVL2-1B/vision_encoder_bfp16.onnx \
+--trtFile /tmp/InternVL2-1B/vision_encoder_bfp16.trt \
+--dtype bfloat16 --minBS 1 --optBS 13 --maxBS 26
+```
+
+### 4B模型
+
+```bash
+# 下载InternVL2-4B模型
+apt update && apt install git-lfs
+git lfs install
+git clone https://huggingface.co/OpenGVLab/InternVL2-4B /tmp/InternVL2-4B
+
+# 安装依赖
+pip install -r ./tools/internvl2/requirements.txt
+
+# 转换ckpt
+rm -rf /tmp/InternVL2-4B/tllm_checkpoint/
+python3 tools/internvl2/convert_phi3_ckpt.py --model_dir /tmp/InternVL2-4B/ \
+--output_dir /tmp/InternVL2-4B/tllm_checkpoint/ --dtype bfloat16
+
+# 构建llm引擎，根据具体显存情况可以配置不同。
+# 这里设置支持最大batch_size为2，即支持2个并发同时推理，超过两个排队处理。
+# 设置每个请求最多输入26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
+# 即：max_multimodal_len=2（max_batch_size） * 26（图片最多产生patch个数） * 256（每个patch对应256个token） = 13312
+rm -rf /tmp/InternVL2-4B/trt_engines/
+trtllm-build --checkpoint_dir /tmp/InternVL2-4B/tllm_checkpoint/ \
+--output_dir /tmp/InternVL2-4B/trt_engines/ \
+--gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
+--max_input_len 32768 --max_seq_len 60416 --max_num_tokens 32768 --max_multimodal_len 13312
+
+# 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
+python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2-4B \
+--imagePath /tmp/InternVL2-4B/examples/image1.jpg \
+--onnxFile /tmp/InternVL2-4B/vision_encoder_bfp16.onnx \
+--trtFile /tmp/InternVL2-4B/vision_encoder_bfp16.trt \
+--dtype bfloat16 --minBS 1 --optBS 13 --maxBS 26
+```
+
 ## 构建与部署
 
 ```bash
@@ -51,7 +145,7 @@ grpst archive .
 # 通过--inference_conf参数指定模型对应的inference.yml配置文件启动服务。
 # 如需修改服务端口，并发限制等，可以修改conf/server.yml文件，然后启动时指定--server_conf参数指定新的server.yml文件。
 # 注意如果使用多卡推理，需要使用mpi方式启动，--mpi_np参数为并行推理的GPU数量。
-grpst start ./server.mar --inference_conf=conf/inference_internvl2.yml
+grpst start ./server.mar --inference_conf=conf/inference_internvl2-8B.yml
 
 # 查看服务状态
 grpst ps
@@ -136,7 +230,7 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
         ]
       }
     ],
-    "max_tokens": 512
+    "max_tokens": 1024
   }'
 # 返回如下：
 : '

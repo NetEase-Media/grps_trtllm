@@ -273,17 +273,17 @@ public:
                                 rapidjson::MemoryPoolAllocator<>& allocator) override;
 };
 
-class Internvl2Styler : public LLMStyler {
+class Internvl2Internlm2Styler : public LLMStyler {
 public:
-  Internvl2Styler()
-      : LLMStyler("internvl2",
+  Internvl2Internlm2Styler()
+      : LLMStyler("internvl2-internlm2",
                   "你是由上海人工智能实验室联合商汤科技开发的书生多模态大模型，英文名叫InternVL, "
                   "是一个有用无害的人工智能助手。",
                   {"system", "user", "assistant"},
                   false,
                   "",
                   true) {}
-  ~Internvl2Styler() override = default;
+  ~Internvl2Internlm2Styler() override = default;
 
   /**
    * @brief Build prompt for model input from OpenAI interface json body request.
@@ -305,6 +305,46 @@ public:
                                 int64_t req_id,
                                 rapidjson::GenericValue<rapidjson::UTF8<>>& message,
                                 rapidjson::MemoryPoolAllocator<>& allocator) override;
+};
+
+class Internvl2Phi3Styler : public LLMStyler {
+public:
+  Internvl2Phi3Styler()
+      : LLMStyler("internvl2-phi3",
+                  "你是由上海人工智能实验室联合商汤科技开发的书生多模态大模型，英文名叫InternVL, "
+                  "是一个有用无害的人工智能助手。",
+                  {"<|system|>\n", "<|user|>\n", "<|assistant|>\n"},
+                  false,
+                  "",
+                  true) {}
+  ~Internvl2Phi3Styler() override = default;
+
+  /**
+   * @brief Build prompt for model input from OpenAI interface json body request.
+   * @param json_body: Json body from client.
+   * @return <if_function_call, prompt, img_urls>: if_function_call is true if the prompt contains function call.
+   */
+  std::tuple<bool, std::string, std::vector<std::string>> BuildPrompt(const rapidjson::Document& json_body) override;
+
+  /**
+   * @brief Parse function call response from generated text and build content and tool_calls array of message
+   * member of OpenAI interface response.
+   * @param gen_txt: Generated text.
+   * @param req_id: Request id.
+   * @param message: Message member of OpenAI interface response format.
+   * @param allocator: Json allocator.
+   * @return stop reason.
+   */
+  std::string ParseFunctionCall(const std::string& gen_txt,
+                                int64_t req_id,
+                                rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                rapidjson::MemoryPoolAllocator<>& allocator) override;
+};
+
+class Internvl2Qwen2Styler : public Internvl2Internlm2Styler {
+public:
+  Internvl2Qwen2Styler() = default;
+  ~Internvl2Qwen2Styler() override = default;
 };
 
 class LLMStylerFactory {

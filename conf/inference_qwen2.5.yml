@@ -7,7 +7,7 @@ models:
     inferer_path:
     inferer_args: # more args of model inferer.
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
-      # Current support {`qwen2.5`, `qwen`, `chatglm3`, `glm4`, `internlm2`, `internvl2`}.
+      # Support llm_style see README.md.
       llm_style: qwen2.5
 
       # tokenizer config.
