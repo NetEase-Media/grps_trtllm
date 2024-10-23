@@ -138,6 +138,8 @@ private:
   std::unordered_set<std::string> stop_words_;
   std::unordered_set<std::string> bad_words_;
 
+  executor::SamplingConfig def_sampling_config_;
+
   executor::ModelType model_type_;
 
   size_t max_batch_size_;

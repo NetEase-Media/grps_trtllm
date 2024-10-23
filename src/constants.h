@@ -29,21 +29,42 @@ struct InputFieldsNames {
   static constexpr char const* kReturnContextLogits = "return_context_logits";
 
   // SamplingConfig
+  /// @brief The beam width. Default is 1 which disables beam search.
   static constexpr char const* kBeamWidth = "beam_width";
+  /// @brief Controls number of logits to sample from. Default is 0 (all logits).
   static constexpr char const* kTopK = "top_k";
+  /// @brief Controls the top-P probability to sample from. Default is 0.f
   static constexpr char const* kTopP = "top_p";
+  /// @brief Controls decay in the top-P algorithm. topPMin is lower-bound. Default is 1.e-6.
   static constexpr char const* kTopPMin = "top_k_min";
+  /// @brief Controls decay in the top-P algorithm. The decay value. Default is 1.f
   static constexpr char const* kTopPDecay = "top_p_decay";
+  /// @brief Controls decay in the top-P algorithm. Indicates where to reset the decay. Default is 1.
   static constexpr char const* kTopPResetIds = "top_p_reset_ids";
+  /// @brief Controls the modulation of logits when sampling new tokens. It can have values > 0.f. Default is 1.0f
   static constexpr char const* kTemperature = "temperature";
+  /// @brief Controls how to penalize longer sequences in beam search. Default is 0.f
   static constexpr char const* kLengthPenalty = "length_penalty";
+  /// @brief Controls whether the generation process finishes once beamWidth sentences are generated (ends with
+  /// end_token)
   static constexpr char const* kEarlyStopping = "early_stopping";
+  /// @brief Used to penalize tokens based on how often they appear in the sequence. It can have any value > 0.f.
+  /// Values < 1.f encourages repetition, values > 1.f discourages it. Default is 1.f.
   static constexpr char const* kRepetitionPenalty = "repetition_penalty";
+  /// @brief Lower bound on the number of tokens to generate. Values < 1 have no effect. Default is 1.
   static constexpr char const* kMinLength = "min_length";
+  /// @brief Controls the diversity in beam search.
   static constexpr char const* kBeamSearchDiversityRate = "beam_search_diversity_rate";
+  /// @brief Used to penalize tokens already present in the sequence (irrespective of the number of appearances). It
+  /// can have any values. Values < 0.f encourage repetition, values > 0.f discourage it. Default is 0.f.
   static constexpr char const* kPresencePenalty = "presence_penalty";
+  /// @brief Used to penalize tokens already present in the sequence (dependent on the number of appearances). It can
+  /// have any values. Values < 0.f encourage repetition, values > 0.f discourage it. Default is 0.f.
   static constexpr char const* kFrequencyPenalty = "frequency_penalty";
+  /// @brief Controls the random seed used by the random number generator in sampling
   static constexpr char const* kRandomSeed = "seed";
+  /// @brief Controls how many repeat ngram size are acceptable. Default is 1 << 30.
+  static constexpr char const* kNoRepeatNgramSize = "no_repeat_ngram_size";
 
   // PromptTuningConfig
   static constexpr char const* kPromptEmbeddingTable = "prompt_embedding_table";

@@ -13,8 +13,9 @@
     * [3.6 模拟请求](#36-模拟请求)
     * [3.7 指标观测](#37-指标观测)
     * [3.8 关闭服务](#38-关闭服务)
-* [4. docker部署](#4-docker部署)
-* [5. 与xinference-vllm性能比较](#5-与xinference-vllm性能比较)
+* [4. 采样参数配置](#4-采样参数配置)
+* [5. docker部署](#5-docker部署)
+* [6. 与xinference-vllm性能比较](#6-与xinference-vllm性能比较)
 
 ## 1. 说明
 
@@ -185,6 +186,12 @@ models:
       #    id: 151643
       prefix_tokens_id: # prefix tokens id will be added to the beginning of the input ids. Empty if not set.
       suffix_tokens_id: # suffix tokens id will be added to the end of the input ids. Empty if not set.
+
+      # default sampling config, sampling param in request will overwrite these. Support sampling params see
+      # @ref(src/constants.h - SamplingConfig)
+      sampling:
+        top_k: 50
+        top_p: 1.0
 
       # trtllm config.
       gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
@@ -401,7 +408,38 @@ Response: The current temperature in Boston is 59.0 degrees Fahrenheit.
 grpst stop my_grps
 ```
 
-## 4. docker部署
+## 4. 采样参数配置
+
+通过请求参数可以指定采样参数，例如：
+
+```json
+{
+  "model": "qwen2.5-instruct",
+  "messages": [
+    {
+      "role": "user",
+      "content": "你好，你是谁？"
+    }
+  ],
+  "top_k": 50,
+  "top_p": 1.0
+}
+```
+
+同时也支持在部署模型服务时通过配置的方式设置模型默认的采样参数，见```inference.yml```文件中的```sampling```字段，这有助于设置一些
+```OpenAI```
+协议不支持的采样参数。例如：
+
+```yaml
+sampling:
+  top_k: 50
+  top_p: 1.0
+```
+
+注意，当请求参数中指定了采样参数时，会覆盖默认的采样参数。
+具体支持的采样参数见[src/constants.h](src/constants.h)文件中的```SamplingConfig```。
+
+## 5. docker部署
 
 ```bash
 # 更新conf/inference.yml软链接为具体的inference*.yml配置文件
@@ -427,7 +465,7 @@ docker logs -f grps_trtllm_server
 docker rm -f grps_trtllm_server
 ```
 
-### 5. 与xinference-vllm性能比较
+### 6. 与xinference-vllm性能比较
 
 这里不再比较与```triton-trtllm```性能，因为它不是```OpenAI```协议。比较与```xinference-vllm```服务的性能差异。
 

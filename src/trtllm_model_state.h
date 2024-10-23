@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "tensorrt_llm/common/logger.h"
+#include "tensorrt_llm/executor/executor.h"
 #include "tensorrt_llm/plugins/api/tllmPlugin.h"
 #include "tensorrt_llm/runtime/tllmLogger.h"
 
@@ -84,6 +85,10 @@ std::vector<std::vector<int32_t>> TrtLlmModelState::GetParameter<std::vector<std
 
 template <>
 std::unordered_map<std::string, int32_t> TrtLlmModelState::GetParameter<std::unordered_map<std::string, int32_t>>(
+  std::string const& name);
+
+template <>
+tensorrt_llm::executor::SamplingConfig TrtLlmModelState::GetParameter<tensorrt_llm::executor::SamplingConfig>(
   std::string const& name);
 
 } // namespace netease::grps

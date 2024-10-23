@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #include "logger/logger.h"
+#include "src/constants.h"
 
 namespace netease::grps {
 
@@ -188,6 +189,109 @@ std::unordered_map<std::string, int32_t> TrtLlmModelState::GetParameter<std::uno
     throw std::invalid_argument("Failed to parse conf, not a map, conf_name: " + name);
   }
   return str2int;
+}
+
+template <>
+tensorrt_llm::executor::SamplingConfig TrtLlmModelState::GetParameter<tensorrt_llm::executor::SamplingConfig>(
+  std::string const& name) {
+  int32_t beam_width = 1;
+  std::optional<int32_t> top_k{std::nullopt};
+  std::optional<float> top_p{std::nullopt};
+  std::optional<float> top_p_min{std::nullopt};
+  std::optional<float> top_p_decay{std::nullopt};
+  std::optional<int32_t> top_p_reset_ids{std::nullopt};
+  std::optional<float> temperature{std::nullopt};
+  std::optional<int32_t> early_stopping{std::nullopt};
+  std::optional<int32_t> min_length{std::nullopt};
+  std::optional<float> beam_search_diversity_rate{std::nullopt};
+  std::optional<float> length_penalty{std::nullopt};
+  std::optional<float> repetition_penalty{std::nullopt};
+  std::optional<float> presence_penalty{std::nullopt};
+  std::optional<float> frequency_penalty{std::nullopt};
+  std::optional<uint64_t> random_seed{std::nullopt};
+  std::optional<int32_t> no_repeat_ngram_size(std::nullopt);
+
+  if (model_config_[name] && model_config_[name].IsMap()) {
+    if (model_config_[name][InputFieldsNames::kBeamWidth]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kBeamWidth, int32_t, beam_width);
+    }
+    if (model_config_[name][InputFieldsNames::kTopK]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kTopK, int32_t, top_k);
+    }
+    if (model_config_[name][InputFieldsNames::kTopP]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kTopP, float, top_p);
+    }
+    if (top_p.has_value() && top_p.value() <= 0.F) {
+      top_p.reset();
+    }
+    if (model_config_[name][InputFieldsNames::kTopPMin]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kTopPMin, float, top_p_min);
+    }
+    if (model_config_[name][InputFieldsNames::kTopPDecay]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kTopPDecay, float, top_p_decay);
+    }
+    if (model_config_[name][InputFieldsNames::kTopPResetIds]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kTopPResetIds, int32_t, top_p_reset_ids);
+    }
+    if (model_config_[name][InputFieldsNames::kTemperature]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kTemperature, float, temperature);
+    }
+    if (model_config_[name][InputFieldsNames::kEarlyStopping]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kEarlyStopping, int32_t, early_stopping);
+    }
+    if (model_config_[name][InputFieldsNames::kMinLength]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kMinLength, int32_t, min_length);
+    }
+    if (model_config_[name][InputFieldsNames::kBeamSearchDiversityRate]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kBeamSearchDiversityRate, float,
+                       beam_search_diversity_rate);
+    }
+    if (model_config_[name][InputFieldsNames::kLengthPenalty]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kLengthPenalty, float, length_penalty);
+    }
+    if (model_config_[name][InputFieldsNames::kRepetitionPenalty]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kRepetitionPenalty, float, repetition_penalty);
+    }
+    if (model_config_[name][InputFieldsNames::kPresencePenalty]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kPresencePenalty, float, presence_penalty);
+    }
+    if (model_config_[name][InputFieldsNames::kFrequencyPenalty]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kFrequencyPenalty, float, frequency_penalty);
+    }
+    if (model_config_[name][InputFieldsNames::kRandomSeed]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kRandomSeed, uint64_t, random_seed);
+    }
+    if (model_config_[name][InputFieldsNames::kNoRepeatNgramSize]) {
+      YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kNoRepeatNgramSize, int32_t, no_repeat_ngram_size);
+    }
+  }
+
+  CLOG4(INFO,
+        "Loaded default sampling config: "
+          << "beam_width: " << beam_width << ", top_k: " << (top_k.has_value() ? std::to_string(top_k.value()) : "None")
+          << ", top_p: " << (top_p.has_value() ? std::to_string(top_p.value()) : "None")
+          << ", top_p_min: " << (top_p_min.has_value() ? std::to_string(top_p_min.value()) : "None")
+          << ", top_p_decay: " << (top_p_decay.has_value() ? std::to_string(top_p_decay.value()) : "None")
+          << ", top_p_reset_ids: " << (top_p_reset_ids.has_value() ? std::to_string(top_p_reset_ids.value()) : "None")
+          << ", temperature: " << (temperature.has_value() ? std::to_string(temperature.value()) : "None")
+          << ", min_length: " << (min_length.has_value() ? std::to_string(min_length.value()) : "None")
+          << ", beam_search_diversity_rate: "
+          << (beam_search_diversity_rate.has_value() ? std::to_string(beam_search_diversity_rate.value()) : "None")
+          << ", repetition_penalty: "
+          << (repetition_penalty.has_value() ? std::to_string(repetition_penalty.value()) : "None")
+          << ", presence_penalty: "
+          << (presence_penalty.has_value() ? std::to_string(presence_penalty.value()) : "None")
+          << ", frequency_penalty: "
+          << (frequency_penalty.has_value() ? std::to_string(frequency_penalty.value()) : "None")
+          << ", length_penalty: " << (length_penalty.has_value() ? std::to_string(length_penalty.value()) : "None")
+          << ", early_stopping: " << (early_stopping.has_value() ? std::to_string(early_stopping.value()) : "None")
+          << ", no_repeat_ngram_size: "
+          << (no_repeat_ngram_size.has_value() ? std::to_string(no_repeat_ngram_size.value()) : "None"));
+
+  return tensorrt_llm::executor::SamplingConfig(beam_width, top_k, top_p, top_p_min, top_p_reset_ids, top_p_decay,
+                                                random_seed, temperature, min_length, beam_search_diversity_rate,
+                                                repetition_penalty, presence_penalty, frequency_penalty, length_penalty,
+                                                early_stopping, no_repeat_ngram_size);
 }
 
 } // namespace netease::grps

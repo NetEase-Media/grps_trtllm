@@ -303,10 +303,17 @@ static executor::OutputConfig GetOutputConfigFromJsonBody(const rapidjson::Docum
 }
 
 static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::Document& json_body,
-                                                              const std::string& model) {
-  int32_t beam_width = 1;
+                                                              const std::string& model,
+                                                              const executor::SamplingConfig& def_sampling_config) {
+  int32_t beam_width = def_sampling_config.getBeamWidth();
+  if (json_body.HasMember(InputFieldsNames::kBeamWidth)) {
+    if (!json_body[InputFieldsNames::kBeamWidth].IsInt()) {
+      throw std::invalid_argument("`beam_width` is not an integer");
+    }
+    beam_width = json_body[InputFieldsNames::kBeamWidth].GetInt();
+  }
 
-  std::optional<executor::SizeType32> top_k{std::nullopt};
+  std::optional<executor::SizeType32> top_k = def_sampling_config.getTopK();
   if (json_body.HasMember(InputFieldsNames::kTopK)) {
     if (!json_body[InputFieldsNames::kTopK].IsInt()) {
       throw std::invalid_argument("`top_k` is not an integer");
@@ -314,7 +321,7 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     top_k = json_body[InputFieldsNames::kTopK].GetInt();
   }
 
-  std::optional<float> top_p{std::nullopt};
+  std::optional<float> top_p = def_sampling_config.getTopP();
   if (json_body.HasMember(InputFieldsNames::kTopP)) {
     if (!json_body[InputFieldsNames::kTopP].IsFloat()) {
       throw std::invalid_argument("`top_p` is not a float");
@@ -325,11 +332,31 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     top_p.reset();
   }
 
-  std::optional<float> top_p_min{std::nullopt};
-  std::optional<float> top_p_decay{std::nullopt};
-  std::optional<int32_t> top_p_reset_ids{std::nullopt};
+  std::optional<float> top_p_min = def_sampling_config.getTopPMin();
+  if (json_body.HasMember(InputFieldsNames::kTopPMin)) {
+    if (!json_body[InputFieldsNames::kTopPMin].IsFloat()) {
+      throw std::invalid_argument("`top_p_min` is not a float");
+    }
+    top_p_min = json_body[InputFieldsNames::kTopPMin].GetFloat();
+  }
 
-  std::optional<float> temperature{std::nullopt};
+  std::optional<float> top_p_decay = def_sampling_config.getTopPDecay();
+  if (json_body.HasMember(InputFieldsNames::kTopPDecay)) {
+    if (!json_body[InputFieldsNames::kTopPDecay].IsFloat()) {
+      throw std::invalid_argument("`top_p_decay` is not a float");
+    }
+    top_p_decay = json_body[InputFieldsNames::kTopPDecay].GetFloat();
+  }
+
+  std::optional<int32_t> top_p_reset_ids = def_sampling_config.getTopPResetIds();
+  if (json_body.HasMember(InputFieldsNames::kTopPResetIds)) {
+    if (!json_body[InputFieldsNames::kTopPResetIds].IsInt()) {
+      throw std::invalid_argument("`top_p_reset_ids` is not an integer");
+    }
+    top_p_reset_ids = json_body[InputFieldsNames::kTopPResetIds].GetInt();
+  }
+
+  std::optional<float> temperature = def_sampling_config.getTemperature();
   if (json_body.HasMember(InputFieldsNames::kTemperature)) {
     if (!json_body[InputFieldsNames::kTemperature].IsFloat()) {
       throw std::invalid_argument("`temperature` is not a float");
@@ -337,11 +364,31 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     temperature = json_body[InputFieldsNames::kTemperature].GetFloat();
   }
 
-  std::optional<int32_t> early_stopping{std::nullopt};
-  std::optional<int32_t> min_length{std::nullopt};
-  std::optional<float> beam_search_diversity_rate{std::nullopt};
+  std::optional<int32_t> early_stopping = def_sampling_config.getEarlyStopping();
+  if (json_body.HasMember(InputFieldsNames::kEarlyStopping)) {
+    if (!json_body[InputFieldsNames::kEarlyStopping].IsInt()) {
+      throw std::invalid_argument("`early_stopping` is not an integer");
+    }
+    early_stopping = json_body[InputFieldsNames::kEarlyStopping].GetInt();
+  }
 
-  std::optional<float> length_penalty{std::nullopt};
+  std::optional<int32_t> min_length = def_sampling_config.getMinLength();
+  if (json_body.HasMember(InputFieldsNames::kMinLength)) {
+    if (!json_body[InputFieldsNames::kMinLength].IsInt()) {
+      throw std::invalid_argument("`min_length` is not an integer");
+    }
+    min_length = json_body[InputFieldsNames::kMinLength].GetInt();
+  }
+
+  std::optional<float> beam_search_diversity_rate = def_sampling_config.getBeamSearchDiversityRate();
+  if (json_body.HasMember(InputFieldsNames::kBeamSearchDiversityRate)) {
+    if (!json_body[InputFieldsNames::kBeamSearchDiversityRate].IsFloat()) {
+      throw std::invalid_argument("`beam_search_diversity_rate` is not a float");
+    }
+    beam_search_diversity_rate = json_body[InputFieldsNames::kBeamSearchDiversityRate].GetFloat();
+  }
+
+  std::optional<float> length_penalty = def_sampling_config.getLengthPenalty();
   if (json_body.HasMember(InputFieldsNames::kLengthPenalty)) {
     if (!json_body[InputFieldsNames::kLengthPenalty].IsFloat()) {
       throw std::invalid_argument("`length_penalty` is not a float");
@@ -349,7 +396,7 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     length_penalty = json_body[InputFieldsNames::kLengthPenalty].GetFloat();
   }
 
-  std::optional<float> repetition_penalty{std::nullopt};
+  std::optional<float> repetition_penalty = def_sampling_config.getRepetitionPenalty();
   if (json_body.HasMember(InputFieldsNames::kRepetitionPenalty)) {
     if (!json_body[InputFieldsNames::kRepetitionPenalty].IsFloat()) {
       throw std::invalid_argument("`repetition_penalty` is not a float");
@@ -357,7 +404,7 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     repetition_penalty = json_body[InputFieldsNames::kRepetitionPenalty].GetFloat();
   }
 
-  std::optional<float> presence_penalty{std::nullopt};
+  std::optional<float> presence_penalty = def_sampling_config.getPresencePenalty();
   if (json_body.HasMember(InputFieldsNames::kPresencePenalty)) {
     if (!json_body[InputFieldsNames::kPresencePenalty].IsFloat()) {
       throw std::invalid_argument("`presence_penalty` is not a float");
@@ -365,7 +412,7 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     presence_penalty = json_body[InputFieldsNames::kPresencePenalty].GetFloat();
   }
 
-  std::optional<float> frequency_penalty{std::nullopt};
+  std::optional<float> frequency_penalty = def_sampling_config.getFrequencyPenalty();
   if (json_body.HasMember(InputFieldsNames::kFrequencyPenalty)) {
     if (!json_body[InputFieldsNames::kFrequencyPenalty].IsFloat()) {
       throw std::invalid_argument("`frequency_penalty` is not a float");
@@ -373,7 +420,7 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     frequency_penalty = json_body[InputFieldsNames::kFrequencyPenalty].GetFloat();
   }
 
-  std::optional<uint64_t> random_seed{std::nullopt};
+  std::optional<uint64_t> random_seed = def_sampling_config.getRandomSeed();
   if (json_body.HasMember(InputFieldsNames::kRandomSeed)) {
     if (!json_body[InputFieldsNames::kRandomSeed].IsUint64()) {
       throw std::invalid_argument("`seed` is not an unsigned integer");
@@ -381,9 +428,41 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     random_seed = json_body[InputFieldsNames::kRandomSeed].GetUint64();
   }
 
+  std::optional<int32_t> no_repeat_ngram_size = def_sampling_config.getNoRepeatNgramSize();
+  if (json_body.HasMember(InputFieldsNames::kNoRepeatNgramSize)) {
+    if (!json_body[InputFieldsNames::kNoRepeatNgramSize].IsUint64()) {
+      throw std::invalid_argument("`no_repeat_ngram_size` is not an unsigned integer");
+    }
+    no_repeat_ngram_size = json_body[InputFieldsNames::kNoRepeatNgramSize].GetInt();
+  }
+
+  /**
+  CLOG4(
+    INFO,
+    "SamplingConfig: "
+      << "beam_width: " << beam_width << ", top_k: " << (top_k.has_value() ? std::to_string(top_k.value()) : "None")
+      << ", top_p: " << (top_p.has_value() ? std::to_string(top_p.value()) : "None")
+      << ", top_p_min: " << (top_p_min.has_value() ? std::to_string(top_p_min.value()) : "None")
+      << ", top_p_decay: " << (top_p_decay.has_value() ? std::to_string(top_p_decay.value()) : "None")
+      << ", top_p_reset_ids: " << (top_p_reset_ids.has_value() ? std::to_string(top_p_reset_ids.value()) : "None")
+      << ", temperature: " << (temperature.has_value() ? std::to_string(temperature.value()) : "None")
+      << ", min_length: " << (min_length.has_value() ? std::to_string(min_length.value()) : "None")
+      << ", beam_search_diversity_rate: "
+      << (beam_search_diversity_rate.has_value() ? std::to_string(beam_search_diversity_rate.value()) : "None")
+      << ", repetition_penalty: "
+      << (repetition_penalty.has_value() ? std::to_string(repetition_penalty.value()) : "None")
+      << ", presence_penalty: " << (presence_penalty.has_value() ? std::to_string(presence_penalty.value()) : "None")
+      << ", frequency_penalty: " << (frequency_penalty.has_value() ? std::to_string(frequency_penalty.value()) : "None")
+      << ", length_penalty: " << (length_penalty.has_value() ? std::to_string(length_penalty.value()) : "None")
+      << ", early_stopping: " << (early_stopping.has_value() ? std::to_string(early_stopping.value()) : "None")
+      << ", no_repeat_ngram_size: "
+      << (no_repeat_ngram_size.has_value() ? std::to_string(no_repeat_ngram_size.value()) : "None"));
+  */
+
   return executor::SamplingConfig(beam_width, top_k, top_p, top_p_min, top_p_reset_ids, top_p_decay, random_seed,
                                   temperature, min_length, beam_search_diversity_rate, repetition_penalty,
-                                  presence_penalty, frequency_penalty, length_penalty, early_stopping);
+                                  presence_penalty, frequency_penalty, length_penalty, early_stopping,
+                                  no_repeat_ngram_size);
 }
 
 static std::optional<executor::PromptTuningConfig> BuildPromptTuningForImages(const std::vector<std::string>& img_urls,
@@ -416,7 +495,8 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   const std::unordered_set<std::string>& stop_words,
   const std::unordered_set<std::string>& bad_words,
   size_t max_output_len,
-  executor::ModelType model_type) {
+  executor::ModelType model_type,
+  const executor::SamplingConfig& def_sampling_config) {
   rapidjson::Document json_body;
   json_body.Parse(http_body.c_str());
   if (json_body.HasParseError()) {
@@ -459,7 +539,7 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   std::optional<executor::SizeType32> pad_id = tokenizer->pad_token_id();
 
   // Sampling config.
-  auto sampling_config = utils::GetSamplingConfigFromJsonBody(json_body, model);
+  auto sampling_config = utils::GetSamplingConfigFromJsonBody(json_body, model, def_sampling_config);
 
   // Bad words.
   std::list<executor::VecTokens> bad_words_list;

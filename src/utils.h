@@ -123,6 +123,7 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   const std::unordered_set<std::string>& stop_words,
   const std::unordered_set<std::string>& bad_words,
   size_t max_output_len,
-  executor::ModelType model_type);
+  executor::ModelType model_type,
+  const executor::SamplingConfig& def_sampling_config);
 } // namespace utils
 } // namespace netease::grps
