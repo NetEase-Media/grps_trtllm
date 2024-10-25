@@ -82,13 +82,13 @@ void SetHttpResponse(GrpsContext& grps_ctx,
 /// @brief Respond error http response with OpenAI format.
 inline void HttpRespondErrorWithOpenAi(GrpsContext& grps_ctx, int status_code, const std::string& error_msg) {
   grps_ctx.set_err_msg(error_msg);
-  return SetHttpResponse(grps_ctx, status_code, "application/json", R"({"error": ")" + error_msg + "\"}");
+  return SetHttpResponse(grps_ctx, status_code, "application/json", R"({"error": {"message": ")" + error_msg + "\"}}");
 }
 
 /// @brief Streaming respond error http response with OpenAI format.
 inline void HttpStreamingRespondErrorWithOpenAi(GrpsContext& grps_ctx, const std::string& error_msg) {
   grps_ctx.set_err_msg(error_msg);
-  std::string content = R"({"error": ")" + error_msg + "\"}";
+  std::string content = R"(data: {"error": {"message": ")" + error_msg + "\"}}\n\n";
   grps_ctx.CustomizedHttpStreamingRespond(content.c_str(), content.size(), true);
 }
 

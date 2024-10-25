@@ -1,21 +1,16 @@
 # grps-trtllm
 
+<img src="docs/gradio.gif"  height="500" width="1024" alt="rnn-quick_draw_classify">
+
 ## 目录
 
 * [1. 说明](#1-说明)
 * [2. 工程结构](#2-工程结构)
 * [3. 本地开发与调试](#3-本地开发与调试)
-    * [3.1 拉取代码](#31-拉取代码)
-    * [3.2 创建容器](#32-创建容器)
-    * [3.3 构建trtllm引擎](#33-构建trtllm引擎)
-    * [3.3 修改inference.yml配置](#33-修改inferenceyml配置)
-    * [3.5 构建与部署](#35-构建与部署)
-    * [3.6 模拟请求](#36-模拟请求)
-    * [3.7 指标观测](#37-指标观测)
-    * [3.8 关闭服务](#38-关闭服务)
 * [4. 采样参数配置](#4-采样参数配置)
-* [5. docker部署](#5-docker部署)
-* [6. 与xinference-vllm性能比较](#6-与xinference-vllm性能比较)
+* [5. 启动gradio服务](#5-启动gradio服务)
+* [6. docker部署](#6-docker部署)
+* [7. 与xinference-vllm性能比较](#7-与xinference-vllm性能比较)
 
 ## 1. 说明
 
@@ -439,7 +434,22 @@ sampling:
 注意，当请求参数中指定了采样参数时，会覆盖默认的采样参数。
 具体支持的采样参数见[src/constants.h](src/constants.h)文件中的```SamplingConfig```。
 
-## 5. docker部署
+## 5. 启动gradio服务
+
+通过[gradio](https://www.gradio.app/)我们可以快速启动一个与LLM进行聊天的web界面，支持启动纯文本聊天界面和多模态聊天界面两种。如下启动命令：
+
+```bash
+# 启动纯文本聊天界面
+python3 tools/gradio/llm_app.py llm 0.0.0.0:9997
+# 启动多模态聊天界面，当前支持了internvl2模型
+python3 tools/gradio/llm_app.py internvl2 0.0.0.0:9997
+```
+
+启动后通过浏览器访问```http://ip:7860```即可进入聊天界面。如下图：
+
+![gradio.png](docs/gradio.png)
+
+## 6. docker部署
 
 ```bash
 # 更新conf/inference.yml软链接为具体的inference*.yml配置文件
@@ -465,7 +475,7 @@ docker logs -f grps_trtllm_server
 docker rm -f grps_trtllm_server
 ```
 
-### 6. 与xinference-vllm性能比较
+## 7. 与xinference-vllm性能比较
 
 这里不再比较与```triton-trtllm```性能，因为它不是```OpenAI```协议。比较与```xinference-vllm```服务的性能差异。
 
