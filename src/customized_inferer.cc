@@ -165,7 +165,11 @@ void TrtllmInferer::Infer(const ::grps::protos::v1::GrpsMessage& input,
     // Enqueue.
     trtllm_instance_->EnqueueAndWait(ctx, ctx.http_controller()->request_attachment().to_string());
   } catch (const std::exception& e) {
-    utils::HttpRespondErrorWithOpenAi(ctx, 500, e.what());
+    if (ctx.IfStreaming()) {
+      utils::HttpStreamingRespondErrorWithOpenAi(ctx, e.what());
+    } else {
+      utils::HttpRespondErrorWithOpenAi(ctx, 500, e.what());
+    }
   }
 }
 } // namespace netease::grps
