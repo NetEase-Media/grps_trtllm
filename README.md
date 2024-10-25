@@ -1,6 +1,6 @@
 # grps-trtllm
 
-<img src="docs/gradio.gif"  height="500" width="1024" alt="rnn-quick_draw_classify">
+<img src="docs/gradio.gif" alt="gradio.gif">
 
 ## 目录
 
