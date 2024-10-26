@@ -90,6 +90,20 @@ def multi_modal_llm_fn(message, history):
                             "url": 'file://' + pre_message[0]
                         }
                     })
+            image_flag_count = pre_messages[-1].count('<image>')
+            if image_flag_count == 0:
+                # insert <image> in text start
+                if len(pre_messages[:-1]) == 1:
+                    msg['content'][0]['text'] = '<image>' + pre_messages[-1]
+                elif len(pre_messages[:-1]) > 1:
+                    pre_text = ''
+                    for i in range(len(pre_messages[:-1])):
+                        pre_text += 'Image-' + str(i + 1) + ': <image>\n'
+                    msg['content'][0]['text'] = pre_text + pre_messages[-1]
+            if 0 < image_flag_count != len(pre_messages[:-1]):
+                yield 'error: `<image>`与实际图片数量不一致。'
+                return
+
             messages.append(msg)
             messages.append({
                 "role": "assistant",
@@ -116,6 +130,21 @@ def multi_modal_llm_fn(message, history):
                 }
             })
     messages.append(new_message)
+
+    image_flag_count = message['text'].count('<image>')
+    if image_flag_count == 0:
+        # insert <image> in text start
+        if len(message['files']) == 1:
+            new_message['content'][0]['text'] = '<image>' + message['text']
+        elif len(message['files']) > 1:
+            pre_text = ''
+            for i in range(len(message['files'])):
+                pre_text += 'Image-' + str(i + 1) + ': <image>\n'
+            new_message['content'][0]['text'] = pre_text + message['text']
+    if 0 < image_flag_count != len(message['files']):
+        yield 'error: `<image>`与实际图片数量不一致。'
+        return
+
     # print('messages:', messages)
 
     # Request to openai llm server.
@@ -159,9 +188,9 @@ if app_type == 'llm':
 else:
     demo = gr.ChatInterface(fn=multi_modal_llm_fn, type="messages", examples=[
         {"text": "你好，你是谁？"},
-        {"text": "<image>\n描述一下这张图片：",
+        {"text": "描述一下这张图片：",
          "files": ['https://i2.hdslb.com/bfs/archive/7172d7a46e2703e0bd5eabda22f8d8ac70025c76.jpg']},
-        {"text": "Image-1: <image>\nImage-2: <image>\n描述一下这两张图片：",
+        {"text": "描述一下这两张图片：",
          "files": [
              'https://p6.itc.cn/q_70/images03/20230821/69b103277521450e89090a24df1327d7.jpeg',
              'https://i0.hdslb.com/bfs/archive/dd8dfe1126b847e00573dbda617180da77a38a06.jpg']}],
