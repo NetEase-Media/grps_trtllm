@@ -56,10 +56,7 @@ def llm_fn(message, history):
                 yield content
     except openai.APIError as e:
         print('error:', e)
-        if '[TrtInfererException] Dims not match' in e.message:
-            yield 'error: 图片尺寸过大或超过图片个数限制。'
-        else:
-            yield 'error: ' + e.message.replace('<image>', '`<image>`')
+        yield 'error: ' + e.message
     except Exception as e:
         print('error:', e)
         yield 'error: ' + str(e)

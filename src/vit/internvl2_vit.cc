@@ -104,7 +104,6 @@ void Internvl2VIT::LoadImage(const std::vector<std::vector<char>>& images_bytes,
 
   // Normalize each image
   for (auto& img : images) {
-    // Resize image to input size
     Normalize(img);
     out[idx].emplace_back(img);
   }
