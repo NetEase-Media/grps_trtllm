@@ -500,6 +500,7 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   rapidjson::Document json_body;
   json_body.Parse(http_body.c_str());
   if (json_body.HasParseError()) {
+    CLOG4(ERROR, "Parse http json body failed: " << json_body.GetParseError() << ", body: " << http_body);
     throw std::invalid_argument("Parse http json body failed.");
   }
 

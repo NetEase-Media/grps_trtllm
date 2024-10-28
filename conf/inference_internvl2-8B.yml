@@ -109,7 +109,7 @@ models:
       max_attention_window_size: # use default (i.e. max_sequence_length) if not set.
       sink_token_length: # use default if not set.
       batch_scheduler_policy: guaranteed_no_evict # must be `max_utilization` or `guaranteed_no_evict`.
-      kv_cache_free_gpu_mem_fraction: 0.6 # will be set to 0.9 or `max_tokens_in_paged_kv_cache` if not set.
+      kv_cache_free_gpu_mem_fraction: 0.7 # will be set to 0.9 or `max_tokens_in_paged_kv_cache` if not set.
       kv_cache_host_memory_bytes: # will be set to 0 if not set.
       kv_cache_onboard_blocks: # will be set to true if not set.
       exclude_input_in_output: true # will be set to false if not set.

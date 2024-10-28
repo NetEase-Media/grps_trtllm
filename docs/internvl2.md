@@ -42,11 +42,12 @@ python3 tools/internvl2/convert_internlm2_ckpt.py --model_dir /tmp/InternVL2-8B/
 # 这里设置支持最大batch_size为2，即支持2个并发同时推理，超过两个排队处理。
 # 设置每个请求最多输入26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
 # 即：max_multimodal_len=2（max_batch_size） * 26（图片最多产生patch个数） * 256（每个patch对应256个token） = 13312
+# 设置max_input_len为32k，max_seq_len为36k（即最大输出为4k）。
 rm -rf /tmp/InternVL2-8B/trt_engines/
 trtllm-build --checkpoint_dir /tmp/InternVL2-8B/tllm_checkpoint/ \
 --output_dir /tmp/InternVL2-8B/trt_engines/ \
 --gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
---max_input_len 32768 --max_seq_len 60416 --max_num_tokens 32768 --max_multimodal_len 13312
+--max_input_len 32768 --max_seq_len 36960 --max_num_tokens 32768 --max_multimodal_len 13312
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
 python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2-8B \
@@ -465,6 +466,18 @@ python3 client/openai_cli.py 0.0.0.0:9997 "<image>\n简述一下这张图片的�
 : '
 ChatCompletion(id='chatcmpl-9', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='这张图片展示了一只猫。猫的身体大部分是白色的，背部和头部有黑色的斑点。猫的耳朵竖起，眼睛半闭，似乎在打盹。猫的胡须清晰可见，鼻子和嘴巴也清晰可见。猫的身体蜷缩在地面上，地面是灰色的，看起来像是水泥或沥青。\n\n从猫的姿态和表情来看，它处于一种放松和舒适的状态。猫的毛发看起来非常柔软，整体给人一种宁静的感觉。\n\n通过观察猫的特征，可以推断出这只猫可能是一只家猫，因为它的毛发整洁，而且看起来非常健康。家猫通常喜欢在温暖和安静的地方休息，这与图片中的环境相符。\n\n总结来说，这张图片展示了一只白色的猫，背部和头部有黑色斑点，它正躺在灰色的地面上打盹，表现出一种放松和舒适的状态。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1729673390, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=172, prompt_tokens=2359, total_tokens=2531, completion_tokens_details=None, prompt_tokens_details=None))
 '
+```
+
+## 开启gradio服务
+
+![gradio.png](gradio.png)
+
+```bash
+# 安装gradio
+pip install -r tools/gradio/requirements.txt
+
+# 启动多模态聊天界面，使用internvl2多模态模型，0.0.0.0:9997表示llm后端服务地址
+python3 tools/gradio/llm_app.py internvl2 0.0.0.0:9997
 ```
 
 ## 关闭服务
