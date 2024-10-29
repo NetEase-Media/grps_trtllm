@@ -1,5 +1,7 @@
 # grps-trtllm
 
+## 演示
+
 <img src="docs/gradio.gif" alt="gradio.gif">
 
 ## 目录
@@ -458,6 +460,8 @@ Running on local URL:  http://0.0.0.0:7860
 通过浏览器访问```http://ip:7860```即可进入聊天界面。如下图：
 
 ![gradio.png](docs/gradio.png)
+
+由于显存限制，视频默认只截取了8帧，且可能不支持比较大的分别率，可以根据实际情况进行调整。
 
 ## 6. docker部署
 
