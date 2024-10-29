@@ -472,6 +472,13 @@ python3 client/openai_cli.py 0.0.0.0:9997 "<image>\n简述一下这张图片的�
 : '
 ChatCompletion(id='chatcmpl-9', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='这张图片展示了一只猫。猫的身体大部分是白色的，背部和头部有黑色的斑点。猫的耳朵竖起，眼睛半闭，似乎在打盹。猫的胡须清晰可见，鼻子和嘴巴也清晰可见。猫的身体蜷缩在地面上，地面是灰色的，看起来像是水泥或沥青。\n\n从猫的姿态和表情来看，它处于一种放松和舒适的状态。猫的毛发看起来非常柔软，整体给人一种宁静的感觉。\n\n通过观察猫的特征，可以推断出这只猫可能是一只家猫，因为它的毛发整洁，而且看起来非常健康。家猫通常喜欢在温暖和安静的地方休息，这与图片中的环境相符。\n\n总结来说，这张图片展示了一只白色的猫，背部和头部有黑色斑点，它正躺在灰色的地面上打盹，表现出一种放松和舒适的状态。', refusal=None, role='assistant', function_call=None, tool_calls=None))], created=1729673390, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=172, prompt_tokens=2359, total_tokens=2531, completion_tokens_details=None, prompt_tokens_details=None))
 '
+
+# 通过base64 img url方式进行请求
+python3 client/base64_img_cli.py 0.0.0.0:9997 "<image>\n简述一下这张图片的内容。" false ./data/image1.jpg
+# 返回如下：
+: '
+ChatCompletion(id='chatcmpl-7', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='这张图片展示了一只红熊猫。红熊猫是一种小型哺乳动物，属于熊科，主要分布在亚洲的森林地区。它们通常生活在高海拔地区，如喜马拉雅山脉和岷山山脉。红熊猫以其独特的毛色和可爱的外表而闻名。\n\n图片中的红熊猫正趴在一块木板上，似乎在观察周围的环境。它的毛色主要是棕色和白色，脸部有明显的白色斑块，耳朵和四肢的末端也是白色的。红熊猫的眼睛大而圆，显得非常可爱。\n\n背景中可以看到一些绿色的植物，表明这只红熊猫可能处于一个自然环境或动物园的栖息地。背景中的树木和植物为红熊猫提供了遮蔽和栖息的场所。\n\n红熊猫是杂食性动物，主要以竹子为食，但也吃昆虫、小鸟和鸟蛋。它们通常生活在树上，擅长攀爬和跳跃。红熊猫的繁殖率较低，因此被列为易危物种。\n\n通过这张图片，我们可以了解到红熊猫的外观特征和栖息环境，同时也能感受到它们在自然界中的可爱和独特之处。', refusal=None, role='assistant', audio=None, function_call=None, tool_calls=None))], created=1730202973, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=219, prompt_tokens=3383, total_tokens=3602, completion_tokens_details=None, prompt_tokens_details=None))
+’
 ```
 
 ## 开启gradio服务

@@ -3,8 +3,10 @@
 #include "vit.h"
 
 #include <boost/asio/post.hpp>
+#include <boost/beast/core/detail/base64.hpp>
 #include <boost/thread/latch.hpp>
 #include <fstream>
+#include <regex>
 
 #include "src/utils.h"
 #include "src/vit/internvl2_vit.h"
@@ -30,6 +32,17 @@ static void GetImageFn(const std::vector<std::string>& img_urls, std::vector<std
     imgs_bytes[i] = utils::DownloadFile<std::vector<char>>(img_url);
   } else if (img_url.find("file://") == 0) {
     imgs_bytes[i] = utils::LoadBytesFromFile<std::vector<char>>(img_url.substr(7));
+  } else { // base64 image
+    if (img_url.find(',') == std::string::npos) {
+      return;
+    }
+    const auto& prefix = img_url.substr(0, img_url.find(',') + 1);
+    if (std::regex_match(prefix, std::regex("^data:image/[a-zA-Z]*;base64,$"))) {
+      const auto& base64_str = img_url.substr(img_url.find(',') + 1);
+      imgs_bytes[i].resize(boost::beast::detail::base64::decoded_size(base64_str.size()));
+      auto res = boost::beast::detail::base64::decode(imgs_bytes[i].data(), base64_str.data(), base64_str.size());
+      imgs_bytes[i].resize(res.first);
+    }
   }
 }
 
@@ -44,7 +57,7 @@ std::vector<std::vector<char>> VIT::GetImages(const std::vector<std::string>& im
       try {
         GetImageFn(img_urls, images_bytes, i);
       } catch (const std::exception& e) {
-        CLOG4(ERROR, "Get image from url: " << img_urls[i] << " failed, error: " << e.what());
+        CLOG4(ERROR, "Get image failed from url: " << img_urls[i] << " failed, error: " << e.what());
       }
       done.count_down();
     });
