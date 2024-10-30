@@ -55,7 +55,7 @@ trtllm-build --checkpoint_dir /tmp/InternVL2-8B/tllm_checkpoint/ \
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
 python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2-8B \
---imagePath /tmp/InternVL2-8B/examples/image1.jpg \
+--imagePath ./data/frames/frame_0.jpg \
 --onnxFile /tmp/InternVL2-8B/vision_encoder_bfp16.onnx \
 --trtFile /tmp/InternVL2-8B/vision_encoder_bfp16.trt \
 --dtype bfloat16 --minBS 1 --optBS 13 --maxBS 26
@@ -95,7 +95,7 @@ trtllm-build --checkpoint_dir /tmp/InternVL2-1B/tllm_checkpoint/ \
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
 python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2-1B \
---imagePath /tmp/InternVL2-1B/examples/image1.jpg \
+--imagePath ./data/frames/frame_0.jpg \
 --onnxFile /tmp/InternVL2-1B/vision_encoder_bfp16.onnx \
 --trtFile /tmp/InternVL2-1B/vision_encoder_bfp16.trt \
 --dtype bfloat16 --minBS 1 --optBS 13 --maxBS 26
@@ -132,7 +132,7 @@ trtllm-build --checkpoint_dir /tmp/InternVL2-4B/tllm_checkpoint/ \
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
 python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2-4B \
---imagePath /tmp/InternVL2-4B/examples/image1.jpg \
+--imagePath ./data/frames/frame_0.jpg \
 --onnxFile /tmp/InternVL2-4B/vision_encoder_bfp16.onnx \
 --trtFile /tmp/InternVL2-4B/vision_encoder_bfp16.trt \
 --dtype bfloat16 --minBS 1 --optBS 13 --maxBS 26

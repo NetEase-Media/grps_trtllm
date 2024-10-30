@@ -234,22 +234,22 @@ def load_trt_engine(engine_path):
     return engine, context, inp_name, out_name
 
 
-def trt_malloc(inp_data):
-    """malloc tensorrt input and output cpu and gpu memory."""
-    h_input = np.array(inp_data)
-    # Allocate device memory for inputs and outputs.
-    d_input = cuda.mem_alloc(
-        4 * 13 * 3 * 448 * 448 * 2)  # can allocate a larger batch size to reuse of this memory
-    d_output = cuda.mem_alloc(4 * 13 * 3 * 256 * 4096)  # can allocate a larger batch size to reuse of this memory
-    return h_input, d_input, d_output
-
-
-def trt_infer(inp_name, out_name, h_input, d_input, d_output, trt_ctx, stream):
+def trt_infer(inp_name, out_name, trt_ctx, stream, inp_data):
     """pure-trt infer."""
-    batch_size = h_input.shape[0]
+    """malloc tensorrt input and output cpu and gpu memory."""
+    h_input = np.array(inp_data.cpu().numpy())
+    # Allocate device memory for inputs and outputs.
+    d_input = cuda.mem_alloc(h_input.size * 2)
+
     # set true input shape
     print('h_input.shape: ', h_input.shape)
     trt_ctx.set_input_shape(inp_name, h_input.shape)
+
+    # get true output shape.
+    d_out_shape = trt_ctx.get_tensor_shape(out_name)
+    print('d_output.shape: ', d_out_shape)
+    d_output = cuda.mem_alloc(trt.volume(d_out_shape) * 2)
+
     # copy input data from cpu to gpu
     cuda.memcpy_htod_async(d_input, h_input, stream)
     # execute trt engine
@@ -257,7 +257,7 @@ def trt_infer(inp_name, out_name, h_input, d_input, d_output, trt_ctx, stream):
     trt_ctx.set_tensor_address(out_name, int(d_output))
     trt_ctx.execute_async_v3(stream_handle=stream.handle)
     # copy output data from gpu to cpu
-    h_output = cuda.pagelocked_empty((batch_size, 256, 4096), dtype=np.float16)
+    h_output = cuda.pagelocked_empty(list(d_out_shape), dtype=np.float16)
     cuda.memcpy_dtoh_async(h_output, d_output, stream)
     # synchronize stream
     stream.synchronize()
@@ -268,17 +268,25 @@ def trt_infer(inp_name, out_name, h_input, d_input, d_output, trt_ctx, stream):
 def compare_output(vision_encoder, trt_file, image):
     print("Start comparing the output of HF model and TRT engine!")
     # HF infer
-    hf_output = vision_encoder(image)
+    hf_output = vision_encoder(image).cpu().detach().numpy()
     print("HF output: ", hf_output)
 
     # TRT infer
     import pycuda.autoinit
 
     trt_engine, trt_ctx, inp_name, out_name = load_trt_engine(trt_file)
-    h_input, d_input, d_output = trt_malloc(np.ascontiguousarray(image.numpy()))
     stream = cuda.Stream()
-    trt_out = trt_infer(inp_name, out_name, h_input, d_input, d_output, trt_ctx, stream)
+    trt_out = trt_infer(inp_name, out_name, trt_ctx, stream, image)
+
     print("TRT output: ", trt_out)
+
+    # Calc diff rate
+    hf_output = hf_output.astype(np.float32)
+    trt_out = trt_out.astype(np.float32)
+    diff = np.abs(hf_output - trt_out)
+    diff_sum = np.sum(diff)
+    origin_sum = np.sum(np.abs(hf_output))
+    print("Diff rate: {:.2f}%， diff sum: {}, origin_sum: {}".format(diff_sum / origin_sum * 100, diff_sum, origin_sum))
 
 
 def parse_arguments():
@@ -311,6 +319,9 @@ def parse_arguments():
                         default='bfloat16',
                         help='The dtype of the model.',
                         choices=['bfloat16', 'float16'])
+    parser.add_argument('--loadOnCpu',
+                        action='store_true',
+                        help='Load the model on CPU.')
     parser.add_argument('--minBS', type=int, default=1)
     parser.add_argument('--optBS', type=int, default=13)
     parser.add_argument('--maxBS', type=int, default=4 * 13)
@@ -333,9 +344,12 @@ if __name__ == '__main__':
         torch_dtype=str_dtype_to_torch(args.dtype),
         trust_remote_code=True,
     ).eval()
-    vision_encoder = (VisionEncoderWrapper(hf_model.vision_model, hf_model.mlp1, select_layer=-1).to('cpu'))
+    vision_encoder = (VisionEncoderWrapper(hf_model.vision_model, hf_model.mlp1, select_layer=-1))
 
-    image = load_image(args.imagePath).to('cpu').to(str_dtype_to_torch(args.dtype))
+    image = load_image(args.imagePath).to(str_dtype_to_torch(args.dtype))
+    if not args.loadOnCpu:
+        vision_encoder = vision_encoder.to('cuda')
+        image = image.to('cuda')
 
     onnx_trt_obj = ONNX_TRT()
 
@@ -347,4 +361,5 @@ if __name__ == '__main__':
         onnx_trt_obj.generate_trt_engine(args.onnxFile, args.trtFile,
                                          args.minBS, args.optBS, args.maxBS)
 
-    # compare_output(vision_encoder, args.trtFile, image)
+    if args.dtype == 'float16':  # Current numpy not support bfloat16. Only compare float16.
+        compare_output(vision_encoder, args.trtFile, image)
