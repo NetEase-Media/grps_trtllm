@@ -112,6 +112,7 @@ set(COMMON_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/tensorrt/trt_inferer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/internvl2_vit.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/tokenizer.cc
 )
 
 add_library(grps-tensorrt-llm-common SHARED ${COMMON_SRCS})
@@ -161,6 +162,7 @@ set_property(
 
 target_link_libraries(grps-tensorrt-llm-common PUBLIC
         tensorrt_llm
+        tokenizers_cpp
         ${MPI_LIBRARIES}
         ${CUDA_LIBRARIES}
         nvinfer
@@ -170,6 +172,9 @@ target_link_libraries(grps-tensorrt-llm-common PUBLIC
         opencv_highgui
         opencv_imgcodecs
 )
+if (PILLOW_RESIZE_ENABLE)
+    target_link_libraries(grps-tensorrt-llm-common PUBLIC PillowResize)
+endif ()
 
 set_target_properties(
         grps-tensorrt-llm-common PROPERTIES POSITION_INDEPENDENT_CODE ON
@@ -178,7 +183,6 @@ set_target_properties(
 add_library(grps-server-customized SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/customized_inferer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/grps_server_customized.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/tokenizer.cc
 )
 
 target_compile_options(grps-server-customized PRIVATE ${COMPILE_OPTIONS})
@@ -187,7 +191,6 @@ target_link_directories(grps-server-customized BEFORE PRIVATE ${THIRD_PARTY_LIB_
 target_link_libraries(grps-server-customized PRIVATE
         grps-tensorrt-llm-common
         libgrps-server-framework.a
-        tokenizers_cpp
         ${MPI_LIBRARIES}
         brpc
         grpc++_unsecure

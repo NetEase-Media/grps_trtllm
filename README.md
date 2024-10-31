@@ -395,8 +395,8 @@ Response: The current temperature in Boston is 59.0 degrees Fahrenheit.
 
 通过访问```http://ip:9997/``` 可以查看服务的指标信息。如下指标：
 
-![metrics_0.png](data/metrics_0.png)<br>
-![metrics_1.png](data/metrics_1.png)
+![metrics_0.png](docs/metrics_0.png)<br>
+![metrics_1.png](docs/metrics_1.png)
 
 ### 3.8 关闭服务
 

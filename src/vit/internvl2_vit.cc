@@ -58,8 +58,13 @@ std::vector<cv::Mat> Internvl2VIT::DynamicPreprocess(
   int blocks = target_aspect_ratio.first * target_aspect_ratio.second;
 
   // Resize the image
+#ifdef PILLOW_RESIZE_ENABLE
+  cv::Mat resized_img = PillowResize::resize(image, cv::Size(target_width, target_height),
+                                             PillowResize::InterpolationMethods::INTERPOLATION_BICUBIC);
+#else
   cv::Mat resized_img;
   cv::resize(image, resized_img, cv::Size(target_width, target_height), cv::INTER_CUBIC);
+#endif
 
   std::vector<cv::Mat> processed_images;
   for (int i = 0; i < blocks; i++) {
@@ -70,8 +75,13 @@ std::vector<cv::Mat> Internvl2VIT::DynamicPreprocess(
   }
 
   if (use_thumbnail && blocks != 1) {
+#ifdef PILLOW_RESIZE_ENABLE
+    cv::Mat thumbnail_img = PillowResize::resize(image, cv::Size(image_size, image_size),
+                                                 PillowResize::InterpolationMethods::INTERPOLATION_BICUBIC);
+#else
     cv::Mat thumbnail_img;
     cv::resize(image, thumbnail_img, cv::Size(image_size, image_size), cv::INTER_CUBIC);
+#endif
     processed_images.push_back(thumbnail_img);
   }
 

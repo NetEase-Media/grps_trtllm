@@ -266,6 +266,7 @@ def multi_modal_llm_fn(message, history):
             if msg.choices[0].delta.content is not None:
                 content += msg.choices[0].delta.content
                 yield content
+        # print('response:', content)
     except openai.APIError as e:
         print('error:', e)
         if '[TrtInfererException] Dims not match' in e.message:

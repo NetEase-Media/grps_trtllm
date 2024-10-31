@@ -160,17 +160,6 @@ find_package(MPI REQUIRED)
 message(STATUS "Using MPI_INCLUDE_PATH: ${MPI_INCLUDE_PATH}")
 message(STATUS "Using MPI_LIBRARIES: ${MPI_LIBRARIES}")
 
-string(REPLACE ";" " " CXXFLAGS "${CXXFLAGS}")
-string(APPEND CMAKE_CXX_FLAGS " ")
-string(APPEND CMAKE_CXX_FLAGS ${CXXFLAGS})
-
-#message(STATUS "CMAKE_C_FLAGS_DEBUG: " ${CMAKE_C_FLAGS_DEBUG})
-#message(STATUS "CMAKE_C_FLAGS_RELEASE: " ${CMAKE_C_FLAGS_RELEASE})
-#message(STATUS "CMAKE_C_FLAGS_RELWITHDEBINFO: " ${CMAKE_C_FLAGS_RELWITHDEBINFO})
-#message(STATUS "CMAKE_CXX_FLAGS_DEBUG: " ${CMAKE_CXX_FLAGS_DEBUG})
-#message(STATUS "CMAKE_CXX_FLAGS_RELEASE: " ${CMAKE_CXX_FLAGS_RELEASE})
-message(STATUS "CMAKE_CXX_FLAGS_RELWITHDEBINFO: " ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
-
 include_directories(
         /usr/local/include
         /usr/include
@@ -206,6 +195,26 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/tokenizers-cpp)
 #find_package(jinja2cpp REQUIRED)
 #include_directories(${JINJA2CPP_PATH}/include)
 #install(DIRECTORY /usr/local/jinja2cpp/lib/ DESTINATION lib FILES_MATCHING PATTERN "*.so*")
+
+#------------------- pillow-resize -------------------
+# Current not enable because of poor performance.
+option(PILLOW_RESIZE_ENABLE "Enable pillow-resize instead of opencv resize" OFF)
+if (PILLOW_RESIZE_ENABLE)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/pillow-resize/include)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/pillow-resize)
+    list(APPEND CXXFLAGS -DPILLOW_RESIZE_ENABLE)
+endif ()
+
+string(REPLACE ";" " " CXXFLAGS "${CXXFLAGS}")
+string(APPEND CMAKE_CXX_FLAGS " ")
+string(APPEND CMAKE_CXX_FLAGS ${CXXFLAGS})
+
+#message(STATUS "CMAKE_C_FLAGS_DEBUG: " ${CMAKE_C_FLAGS_DEBUG})
+#message(STATUS "CMAKE_C_FLAGS_RELEASE: " ${CMAKE_C_FLAGS_RELEASE})
+#message(STATUS "CMAKE_C_FLAGS_RELWITHDEBINFO: " ${CMAKE_C_FLAGS_RELWITHDEBINFO})
+#message(STATUS "CMAKE_CXX_FLAGS_DEBUG: " ${CMAKE_CXX_FLAGS_DEBUG})
+#message(STATUS "CMAKE_CXX_FLAGS_RELEASE: " ${CMAKE_CXX_FLAGS_RELEASE})
+message(STATUS "CMAKE_CXX_FLAGS_RELWITHDEBINFO: " ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
 
 add_subdirectory(src)
 

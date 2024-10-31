@@ -2,6 +2,9 @@
 
 #pragma once
 
+#ifdef PILLOW_RESIZE_ENABLE
+#include <PillowResize/PillowResize.hpp>
+#endif
 #include <opencv2/opencv.hpp>
 
 #include "src/vit/vit.h"

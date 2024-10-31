@@ -450,7 +450,7 @@ TrtLlmModelInstance::TrtLlmModelInstance(TrtLlmModelState* model_state,
 }
 
 void TrtLlmModelInstance::EnqueueAndWait(GrpsContext& grps_ctx, const std::string& http_body) {
-  uint64_t begin_time_us = GET_SYS_TME_US();
+  uint64_t begin_time_us = GET_SYS_TIME_US();
   auto [func_call, model, executor_request] = utils::CreateRequestFromOpenAiHttpBody(
     http_body, instance_specific_config.exclude_input_from_output, grps_ctx.IfStreaming(), llm_styler_, tokenizer_,
     vit_, stop_words_, bad_words_, max_output_len_, model_type_, def_sampling_config_);
@@ -586,7 +586,7 @@ void TrtLlmModelInstance::WaitForResponse() {
           }
         }
 
-        uint64_t finish_time_us = GET_SYS_TME_US();
+        uint64_t finish_time_us = GET_SYS_TIME_US();
         CLOG4(INFO, "Finished request: " << request_data->trtllm_req_id << ", model: " << request_data->model
                                          << ", if func call: " << request_data->func_call
                                          << ", if streaming: " << grps_ctx->IfStreaming()

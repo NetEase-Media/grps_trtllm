@@ -34,7 +34,7 @@ namespace netease::grps {
   uint64_t TS_NS;             \
   SET_TIMESTAMP(TS_NS);
 
-#define GET_SYS_TME_US() \
+#define GET_SYS_TIME_US() \
   std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count()
 
 #define GET_SYS_TIME_MS() \
