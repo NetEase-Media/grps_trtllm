@@ -112,6 +112,7 @@ set(COMMON_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/tensorrt/trt_inferer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/internvl2_vit.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/vit/qwenvl_vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tokenizer.cc
 )
 

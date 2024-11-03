@@ -140,3 +140,4 @@ if __name__ == '__main__':
     output_dir = sys.argv[2]
     tokenizer = AutoTokenizer.from_pretrained(input_path, trust_remote_code=True)
     convert_tiktoken(tokenizer.tokenizer, output_dir)
+    print("Conversion successful!")

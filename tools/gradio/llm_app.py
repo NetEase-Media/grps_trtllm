@@ -1,5 +1,6 @@
 import os
 import shutil
+import socket
 import sys
 import uuid
 
@@ -8,19 +9,28 @@ import numpy as np
 import openai
 from PIL import Image
 from decord import VideoReader, cpu
+from transformers import AutoTokenizer
 
 VIDEO_MAX_FRAMES = 8
+
+SERVER_PORT = 7860
 
 if len(sys.argv) < 3:
     print('python3 llm_app.py <app_type> <llm_server>')
     exit(1)
 
 app_type = sys.argv[1]
-if app_type not in ['llm', 'internvl2']:
-    print('`app_type` only support `llm`(all text llm) or `internvl2`(multi-modal)')
+if app_type not in ['llm', 'internvl2', 'qwenvl']:
+    print('`app_type` only support `llm`(all text llm) or `internvl2`(multi-modal) or `qwenvl`(multi-modal).')
     exit(1)
 
 llm_server = sys.argv[2]
+
+
+def get_ip_socket():
+    hostname = socket.gethostname()
+    ip_address = socket.gethostbyname(hostname)
+    return ip_address
 
 
 def get_index(bound, fps, max_frame, first_idx=0, num_segments=32):
@@ -104,7 +114,7 @@ def llm_fn(message, history):
         yield 'error: ' + str(e)
 
 
-def multi_modal_llm_fn(message, history):
+def internvl2_llm_fn(message, history):
     # print('message:', message)
     # print('history:', history)
 
@@ -278,6 +288,121 @@ def multi_modal_llm_fn(message, history):
         yield 'error: ' + str(e)
 
 
+qwenvl_tokenizer = None
+
+
+def qwenvl_llm_fn(message, history):
+    # print('message:', message)
+    # print('history:', history)
+
+    img_dir = None
+
+    last_img_url = None
+    # History messages.
+    messages = []
+    pre_messages = []
+    for his in history:
+        if his['role'] == 'user':
+            pre_messages.append(his['content'])
+        elif his['role'] == 'assistant':
+            if len(pre_messages) == 0:
+                continue
+            msg = {
+                "role": "user",
+                "content": [
+                ]
+            }
+            if len(pre_messages) > 1:
+                for pre_message in pre_messages[:-1]:  # image content
+                    msg['content'].append({
+                        "type": "image_url",
+                        "image_url": {
+                            "url": 'file://' + pre_message[0]
+                        }
+                    })
+                    last_img_url = pre_message[0]
+            msg['content'].append({
+                "type": "text",
+                "text": pre_messages[-1]  # last is the text content
+            })
+            messages.append(msg)
+            messages.append({
+                "role": "assistant",
+                "content": his['content']
+            })
+            pre_messages = []
+
+    # New message.
+    new_message = {
+        "role": "user",
+        "content": [
+        ]
+    }
+    if 'files' in message:
+        for file in message['files']:
+            new_message['content'].append({
+                "type": "image_url",
+                "image_url": {
+                    "url": 'file://' + file['path']
+                }
+            })
+            last_img_url = file['path']
+    new_message['content'].append({
+        "type": "text",
+        "text": message['text']
+    })
+    messages.append(new_message)
+
+    # print('messages:', messages)
+
+    # Request to openai llm server.
+    client = openai.Client(
+        api_key="cannot be empty",
+        base_url=f"http://{llm_server}/v1"
+    )
+
+    res = client.chat.completions.create(
+        model="",
+        messages=messages,
+        stream=True
+    )
+    # print('res: ', res)
+
+    if img_dir is not None:
+        shutil.rmtree(img_dir)
+
+    content = ''
+    try:
+        for msg in res:
+            # print('msg:', msg)
+            if msg.choices[0].delta.content is not None:
+                content += msg.choices[0].delta.content
+                yield content
+        # print('response:', content)
+        if '<ref>' in content and '<box>' in content:
+            # build history.
+            tmp = [('Picture 1: <img>' + last_img_url + '</img>\n' + message['text'],
+                    content)]
+            # print('history:', tmp)
+            image = qwenvl_tokenizer.draw_bbox_on_latest_picture(content, tmp)
+            if image:
+                img_url_root = '/tmp/gradio/box/' + str(uuid.uuid4()) + '/'
+                os.makedirs(img_url_root, exist_ok=True)
+                img_url = img_url_root + 'box.jpg'
+                image.save(img_url)
+                yield content + f'\n![image](http://{get_ip_socket()}:{SERVER_PORT}/file=' + img_url + ')'
+
+    except openai.APIError as e:
+        print('error:', e)
+        if '[TrtInfererException] Dims not match' in e.message:
+            yield 'error: 图片尺寸过大或超过图片个数限制。'
+        else:
+            yield 'error: ' + e.message
+    except Exception as e:
+        print('error:', e)
+        yield 'error: ' + str(e)
+
+
 if app_type == 'llm':
     demo = gr.ChatInterface(fn=llm_fn, type="messages", examples=[
         "你好，你是谁？",
@@ -285,8 +410,8 @@ if app_type == 'llm':
         "中国长城有多长？",
         "世界上第一高峰是哪座山？",
     ], title="grps-trtllm", multimodal=False)
-else:
-    demo = gr.ChatInterface(fn=multi_modal_llm_fn, type="messages", examples=[
+elif app_type == 'internvl2':
+    demo = gr.ChatInterface(fn=internvl2_llm_fn, type="messages", examples=[
         {"text": "你好，你是谁？"},
         {"text": "描述一下这张图片：",
          "files": ['https://i2.hdslb.com/bfs/archive/7172d7a46e2703e0bd5eabda22f8d8ac70025c76.jpg']},
@@ -299,5 +424,23 @@ else:
     ],
                             title="grps-trtllm",
                             multimodal=True)
-
-demo.launch(server_name='0.0.0.0')
+elif app_type == 'qwenvl':
+    if not os.path.exists("/tmp/Qwen-VL-Chat"):
+        print("Please download the qwenvl to /tmp/Qwen-VL-Chat first.")
+        exit(1)
+    qwenvl_tokenizer = AutoTokenizer.from_pretrained("/tmp/Qwen-VL-Chat", trust_remote_code=True)
+    demo = gr.ChatInterface(fn=qwenvl_llm_fn, type="messages", examples=[
+        {"text": "你好，你是谁？"},
+        {"text": "描述一下两张图片的不同。",
+         "files": [
+             'https://p6.itc.cn/q_70/images03/20230821/69b103277521450e89090a24df1327d7.jpeg',
+             'https://i0.hdslb.com/bfs/archive/dd8dfe1126b847e00573dbda617180da77a38a06.jpg']},
+        {"text": "输出\"女生\"的检测框。",
+         "files": ['https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg']},
+    ],
+                            title="grps-trtllm",
+                            multimodal=True)
+else:
+    print('`app_type` only support `llm`(all text llm) or `internvl2`(multi-modal) or `qwenvl`(multi-modal).')
+    exit(1)
+demo.launch(server_name='0.0.0.0', server_port=SERVER_PORT)

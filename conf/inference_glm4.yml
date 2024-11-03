@@ -13,7 +13,6 @@ models:
       # tokenizer config.
       tokenizer_type: huggingface # can be `huggingface`, `sentencepiece`. Must be set.
       # Use following command to convert tiktoken `tokenizer.model` to huggingface `tokenizer.json`.
-      # python3 ./tools/glm4_tiktoken_to_hf.py /tmp/glm-4-9b-chat/ /tmp/glm-4-9b-chat/
       tokenizer_path: /tmp/glm-4-9b-chat/ # path of tokenizer. Must be set.
       tokenizer_parallelism: 16 # tokenizers count for parallel tokenization. Will be set to 1 if not set.
       end_token_id: 151329 # "<|endoftext|>"

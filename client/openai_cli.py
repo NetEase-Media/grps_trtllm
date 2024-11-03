@@ -31,9 +31,7 @@ if img_url == "":
                 "role": "user",
             }
         ],
-        top_p=0.3,
         max_tokens=1024,
-        temperature=0.1,
         stream=stream
     )
 else:
@@ -44,21 +42,19 @@ else:
                 "role": "user",
                 "content": [
                     {
-                        "type": "text",
-                        "text": prompt
-                    },
-                    {
                         "type": "image_url",
                         "image_url": {
                             "url": img_url
                         }
                     },
+                    {
+                        "type": "text",
+                        "text": prompt
+                    },
                 ]
             },
         ],
-        top_p=0.3,
         max_tokens=1024,
-        temperature=0.1,
         stream=stream
     )
 

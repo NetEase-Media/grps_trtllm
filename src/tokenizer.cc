@@ -101,7 +101,7 @@ std::vector<int32_t> MultiInstanceTokenizer::Encode(const std::string& text, boo
   std::vector<int32_t> ids;
 
   tokenizers::Tokenizer* tokenizer = GetTokenizer();
-  if (!force_token2id_.empty()) {
+  if (!force_token2id_.empty() || !img_token_.empty()) {
     // Split text by force tokens.
     std::vector<std::pair<size_t, std::string>> splits; // <begin_idx, token>
     for (auto& [token, id] : force_token2id_) {

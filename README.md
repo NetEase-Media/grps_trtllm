@@ -42,11 +42,12 @@
 
 支持的多模态LLM：
 
-| llm_styler          | vit       | chat | function_call | supported model                         | doc                              |
-|---------------------|-----------|------|---------------|-----------------------------------------|----------------------------------|
-| internvl2-internlm2 | internvl2 | ✅    | ❌             | InternVL2-2B,InternVL2-8B,InternVL2-26B | [internvl2](docs%2Finternvl2.md) |
-| internvl2-qwen2     | internvl2 | ✅    | ❌             | InternVL2-1B                            | [internvl2](docs%2Finternvl2.md) |
-| internvl2-phi3      | internvl2 | ✅    | ❌             | InternVL2-4B                            | [internvl2](docs%2Finternvl2.md) |
+| llm_styler          | vit       | chat | function_call | supported model                           | doc                              |
+|---------------------|-----------|------|---------------|-------------------------------------------|----------------------------------|
+| internvl2-internlm2 | internvl2 | ✅    | ❌             | InternVL2-2B, InternVL2-8B, InternVL2-26B | [internvl2](docs%2Finternvl2.md) |
+| internvl2-qwen2     | internvl2 | ✅    | ❌             | InternVL2-1B                              | [internvl2](docs%2Finternvl2.md) |
+| internvl2-phi3      | internvl2 | ✅    | ❌             | InternVL2-4B                              | [internvl2](docs%2Finternvl2.md) |
+| qwenvl              | qwenvl    | ✅    | ❌             | Qwen-VL-Chat, Qwen-VL                     | [qwenvl](docs%2Fqwenvl.md)       |
 
 TODO：
 
@@ -447,8 +448,11 @@ pip install -r tools/gradio/requirements.txt
 # 启动纯文本聊天界面，llm代表纯文本聊天，0.0.0.0:9997表示llm后端服务地址
 python3 tools/gradio/llm_app.py llm 0.0.0.0:9997
 
-# 启动多模态聊天界面，使用internvl2多模态模型，0.0.0.0:9997表示llm后端服务地址
+# 启动多模态聊天界面，使用internvl2多模态模型，支持视频输入，由于显存限制，视频默认只截取了8帧，且可能不支持比较大的分别率，可以根据实际情况进行调整。
 python3 tools/gradio/llm_app.py internvl2 0.0.0.0:9997
+
+# 启动多模态聊天界面，使用qwenvl多模态模型，支持输出检测框
+python3 tools/gradio/llm_app.py qwenvl 0.0.0.0:9997
 ```
 
 启动后日志会显示服务端口号，默认为7860如下：
@@ -460,8 +464,6 @@ Running on local URL:  http://0.0.0.0:7860
 通过浏览器访问```http://ip:7860```即可进入聊天界面。如下图：
 
 ![gradio.png](docs/gradio.png)
-
-由于显存限制，视频默认只截取了8帧，且可能不支持比较大的分别率，可以根据实际情况进行调整。
 
 ## 6. docker部署
 

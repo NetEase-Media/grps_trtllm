@@ -17,12 +17,6 @@ models:
       end_token_id: 2 # "</s>"
       pad_token_id: 2 # "</s>"
       skip_special_tokens: # skip special tokens when decoding. Empty if not set.
-        - 32019 # "</box>"
-        - 32018 # "<box>"
-        - 32017 # "</ref>"
-        - 32016 # "<ref>"
-        - 32015 # "</quad>"
-        - 32014 # "<quad>"
         - 32013 # "<IMG_CONTEXT>"
         - 32012 # "</img>"
         - 32011 # "<img>"
@@ -97,7 +91,7 @@ models:
       # Such as: "<IMG_TOKEN><IMG_TOKEN><IMG_TOKEN>" will be mapped to
       # [img_begin_token_id, img_begin_token_id + 1, img_begin_token_id + 2].
       img_begin_token_id: 32020
-      vit_type: internvl2 # Only support `internvl2` now.
+      vit_type: internvl2 # Support vit_type see README.md.
       vit_path: /tmp/InternVL2-4B/vision_encoder_bfp16.trt # path of vision transformer model.
       vit_worker_tp: 8 # worker thread pool size for load image, preprocessing, postprocessing...
       vit_trt_args:

@@ -38,14 +38,14 @@ res = client.chat.completions.create(
             "role": "user",
             "content": [
                 {
-                    "type": "text",
-                    "text": prompt
-                },
-                {
                     "type": "image_url",
                     "image_url": {
                         "url": img_base64_url
                     }
+                },
+                {
+                    "type": "text",
+                    "text": prompt
                 },
             ]
         },

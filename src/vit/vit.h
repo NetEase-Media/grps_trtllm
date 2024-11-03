@@ -8,6 +8,8 @@
 
 #include "src/tensorrt/trt_inferer.h"
 
+#define VIT_DBG 0
+
 namespace netease::grps {
 
 using PtuningEmbeddingTableType = std::shared_ptr<tensorrt_llm::batch_manager::NamedTensor>;

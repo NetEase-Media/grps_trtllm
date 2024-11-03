@@ -98,18 +98,22 @@ void Internvl2VIT::LoadImage(const std::vector<std::vector<char>>& images_bytes,
                              size_t idx,
                              int input_size,
                              int max_num) {
+  auto begin = GET_SYS_TIME_US();
   // CLOG4(INFO, "Load image, image size: " << images_bytes[idx].size());
   // Load image
   cv::Mat image = cv::imdecode(images_bytes[idx], cv::IMREAD_COLOR);
   if (image.empty()) {
     throw std::runtime_error("Could not open or find the image!");
   }
+  auto imread_end = GET_SYS_TIME_US();
 
   // Convert to RGB.
   cv::cvtColor(image, image, cv::COLOR_BGR2RGB);
+  auto cvt_end = GET_SYS_TIME_US();
 
   // Process image
   std::vector<cv::Mat> images = DynamicPreprocess(image, 1, max_num, input_size, true);
+  auto dynamic_process_end = GET_SYS_TIME_US();
   // CLOG4(INFO, "Dynamic preprocess image success, patches count: " << images.size());
 
   // Normalize each image
@@ -117,9 +121,19 @@ void Internvl2VIT::LoadImage(const std::vector<std::vector<char>>& images_bytes,
     Normalize(img);
     out[idx].emplace_back(img);
   }
+  auto normal_end = GET_SYS_TIME_US();
+
+#if VIT_DBG
+  CLOG4(INFO, "Load image success, image index: "
+                << idx << ", image size: " << images_bytes[idx].size() << ", imread cost: " << imread_end - begin
+                << " us, cvt cost: " << cvt_end - imread_end
+                << " us, dynamic process cost: " << dynamic_process_end - cvt_end
+                << " us, normalize cost: " << normal_end - dynamic_process_end << "us");
+#endif
 }
 
 VitModelInputType Internvl2VIT::Preprocess(const std::vector<std::vector<char>>& images_bytes, std::string& prompt) {
+  auto begin = GET_SYS_TIME_US();
   std::vector<std::vector<cv::Mat>> images_mats;
   boost::latch done(images_bytes.size());
   for (size_t i = 0; i < images_bytes.size(); i++) {
@@ -134,6 +148,7 @@ VitModelInputType Internvl2VIT::Preprocess(const std::vector<std::vector<char>>&
     });
   }
   done.wait();
+  auto load_end = GET_SYS_TIME_US();
 
   size_t batch_size = 0;
   for (size_t i = 0; i < images_mats.size(); ++i) {
@@ -153,6 +168,7 @@ VitModelInputType Internvl2VIT::Preprocess(const std::vector<std::vector<char>>&
   auto buffer = inp_tensor->buffer().Get();
   size_t pos = 0;
   size_t buff_idx = 0;
+
   for (auto& images_mat : images_mats) { // Images count.
     std::string replace = "<img>";
     for (auto img : images_mat) { // Per image patches count.
@@ -168,16 +184,21 @@ VitModelInputType Internvl2VIT::Preprocess(const std::vector<std::vector<char>>&
         }
       }
 
-      for (size_t k = 0; k < 256; k++) { // 256: token count for every image patch.
-        replace.append("<IMG_CONTEXT>");
-      }
+      replace.append(img_ctx_replace_str_);
     }
     replace.append("</img>");
     pos = utils::ReplaceWorld(prompt, "<image>", replace, pos, 1);
   }
+  auto memcpy_end = GET_SYS_TIME_US();
 
   // CLOG4(INFO, "Preprocess images success, input tensor: " << inp_tensor->DebugString());
   VitModelInputType inputs = {{"input", inp_tensor}};
+
+#if VIT_DBG
+  CLOG4(INFO, "Preprocess images success, images count: " << images_bytes.size() << ", patches count: " << batch_size
+                                                          << ", load cost: " << load_end - begin
+                                                          << " us, memcpy cost: " << memcpy_end - load_end << " us");
+#endif
   return inputs;
 }
 

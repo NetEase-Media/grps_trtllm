@@ -14,7 +14,7 @@ apt update && apt install git-lfs
 git lfs install
 git clone https://huggingface.co/THUDM/glm-4-9b-chat /tmp/glm-4-9b-chat
 # 转换tiktoken tokenizer.model为huggingface tokenizer.json格式
-python3 ./tools/glm4/glm4_tiktoken_to_hf.py /tmp/glm-4-9b-chat/ /tmp/glm-4-9b-chat/
+python3 ./tools/tiktoken/tiktoken_to_hf.py /tmp/glm-4-9b-chat/ /tmp/glm-4-9b-chat/
 
 # 进入TensorRT-LLM/examples/chatglm目录，参考README进行构建trtllm引擎。
 cd third_party/TensorRT-LLM/examples/chatglm/

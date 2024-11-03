@@ -1,4 +1,4 @@
-// InternVL2 VIT(Vision transformer).
+// QwenVL VIT(Vision transformer).
 
 #pragma once
 
@@ -11,14 +11,10 @@
 
 namespace netease::grps {
 
-class Internvl2VIT : public VIT {
+class QwenvlVIT : public VIT {
 public:
-  Internvl2VIT() : VIT("internvl2") {
-    for (size_t k = 0; k < 256; k++) { // 256: token count for every image patch.
-      img_ctx_replace_str_.append("<IMG_CONTEXT>");
-    }
-  }
-  ~Internvl2VIT() override = default;
+  QwenvlVIT() : VIT("qwenvl") {}
+  ~QwenvlVIT() override = default;
 
   /**
    * @brief Preprocess images, and will be used as the input to the ViT model.
@@ -37,25 +33,15 @@ public:
   PtuningEmbeddingTableType Postprocess(VitModelOutputType& model_out, std::string& prompt) override;
 
 private:
-  static std::pair<int, int> FindClosestAspectRatio(
-    float aspect_ratio, const std::vector<std::pair<int, int>>& target_ratios, int width, int height, int image_size);
-
-  static std::vector<cv::Mat> DynamicPreprocess(
-    cv::Mat& image, int min_num = 1, int max_num = 12, int image_size = 448, bool use_thumbnail = false);
-
   void Normalize(cv::Mat& img);
-
   void LoadImage(const std::vector<std::vector<char>>& images_bytes,
                  std::vector<std::vector<cv::Mat>>& out,
                  size_t idx,
-                 int input_size = 448,
-                 int max_num = 12);
+                 int input_size = 448);
 
   // IMAGENET mean and std for normalization
-  cv::Scalar imagenet_mean_ = {0.485, 0.456, 0.406};
-  cv::Scalar imagenet_std_ = {0.229, 0.224, 0.225};
-
-  std::string img_ctx_replace_str_{};
+  cv::Scalar imagenet_mean_ = {0.48145466, 0.4578275, 0.40821073};
+  cv::Scalar imagenet_std_ = {0.26862954, 0.26130258, 0.27577711};
 };
 
 } // namespace netease::grps

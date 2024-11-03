@@ -10,6 +10,7 @@
 
 #include "src/utils.h"
 #include "src/vit/internvl2_vit.h"
+#include "src/vit/qwenvl_vit.h"
 
 namespace netease::grps {
 
@@ -76,22 +77,39 @@ std::vector<std::vector<char>> VIT::GetImages(const std::vector<std::string>& im
 
 PtuningEmbeddingTableType VIT::Encode(const std::vector<std::string>& img_urls, std::string& prompt) {
   // 1. Get image data from urls.
+  auto begin = GET_SYS_TIME_US();
   std::vector<std::vector<char>> images_bytes = GetImages(img_urls);
+  auto get_images_end = GET_SYS_TIME_US();
 
   // 2. Preprocess image data to vit trt model input.
   VitModelInputType model_inp = Preprocess(images_bytes, prompt);
+  auto preprocess_end = GET_SYS_TIME_US();
 
   // 3. Vit model trt infer.
   VitModelOutputType outputs;
   inferer_->Infer(model_inp, outputs);
+  auto infer_end = GET_SYS_TIME_US();
 
   // 4. Postprocess vit trt model output to trtllm ptuning embedding table.
-  return Postprocess(outputs, prompt);
+  auto out = Postprocess(outputs, prompt);
+  auto postprocess_end = GET_SYS_TIME_US();
+
+#if VIT_DBG
+  CLOG4(INFO, "VIT model encode success, type: " << type_name_ << ", img_urls size: " << img_urls.size()
+                                                 << ", get_images_time: " << get_images_end - begin
+                                                 << " us, preprocess_time: " << preprocess_end - get_images_end
+                                                 << " us, infer_time: " << infer_end - preprocess_end
+                                                 << " us, postprocess_time: " << postprocess_end - infer_end << " us");
+#endif
+
+  return out;
 }
 
 std::unique_ptr<VIT> VITFactory::CreateVIT(const std::string& type_name) {
   if (type_name == "internvl2") {
     return std::make_unique<Internvl2VIT>();
+  } else if (type_name == "qwenvl") {
+    return std::make_unique<QwenvlVIT>();
   } else {
     return nullptr;
   }
