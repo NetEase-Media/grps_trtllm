@@ -86,6 +86,9 @@ inline size_t TrtDtypeSize(nvinfer1::DataType data_type) {
     case nvinfer1::DataType::kFLOAT:
       data_type_size = 4;
       break;
+    case nvinfer1::DataType::kINT64:
+      data_type_size = 8;
+      break;
     default:
       LOG4(ERROR, "Unsupported data type: " << static_cast<int>(data_type));
       break;

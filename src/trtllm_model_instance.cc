@@ -31,9 +31,9 @@ executor::BatchingType TrtLlmModelInstance::GetBatchingTypeFromParams() {
 }
 
 executor::KvCacheConfig TrtLlmModelInstance::GetKvCacheConfigFromParams() {
-  std::optional<int32_t> maxTokensInPagedKvCache = std::nullopt;
+  std::optional<int32_t> max_tokens_in_paged_kv_cache = std::nullopt;
   try {
-    maxTokensInPagedKvCache = model_state_->GetParameter<int32_t>("max_tokens_in_paged_kv_cache");
+    max_tokens_in_paged_kv_cache = model_state_->GetParameter<int32_t>("max_tokens_in_paged_kv_cache");
   } catch (std::exception const& e) {
     // If parameter is not specified, just ignore
     CLOG4(WARN,
@@ -41,9 +41,9 @@ executor::KvCacheConfig TrtLlmModelInstance::GetKvCacheConfigFromParams() {
           "use default value");
   }
 
-  std::optional<float> kvCacheFreeGpuMemFraction = std::nullopt;
+  std::optional<float> kv_cache_free_gpu_mem_fraction = std::nullopt;
   try {
-    kvCacheFreeGpuMemFraction = model_state_->GetParameter<float>("kv_cache_free_gpu_mem_fraction");
+    kv_cache_free_gpu_mem_fraction = model_state_->GetParameter<float>("kv_cache_free_gpu_mem_fraction");
   } catch (std::exception const& e) {
     // If parameter is not specified, just ignore
     CLOG4(WARN,
@@ -51,24 +51,24 @@ executor::KvCacheConfig TrtLlmModelInstance::GetKvCacheConfigFromParams() {
           "max_tokens_in_paged_kv_cache");
   }
 
-  std::optional<size_t> kvCacheHostCacheSize = std::nullopt;
+  std::optional<size_t> kv_cache_host_memory_bytes = std::nullopt;
   try {
-    kvCacheHostCacheSize = model_state_->GetParameter<size_t>("kv_cache_host_memory_bytes");
+    kv_cache_host_memory_bytes = model_state_->GetParameter<size_t>("kv_cache_host_memory_bytes");
   } catch (std::exception const& e) {
     CLOG4(WARN, "kv_cache_host_memory_bytes not set, defaulting to 0");
   }
 
-  bool kvCacheOnboardBlocks = true;
+  bool kv_cache_onboard_blocks = true;
   try {
-    kvCacheOnboardBlocks = model_state_->GetParameter<bool>("kv_cache_onboard_blocks");
+    kv_cache_onboard_blocks = model_state_->GetParameter<bool>("kv_cache_onboard_blocks");
   } catch (std::exception const& e) {
     // If parameter is not specified, just ignore
     CLOG4(WARN, "kv_cache_onboard_blocks not set, defaulting to true");
   }
 
-  std::optional<int32_t> maxAttentionWindow = std::nullopt;
+  std::optional<std::vector<int32_t>> max_attention_window_size = std::nullopt;
   try {
-    maxAttentionWindow = model_state_->GetParameter<int32_t>("max_attention_window_size");
+    max_attention_window_size = model_state_->GetParameter<std::vector<int32_t>>("max_attention_window_size");
   } catch (std::exception const& e) {
     // If parameter is not specified, just ignore
     CLOG4(WARN,
@@ -76,9 +76,9 @@ executor::KvCacheConfig TrtLlmModelInstance::GetKvCacheConfigFromParams() {
           "use default value (i.e. max_sequence_length)");
   }
 
-  std::optional<int32_t> sinkTokenLength = std::nullopt;
+  std::optional<int32_t> sink_token_length = std::nullopt;
   try {
-    sinkTokenLength = model_state_->GetParameter<int32_t>("sink_token_length");
+    sink_token_length = model_state_->GetParameter<int32_t>("sink_token_length");
   } catch (std::exception const& e) {
     // If parameter is not specified, just ignore
     CLOG4(WARN,
@@ -86,22 +86,51 @@ executor::KvCacheConfig TrtLlmModelInstance::GetKvCacheConfigFromParams() {
           "use default value");
   }
 
-  bool enableKVCacheReuse = false;
+  bool enable_kv_cache_reuse = false;
   try {
-    enableKVCacheReuse = model_state_->GetParameter<bool>("enable_kv_cache_reuse");
+    enable_kv_cache_reuse = model_state_->GetParameter<bool>("enable_kv_cache_reuse");
   } catch (std::exception const& e) {
     // If parameter is not specified, just ignore
     CLOG4(WARN, "enable_kv_cache_reuse is not specified, will be set to false");
   }
 
-  std::optional<SizeType32> maxAttentionWindowSizeType = std::nullopt;
-  if (maxAttentionWindow.has_value()) {
-    maxAttentionWindowSizeType = static_cast<SizeType32>(maxAttentionWindow.value());
+  std::optional<float> cross_kv_cache_fraction = std::nullopt;
+  try {
+    cross_kv_cache_fraction = model_state_->GetParameter<float>("cross_kv_cache_fraction");
+  } catch (std::exception const& e) {
+    // If parameter is not specified, just ignore
+    CLOG4(WARN, "cross_kv_cache_fraction is not specified, will use default value of 0.5");
   }
 
-  return executor::KvCacheConfig(enableKVCacheReuse, maxTokensInPagedKvCache, maxAttentionWindowSizeType,
-                                 sinkTokenLength, kvCacheFreeGpuMemFraction, kvCacheHostCacheSize,
-                                 kvCacheOnboardBlocks);
+  std::optional<executor::RetentionPriority> secondary_offload_min_priority = std::nullopt;
+  try {
+    secondary_offload_min_priority =
+      model_state_->GetParameter<executor::RetentionPriority>("secondary_offload_min_priority");
+  } catch (std::exception const& e) {
+    // If parameter is not specified, just ignore
+    CLOG4(WARN, "secondary_offload_min_priority is not specified, will use default value of 0");
+  }
+
+  size_t event_buffer_max_size = 0;
+  try {
+    event_buffer_max_size = model_state_->GetParameter<size_t>("event_buffer_max_size");
+  } catch (std::exception const& e) {
+    // If parameter is not specified, just ignore
+    CLOG4(WARN, "event_buffer_max_size is not specified, will use default value of 0");
+  }
+
+  std::optional<std::vector<SizeType32>> max_attention_window_vec = std::nullopt;
+  if (max_attention_window_size.has_value()) {
+    max_attention_window_vec =
+      std::vector<SizeType32>(max_attention_window_size.value().begin(), max_attention_window_size.value().end());
+  }
+
+  tensorrt_llm::runtime::RuntimeDefaults runtime_defaults(max_attention_window_vec, sink_token_length);
+
+  return executor::KvCacheConfig(enable_kv_cache_reuse, max_tokens_in_paged_kv_cache, max_attention_window_vec,
+                                 sink_token_length, kv_cache_free_gpu_mem_fraction, kv_cache_host_memory_bytes,
+                                 kv_cache_onboard_blocks, cross_kv_cache_fraction, secondary_offload_min_priority,
+                                 event_buffer_max_size, runtime_defaults);
 }
 
 executor::ParallelConfig TrtLlmModelInstance::GetParallelConfigFromParams() {
@@ -197,6 +226,45 @@ executor::SchedulerConfig TrtLlmModelInstance::GetSchedulerConfigFromParams(bool
   return executor::SchedulerConfig(scheduler_policy);
 }
 
+executor::ExtendedRuntimePerfKnobConfig TrtLlmModelInstance::GetExtendedRuntimePerfKnobConfigFromParams() {
+  bool multi_block_mode = true;
+  try {
+    multi_block_mode = model_state_->GetParameter<bool>("multi_block_mode");
+  } catch (std::exception const& e) {
+    // If parameter is not specified, just ignore
+    TLLM_LOG_WARNING("multi_block_mode is not specified, will be set to true");
+  }
+
+  bool enable_context_fmha_fp32_acc = false;
+  try {
+    enable_context_fmha_fp32_acc = model_state_->GetParameter<bool>("enable_context_fmha_fp32_acc");
+  } catch (std::exception const& e) {
+    // If parameter is not specified, just ignore
+    TLLM_LOG_WARNING("enable_context_fmha_fp32_acc is not specified, will be set to false");
+  }
+
+  return executor::ExtendedRuntimePerfKnobConfig(multi_block_mode, enable_context_fmha_fp32_acc);
+}
+
+executor::SpeculativeDecodingConfig TrtLlmModelInstance::GetSpeculativeDecodingConfigFromParams(
+  std::optional<executor::OrchestratorConfig> orch_config) {
+  bool fast_logits = false;
+  try {
+    fast_logits = model_state_->GetParameter<bool>("speculative_decoding_fast_logits");
+  } catch (std::exception const& e) {
+    CLOG4(WARN, "speculative_decoding_fast_logits is not specified, will be set to false");
+  }
+
+  if (fast_logits && (!orch_config.has_value() || orch_config.value().getSpawnProcesses())) {
+    CLOG4(WARN,
+          "speculative_decoding_fast_logits is set, but requires orchestrator with spawn_processes disabled."
+          "Disabling fast logits.");
+    fast_logits = false;
+  }
+
+  return executor::SpeculativeDecodingConfig(fast_logits);
+}
+
 executor::ExecutorConfig TrtLlmModelInstance::GetExecutorConfigFromParams() {
   auto batching_type = GetBatchingTypeFromParams();
 
@@ -210,7 +278,7 @@ executor::ExecutorConfig TrtLlmModelInstance::GetExecutorConfigFromParams() {
   }
   */
 
-  int32_t iter_stats_max_iterations = executor::kDefaultIterStatsMaxIterations;
+  int32_t iter_stats_max_iterations = executor::ExecutorConfig::kDefaultIterStatsMaxIterations;
   try {
     iter_stats_max_iterations = model_state_->GetParameter<int32_t>("iter_stats_max_iterations");
   } catch (std::exception const& e) {
@@ -219,7 +287,7 @@ executor::ExecutorConfig TrtLlmModelInstance::GetExecutorConfigFromParams() {
                   std::to_string(iter_stats_max_iterations));
   }
 
-  int32_t request_stats_max_iterations = executor::kDefaultRequestStatsMaxIterations;
+  int32_t request_stats_max_iterations = executor::ExecutorConfig::kDefaultRequestStatsMaxIterations;
   try {
     request_stats_max_iterations = model_state_->GetParameter<int32_t>("request_stats_max_iterations");
   } catch (std::exception const& e) {
@@ -307,10 +375,36 @@ executor::ExecutorConfig TrtLlmModelInstance::GetExecutorConfigFromParams() {
     CLOG4(WARN, "gpu_weights_percent parameter is not specified, will use default value of 1.0");
   }
 
-  return executor::ExecutorConfig(max_beam_width, scheduler_config, kv_cache_config, enable_chunked_context,
-                                  normalize_log_probs, iter_stats_max_iterations, request_stats_max_iterations,
-                                  batching_type, std::nullopt, std::nullopt, parallel_config, peft_cache_config,
-                                  std::nullopt, std::nullopt, decoding_config, gpu_weights_percent);
+  std::optional<SizeType32> max_queue_size = std::nullopt;
+  try {
+    max_queue_size = model_state_->GetParameter<SizeType32>("max_queue_size");
+  } catch (std::exception const& e) {
+    CLOG4(WARN, "max_queue_size is not specified.");
+  }
+
+  auto extended_runtime_perf_knob_config = GetExtendedRuntimePerfKnobConfigFromParams();
+
+  SizeType32 recv_poll_period_ms = 0;
+  try {
+    recv_poll_period_ms = model_state_->GetParameter<int>("recv_poll_period_ms");
+  } catch (std::exception const& e) {
+    CLOG4(WARN, "recv_poll_period_ms is not set, will use busy loop");
+  }
+
+  uint64_t max_seq_idle_microseconds = 180000000;
+  try {
+    max_seq_idle_microseconds = model_state_->GetParameter<uint64_t>("max_seq_idle_microseconds");
+  } catch (std::exception const& e) {
+    CLOG4(WARN, "max_seq_idle_microseconds is not specified, will use default value of 180000000");
+  }
+
+  auto spec_dec_config = GetSpeculativeDecodingConfigFromParams(parallel_config.getOrchestratorConfig());
+
+  return executor::ExecutorConfig(
+    max_beam_width, scheduler_config, kv_cache_config, enable_chunked_context, normalize_log_probs,
+    iter_stats_max_iterations, request_stats_max_iterations, batching_type, std::nullopt, std::nullopt, parallel_config,
+    peft_cache_config, std::nullopt, decoding_config, gpu_weights_percent, max_queue_size,
+    extended_runtime_perf_knob_config, std::nullopt, recv_poll_period_ms, max_seq_idle_microseconds, spec_dec_config);
 }
 
 TrtLlmModelInstance::TrtLlmModelInstance(TrtLlmModelState* model_state,

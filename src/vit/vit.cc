@@ -10,16 +10,24 @@
 
 #include "src/utils.h"
 #include "src/vit/internvl2_vit.h"
+#include "src/vit/qwen2vl_vit.h"
 #include "src/vit/qwenvl_vit.h"
 
 namespace netease::grps {
 
-void VIT::Init(const std::string& path, int worker_tp, const std::string& device, const YAML::Node& trt_args) {
+void VIT::Init(const std::string& path,
+               int worker_tp,
+               const std::string& device,
+               const YAML::Node& trt_args,
+               const YAML::Node& processor_args,
+               MultiInstanceTokenizer* tokenizer) {
   inferer_ = std::make_unique<TrtModelInferer>();
   worker_tp_ = std::make_unique<boost::asio::thread_pool>(worker_tp);
   inferer_->Init(path, device, trt_args);
+  processor_args_ = processor_args;
+  tokenizer_ = tokenizer;
   CLOG4(INFO, "VIT model initialized, type: " << type_name_ << ", worker_tp" << worker_tp << ", path: " << path
-                                              << ", trt_args: " << trt_args);
+                                              << ", trt_args: " << trt_args << ", processor_args: " << processor_args);
 }
 
 void VIT::Load() {
@@ -75,14 +83,20 @@ std::vector<std::vector<char>> VIT::GetImages(const std::vector<std::string>& im
   return images_bytes;
 }
 
-PtuningEmbeddingTableType VIT::Encode(const std::vector<std::string>& img_urls, std::string& prompt) {
+std::tuple<PtuningEmbeddingTableType, MropeConfType> VIT::Encode(const std::vector<std::string>& img_urls,
+                                                                 std::string& prompt,
+                                                                 tensorrt_llm::executor::VecTokens& token_ids) {
+  if (img_urls.empty()) {
+    return {std::nullopt, std::nullopt};
+  }
+
   // 1. Get image data from urls.
   auto begin = GET_SYS_TIME_US();
   std::vector<std::vector<char>> images_bytes = GetImages(img_urls);
   auto get_images_end = GET_SYS_TIME_US();
 
   // 2. Preprocess image data to vit trt model input.
-  VitModelInputType model_inp = Preprocess(images_bytes, prompt);
+  VitModelInputType model_inp = Preprocess(images_bytes, prompt, token_ids);
   auto preprocess_end = GET_SYS_TIME_US();
 
   // 3. Vit model trt infer.
@@ -91,7 +105,7 @@ PtuningEmbeddingTableType VIT::Encode(const std::vector<std::string>& img_urls, 
   auto infer_end = GET_SYS_TIME_US();
 
   // 4. Postprocess vit trt model output to trtllm ptuning embedding table.
-  auto out = Postprocess(outputs, prompt);
+  auto out = Postprocess(outputs, prompt, token_ids);
   auto postprocess_end = GET_SYS_TIME_US();
 
 #if VIT_DBG
@@ -110,6 +124,8 @@ std::unique_ptr<VIT> VITFactory::CreateVIT(const std::string& type_name) {
     return std::make_unique<Internvl2VIT>();
   } else if (type_name == "qwenvl") {
     return std::make_unique<QwenvlVIT>();
+  } else if (type_name == "qwen2vl") {
+    return std::make_unique<Qwen2vlVIT>();
   } else {
     return nullptr;
   }

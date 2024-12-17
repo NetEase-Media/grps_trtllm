@@ -205,11 +205,6 @@ void TrtModelInferer::Load() {
       auto comps = instance->engine_->getTensorComponentsPerElement(name);
       binding_type_[name] = dtype;
       instance->bindings_.emplace_back(name, dims, max_dims, dtype, vec_dim, comps, is_input_binding, is_shape_binding);
-
-      if (is_shape_binding) {
-        throw TrtInfererException("Shape binding is not supported.");
-      }
-
       CLOG4(INFO, "Trt instance(" << i << ") add binding: " << instance->bindings_.back().DebugString());
     }
 
@@ -283,7 +278,9 @@ void TrtModelInferer::Infer(
 #if TRT_INFERER_DEBUG
   compute_start_event.Record(instance->stream_);
 #endif
-  instance->trt_context_->enqueueV3(instance->stream_.Get());
+  if (!instance->trt_context_->enqueueV3(instance->stream_.Get())) {
+    throw TrtInfererException("Trt execute failed, maybe OOM.");
+  }
 #if TRT_INFERER_DEBUG
   compute_end_event.Record(instance->stream_);
 #endif

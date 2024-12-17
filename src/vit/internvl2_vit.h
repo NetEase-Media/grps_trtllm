@@ -24,17 +24,23 @@ public:
    * @brief Preprocess images, and will be used as the input to the ViT model.
    * @param images: images bytes will be preprocessed.
    * @param prompt: prompt may be changed when vit encoding.
+   * @param token_ids: token ids may generated when vit.
    * @return processed image data with trt tensor format, will be used as the input to the ViT model.
    */
-  VitModelInputType Preprocess(const std::vector<std::vector<char>>& images_bytes, std::string& prompt) override;
+  VitModelInputType Preprocess(const std::vector<std::vector<char>>& images_bytes,
+                               std::string& prompt,
+                               tensorrt_llm::executor::VecTokens& token_ids) override;
 
   /**
    * @brief Postprocess output of vit trt model, and will be used as trtllm ptuning embedding table.
    * @param model_out: output of vit trt model will be postprocessed.
    * @param prompt: prompt may be changed when vit encoding.
-   * @return vit embeddings will be used as trtllm ptuning embedding table.
+   * @param token_ids: token ids may generated when vit.
+   * @return vit embeddings that will be used as trtllm ptuning embedding table, and mrope config if need or nullopt if
+   * not.
    */
-  PtuningEmbeddingTableType Postprocess(VitModelOutputType& model_out, std::string& prompt) override;
+  std::tuple<PtuningEmbeddingTableType, MropeConfType> Postprocess(
+    VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids) override;
 
 private:
   static std::pair<int, int> FindClosestAspectRatio(

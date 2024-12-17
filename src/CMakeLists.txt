@@ -113,6 +113,7 @@ set(COMMON_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/internvl2_vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/qwenvl_vit.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/vit/qwen2vl_vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tokenizer.cc
 )
 
@@ -151,14 +152,14 @@ add_library(tensorrt_llm SHARED IMPORTED)
 set_property(
         TARGET tensorrt_llm
         PROPERTY IMPORTED_LOCATION
-        "/usr/local/lib/python3.10/dist-packages/tensorrt_llm/libs/libtensorrt_llm.so")
+        "/usr/local/lib/python3.12/dist-packages/tensorrt_llm/libs/libtensorrt_llm.so")
 
 add_library(nvinfer_plugin_tensorrt_llm SHARED IMPORTED)
 set_property(
         TARGET nvinfer_plugin_tensorrt_llm
         PROPERTY
         IMPORTED_LOCATION
-        "/usr/local/lib/python3.10/dist-packages/tensorrt_llm/libs/libnvinfer_plugin_tensorrt_llm.so"
+        "/usr/local/lib/python3.12/dist-packages/tensorrt_llm/libs/libnvinfer_plugin_tensorrt_llm.so"
 )
 
 target_link_libraries(grps-tensorrt-llm-common PUBLIC

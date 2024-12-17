@@ -38,6 +38,7 @@ void QwenvlVIT::LoadImage(const std::vector<std::vector<char>>& images_bytes,
 #else
   cv::resize(image, image, cv::Size(input_size, input_size), cv::INTER_CUBIC);
 #endif
+  auto resize_end = GET_SYS_TIME_US();
 
   // Normalize each image
   Normalize(image);
@@ -45,14 +46,16 @@ void QwenvlVIT::LoadImage(const std::vector<std::vector<char>>& images_bytes,
   auto normal_end = GET_SYS_TIME_US();
 
 #if VIT_DBG
-  CLOG4(INFO, "Load image success, image index: " << idx << ", image size: " << images_bytes[idx].size()
-                                                  << ", imread cost: " << imread_end - begin
-                                                  << " us, cvt cost: " << cvt_end - imread_end
-                                                  << " us, normalize cost: " << normal_end - cvt_end << "us");
+  CLOG4(INFO, "Load image success, image index: "
+                << idx << ", image size: " << images_bytes[idx].size() << ", imread cost: " << imread_end - begin
+                << " us, cvt cost: " << cvt_end - imread_end << " us, resize cost: " << resize_end - cvt_end
+                << " us, normalize cost: " << normal_end - resize_end << "us");
 #endif
 }
 
-VitModelInputType QwenvlVIT::Preprocess(const std::vector<std::vector<char>>& images_bytes, std::string& prompt) {
+VitModelInputType QwenvlVIT::Preprocess(const std::vector<std::vector<char>>& images_bytes,
+                                        std::string& prompt,
+                                        tensorrt_llm::executor::VecTokens& token_ids) {
   auto begin = GET_SYS_TIME_US();
   std::vector<std::vector<cv::Mat>> images_mats;
   boost::latch done(images_bytes.size());
@@ -117,7 +120,8 @@ VitModelInputType QwenvlVIT::Preprocess(const std::vector<std::vector<char>>& im
   return inputs;
 }
 
-PtuningEmbeddingTableType QwenvlVIT::Postprocess(VitModelOutputType& model_out, std::string& prompt) {
+std::tuple<PtuningEmbeddingTableType, MropeConfType> QwenvlVIT::Postprocess(
+  VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids) {
   auto out = model_out[0].second;
 
   // reshape.
@@ -133,6 +137,8 @@ PtuningEmbeddingTableType QwenvlVIT::Postprocess(VitModelOutputType& model_out, 
   CLOG4(INFO, "Postprocess success, output tensor shape: [" << true_shape.d[0] << ", " << true_shape.d[1]
                                                             << "], dtype: " << out->tensor->getDataTypeName());
 #endif
-  return out;
+
+  auto e_tensor = executor::detail::ofITensor(out->tensor);
+  return {executor::PromptTuningConfig(std::move(e_tensor)), std::nullopt};
 }
 } // namespace netease::grps

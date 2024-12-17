@@ -136,12 +136,17 @@ void TrtllmInferer::Load() {
     vit_trt_args = model_state_->GetModelConfig()["vit_trt_args"];
   } catch (const std::exception& e) {
   }
+  YAML::Node vit_processor_args;
+  try {
+    vit_processor_args = model_state_->GetModelConfig()["vit_processor_args"];
+  } catch (const std::exception& e) {
+  }
   if (!vit_type.empty()) {
     vit_ = VITFactory::CreateVIT(vit_type);
     if (vit_ == nullptr) {
       throw InfererException("Unsupported vit type: " + vit_type);
     }
-    vit_->Init(vit_path, vit_worker_tp, "gpu:0", vit_trt_args);
+    vit_->Init(vit_path, vit_worker_tp, "gpu:0", vit_trt_args, vit_processor_args, tokenizer_.get());
     if (GlobalConfig::Instance().mpi().world_rank == 0) { // Only rank 0 load vit when using MPI.
       vit_->Load();
     }

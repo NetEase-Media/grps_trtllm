@@ -59,6 +59,8 @@ set(CXXFLAGS
         -Wno-register
         -ffast-math
         -fPIC
+        -O3
+        -march=native
 )
 
 if (CUDA_ENABLE)

@@ -132,7 +132,9 @@ void Internvl2VIT::LoadImage(const std::vector<std::vector<char>>& images_bytes,
 #endif
 }
 
-VitModelInputType Internvl2VIT::Preprocess(const std::vector<std::vector<char>>& images_bytes, std::string& prompt) {
+VitModelInputType Internvl2VIT::Preprocess(const std::vector<std::vector<char>>& images_bytes,
+                                           std::string& prompt,
+                                           tensorrt_llm::executor::VecTokens& token_ids) {
   auto begin = GET_SYS_TIME_US();
   std::vector<std::vector<cv::Mat>> images_mats;
   boost::latch done(images_bytes.size());
@@ -202,7 +204,8 @@ VitModelInputType Internvl2VIT::Preprocess(const std::vector<std::vector<char>>&
   return inputs;
 }
 
-PtuningEmbeddingTableType Internvl2VIT::Postprocess(VitModelOutputType& model_out, std::string& prompt) {
+std::tuple<PtuningEmbeddingTableType, MropeConfType> Internvl2VIT::Postprocess(
+  VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids) {
   auto out = model_out[0].second;
 
   // reshape.
@@ -213,6 +216,7 @@ PtuningEmbeddingTableType Internvl2VIT::Postprocess(VitModelOutputType& model_ou
   true_shape.d[0] = cur_shape.d[0] * cur_shape.d[1];
   true_shape.d[1] = cur_shape.d[2];
   tensor->reshape(true_shape);
-  return out;
+  auto e_tensor = executor::detail::ofITensor(out->tensor);
+  return {executor::PromptTuningConfig(std::move(e_tensor)), std::nullopt};
 }
 } // namespace netease::grps

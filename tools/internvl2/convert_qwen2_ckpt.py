@@ -235,6 +235,7 @@ def convert_and_save_hf(args):
         # When not loading by shard, preload one complete model and then slice per rank weights from this
         # this saves the disk reloading time
         hf_model = load_hf_qwen(model_dir, load_model_on_cpu).language_model
+        os.environ['TRTLLM_DISABLE_UNIFIED_CONVERTER'] = '1'
 
         def convert_and_save_rank(args, rank):
             mapping = Mapping(world_size=world_size,

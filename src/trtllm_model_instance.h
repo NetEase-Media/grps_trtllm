@@ -114,6 +114,13 @@ private:
   /// @brief Get parallel config
   executor::ParallelConfig GetParallelConfigFromParams();
 
+  /// @brief Get extended runtime perf knob config.
+  executor::ExtendedRuntimePerfKnobConfig GetExtendedRuntimePerfKnobConfigFromParams();
+
+  /// @brief Get speculative decoding config
+  executor::SpeculativeDecodingConfig GetSpeculativeDecodingConfigFromParams(
+    std::optional<executor::OrchestratorConfig> orch_config);
+
   /// @brief Get executor config
   executor::ExecutorConfig GetExecutorConfigFromParams();
 

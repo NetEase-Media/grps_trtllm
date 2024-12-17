@@ -8,102 +8,65 @@ models:
     inferer_args: # more args of model inferer.
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
       # Support llm_style see README.md.
-      llm_style: internvl2-internlm2
+      llm_style: qwen2vl
 
       # tokenizer config.
-      tokenizer_type: sentencepiece # can be `huggingface`, `sentencepiece`. Must be set.
-      tokenizer_path: /tmp/InternVL2-8B/ # path of tokenizer. Must be set.
+      tokenizer_type: huggingface # can be `huggingface`, `sentencepiece`. Must be set.
+      tokenizer_path: /tmp/Qwen2-VL-2B-Instruct/ # path of tokenizer. Must be set.
       tokenizer_parallelism: 16 # tokenizers count for parallel tokenization. Will be set to 1 if not set.
-      end_token_id: 2 # "</s>"
-      pad_token_id: 2 # "</s>"
+      end_token_id: 151645 # "<|im_end|>"
+      pad_token_id: 151643 # "<|endoftext|>"
       skip_special_tokens: # skip special tokens when decoding. Empty if not set.
-        - 92546 # "<IMG_CONTEXT>"
-        - 92545 # "</img>"
-        - 92544 # "<img>"
-        - 92543 # "<|im_start|>"
-        - 92542 # "<|im_end|>"
-        - 92541 # "<|action_start|>"
-        - 92540 # "<|action_end|>"
-        - 92539 # "<|interpreter|>"
-        - 92538 # "<|plugin|>"
-        - 0 # "<unk>"
-        - 1 # "<s>"
-        - 2 # "</s>"
+        - 151643 # "<|endoftext|>"
+        - 151644 # "<|im_start|>"
+        - 151645 # "<|im_end|>"
       force_tokens_dict: # will be used to force map tokens to ids when encode and decode instead of using tokenizer. Empty if not set.
-        - token: "</box>"
-          id: 92552
-        - token: "<box>"
-          id: 92551
-        - token: "</ref>"
-          id: 92550
-        - token: "<ref>"
-          id: 92549
-        - token: "</quad>"
-          id: 92548
-        - token: "<quad>"
-          id: 92547
-        - token: "<IMG_CONTEXT>"
-          id: 92546
-        - token: "</img>"
-          id: 92545
-        - token: "<img>"
-          id: 92544
-        - token: "<|im_start|>"
-          id: 92543
-        - token: "<|im_end|>"
-          id: 92542
-        - token: "<|action_start|>"
-          id: 92541
-        - token: "<|action_end|>"
-          id: 92540
-        - token: "<|interpreter|>"
-          id: 92539
-        - token: "<|plugin|>"
-          id: 92538
-        - token: "<unk>"
-          id: 0
-        - token: "<s>"
-          id: 1
-        - token: "</s>"
-          id: 2
-      prefix_tokens_id: [ 1 ] # prefix tokens id will be added to the beginning of the input ids. Empty if not set.
+      #  - token: "<|endoftext|>"
+      #    id: 151643
+      prefix_tokens_id: # prefix tokens id will be added to the beginning of the input ids. Empty if not set.
       suffix_tokens_id: # suffix tokens id will be added to the end of the input ids. Empty if not set.
 
       # multi-modal model config.
-      img_token: "<IMG_CONTEXT>" # image token text.
+      img_token: "<|image_pad|>" # image token text.
       # the beginning token id used to mark the image tokens. Multi img_tokens will be mapped to consecutive token ids
       # with the beginning token id. The beginning token id must be the (max-token-id + 1), that is the true vocab size.
       # Such as: "<IMG_TOKEN><IMG_TOKEN><IMG_TOKEN>" will be mapped to
       # [img_begin_token_id, img_begin_token_id + 1, img_begin_token_id + 2].
-      img_begin_token_id: 92553
-      vit_type: internvl2 # Support vit_type see README.md.
-      vit_path: /tmp/InternVL2-8B/vision_encoder_bfp16.trt # path of vision transformer model.
+
+      img_begin_token_id: 151936
+      vit_type: qwen2vl # Support vit_type see README.md.
+      vit_path: /tmp/Qwen2-VL-2B-Instruct/vision_encoder_bfp16.trt # path of vision transformer model.
       vit_worker_tp: 8 # worker thread pool size for load image, preprocessing, postprocessing...
+      vit_processor_args:
+        min_pixels: 3136 # 4 * 28 * 28
+        max_pixels: 1048576 # 1024 * 1024
+        mrope_only_path: /tmp/Qwen2-VL-2B-Instruct/mrope_only_bfp16.trt # path of mrope only model.
       vit_trt_args:
         streams: 1 # number of streams for trt infer, used for multi-stream parallel infer. More streams will use more gpu memory.
         #dla_cores: 0 # number of dla cores for trt infer.
         customized_op_paths: # customized op paths.
         #  - /path/to/your/customized_op.so
 
-      # default sampling config, sampling param in request will overwrite these. Support sampling params see
-      # @ref(src/constants.h - SamplingConfig)
       sampling:
-        top_k: 50
-        top_p: 1.0
+        top_k: 1
+        top_p: 0.001
+        temperature: 0.01
+        repetition_penalty: 1.0
 
       # trtllm config.
       gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
-      gpt_model_path: /tmp/InternVL2-8B/trt_engines/ # path of decoder model. Must be set.
+      gpt_model_path: /tmp/Qwen2-VL-2B-Instruct/trt_engines/ # path of decoder model. Must be set.
       encoder_model_path: # path of encoder model. Null if not set.
       stop_words: # additional stop words. Empty if not set.
         - "<|im_start|>"
         - "<|im_end|>"
+        - "<|endoftext|>"
       bad_words: # additional bad words. Empty if not set.
       max_tokens_in_paged_kv_cache: # use default if not set.
       max_attention_window_size: # use default (i.e. max_sequence_length) if not set.
       sink_token_length: # use default if not set.
       batch_scheduler_policy: guaranteed_no_evict # must be `max_utilization` or `guaranteed_no_evict`.
-      kv_cache_free_gpu_mem_fraction: 0.7 # will be set to 0.9 or `max_tokens_in_paged_kv_cache` if not set.
+      kv_cache_free_gpu_mem_fraction: 0.8 # will be set to 0.9 or `max_tokens_in_paged_kv_cache` if not set.
       kv_cache_host_memory_bytes: # will be set to 0 if not set.
       kv_cache_onboard_blocks: # will be set to true if not set.
       exclude_input_in_output: true # will be set to false if not set.

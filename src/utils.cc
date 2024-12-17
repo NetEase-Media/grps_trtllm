@@ -372,7 +372,7 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     early_stopping = json_body[InputFieldsNames::kEarlyStopping].GetInt();
   }
 
-  std::optional<int32_t> min_length = def_sampling_config.getMinLength();
+  std::optional<int32_t> min_length = def_sampling_config.getMinTokens();
   if (json_body.HasMember(InputFieldsNames::kMinLength)) {
     if (!json_body[InputFieldsNames::kMinLength].IsInt()) {
       throw std::invalid_argument("`min_length` is not an integer");
@@ -420,7 +420,7 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     frequency_penalty = json_body[InputFieldsNames::kFrequencyPenalty].GetFloat();
   }
 
-  std::optional<uint64_t> random_seed = def_sampling_config.getRandomSeed();
+  std::optional<uint64_t> random_seed = def_sampling_config.getSeed();
   if (json_body.HasMember(InputFieldsNames::kRandomSeed)) {
     if (!json_body[InputFieldsNames::kRandomSeed].IsUint64()) {
       throw std::invalid_argument("`seed` is not an unsigned integer");
@@ -436,28 +436,27 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     no_repeat_ngram_size = json_body[InputFieldsNames::kNoRepeatNgramSize].GetInt();
   }
 
-  /**
-  CLOG4(
-    INFO,
-    "SamplingConfig: "
-      << "beam_width: " << beam_width << ", top_k: " << (top_k.has_value() ? std::to_string(top_k.value()) : "None")
-      << ", top_p: " << (top_p.has_value() ? std::to_string(top_p.value()) : "None")
-      << ", top_p_min: " << (top_p_min.has_value() ? std::to_string(top_p_min.value()) : "None")
-      << ", top_p_decay: " << (top_p_decay.has_value() ? std::to_string(top_p_decay.value()) : "None")
-      << ", top_p_reset_ids: " << (top_p_reset_ids.has_value() ? std::to_string(top_p_reset_ids.value()) : "None")
-      << ", temperature: " << (temperature.has_value() ? std::to_string(temperature.value()) : "None")
-      << ", min_length: " << (min_length.has_value() ? std::to_string(min_length.value()) : "None")
-      << ", beam_search_diversity_rate: "
-      << (beam_search_diversity_rate.has_value() ? std::to_string(beam_search_diversity_rate.value()) : "None")
-      << ", repetition_penalty: "
-      << (repetition_penalty.has_value() ? std::to_string(repetition_penalty.value()) : "None")
-      << ", presence_penalty: " << (presence_penalty.has_value() ? std::to_string(presence_penalty.value()) : "None")
-      << ", frequency_penalty: " << (frequency_penalty.has_value() ? std::to_string(frequency_penalty.value()) : "None")
-      << ", length_penalty: " << (length_penalty.has_value() ? std::to_string(length_penalty.value()) : "None")
-      << ", early_stopping: " << (early_stopping.has_value() ? std::to_string(early_stopping.value()) : "None")
-      << ", no_repeat_ngram_size: "
-      << (no_repeat_ngram_size.has_value() ? std::to_string(no_repeat_ngram_size.value()) : "None"));
-  */
+  // CLOG4(
+  //   INFO,
+  //   "SamplingConfig: "
+  //     << "beam_width: " << beam_width << ", top_k: " << (top_k.has_value() ? std::to_string(top_k.value()) : "None")
+  //     << ", top_p: " << (top_p.has_value() ? std::to_string(top_p.value()) : "None")
+  //     << ", top_p_min: " << (top_p_min.has_value() ? std::to_string(top_p_min.value()) : "None")
+  //     << ", top_p_decay: " << (top_p_decay.has_value() ? std::to_string(top_p_decay.value()) : "None")
+  //     << ", top_p_reset_ids: " << (top_p_reset_ids.has_value() ? std::to_string(top_p_reset_ids.value()) : "None")
+  //     << ", temperature: " << (temperature.has_value() ? std::to_string(temperature.value()) : "None")
+  //     << ", min_length: " << (min_length.has_value() ? std::to_string(min_length.value()) : "None")
+  //     << ", beam_search_diversity_rate: "
+  //     << (beam_search_diversity_rate.has_value() ? std::to_string(beam_search_diversity_rate.value()) : "None")
+  //     << ", repetition_penalty: "
+  //     << (repetition_penalty.has_value() ? std::to_string(repetition_penalty.value()) : "None")
+  //     << ", presence_penalty: " << (presence_penalty.has_value() ? std::to_string(presence_penalty.value()) : "None")
+  //     << ", frequency_penalty: " << (frequency_penalty.has_value() ? std::to_string(frequency_penalty.value()) :
+  //     "None")
+  //     << ", length_penalty: " << (length_penalty.has_value() ? std::to_string(length_penalty.value()) : "None")
+  //     << ", early_stopping: " << (early_stopping.has_value() ? std::to_string(early_stopping.value()) : "None")
+  //     << ", no_repeat_ngram_size: "
+  //     << (no_repeat_ngram_size.has_value() ? std::to_string(no_repeat_ngram_size.value()) : "None"));
 
   return executor::SamplingConfig(beam_width, top_k, top_p, top_p_min, top_p_reset_ids, top_p_decay, random_seed,
                                   temperature, min_length, beam_search_diversity_rate, repetition_penalty,
@@ -465,24 +464,15 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
                                   no_repeat_ngram_size);
 }
 
-static std::optional<executor::PromptTuningConfig> BuildPromptTuningForImages(const std::vector<std::string>& img_urls,
-                                                                              VIT* vit,
-                                                                              std::string& prompt) {
-  if (img_urls.empty()) {
-    return std::nullopt;
-  }
-  if (vit == nullptr) {
+static std::tuple<PtuningEmbeddingTableType, MropeConfType> BuildPromptTuningForImages(
+  const std::vector<std::string>& img_urls, VIT* vit, std::string& prompt, executor::VecTokens& token_ids) {
+  if (!img_urls.empty() && vit == nullptr) {
     throw std::invalid_argument("There is no vit model.");
   }
-  std::shared_ptr<NamedTensor> vit_embeddings = vit->Encode(img_urls, prompt);
-  if (vit_embeddings == nullptr) {
-    throw std::runtime_error("Encode image to embeddings failed.");
+  if (vit == nullptr) {
+    return {std::nullopt, std::nullopt};
   }
-  auto e_tensor = executor::detail::ofITensor(vit_embeddings->tensor);
-  // CLOG4(INFO, "e_tensor shape: [" << e_tensor.getShape()[0] << ", " << e_tensor.getShape()[1]
-  //                                 << "], dtype: " << int(e_tensor.getDataType()) << ", size: " <<
-  //                                 e_tensor.getSize());
-  return executor::PromptTuningConfig(std::move(e_tensor));
+  return vit->Encode(img_urls, prompt, token_ids);
 }
 
 std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody(
@@ -600,14 +590,17 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
     stop_words_list.emplace_back(tokenizer->Encode(llm_styler->func_call_observation_words(), false, false));
   }
 
-  // [TODO]: Support embedding_bias, p_tuning_config, lora_config, external_draft_tokens_config
+  executor::VecTokens input_tokens;
+
   std::optional<executor::Tensor> embedding_bias{std::nullopt};
-  auto p_tuning_config = BuildPromptTuningForImages(image_urls, vit, prompt);
+  auto [p_tuning_config, rope_config] = BuildPromptTuningForImages(image_urls, vit, prompt, input_tokens);
+  if (input_tokens.empty()) {
+    input_tokens = tokenizer->Encode(prompt);
+  }
+
   std::optional<executor::LoraConfig> lora_config{std::nullopt};
   std::optional<executor::ExternalDraftTokensConfig> external_draft_tokens_config{std::nullopt};
 
-  // CLOG4(INFO, "Final prompt: " << prompt);
-  executor::VecTokens input_tokens = tokenizer->Encode(prompt);
   std::optional<executor::VecTokens> encoder_input_tokens{std::nullopt};
 
   if (model_type == executor::ModelType::kENCODER_ONLY || model_type == executor::ModelType::kENCODER_DECODER) {
@@ -617,12 +610,53 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
     }
   }
 
-  return {
-    func_call, std::move(model),
-    executor::Request{input_tokens, max_new_tokens, !func_call && streaming, sampling_config, out_config, end_id,
-                      pad_id, bad_words_list.empty() ? std::nullopt : std::make_optional(bad_words_list),
-                      stop_words_list.empty() ? std::nullopt : std::make_optional(stop_words_list), embedding_bias,
-                      external_draft_tokens_config, p_tuning_config, lora_config, std::nullopt, encoder_input_tokens}};
+  std::optional<std::vector<executor::SizeType32>> position_ids{std::nullopt};
+  std::optional<executor::LookaheadDecodingConfig> lookahead_config{std::nullopt};
+  std::optional<executor::KvCacheRetentionConfig> kv_cache_retention_config{std::nullopt};
+  std::optional<std::string> logits_post_processor_name{std::nullopt};
+  std::optional<executor::IdType> client_id{std::nullopt};
+  bool return_all_generated_tokens = false;
+  executor::PriorityType priority = executor::Request::kDefaultPriority;
+  executor::RequestType type = executor::RequestType::REQUEST_TYPE_CONTEXT_AND_GENERATION;
+  std::optional<executor::ContextPhaseParams> context_phase_params{std::nullopt};
+  std::optional<executor::Tensor> encoder_input_features{std::nullopt};
+  std::optional<executor::SizeType32> encoder_output_length{std::nullopt};
+  std::optional<executor::Tensor> cross_attention_mask{std::nullopt};
+  executor::SizeType32 num_return_sequences = 1;
+  std::optional<executor::EagleConfig> eagle_config{std::nullopt};
+  std::optional<executor::Tensor> skip_cross_attn_blocks{std::nullopt};
+
+  return {func_call, std::move(model),
+          executor::Request{input_tokens,
+                            max_new_tokens,
+                            !func_call && streaming,
+                            sampling_config,
+                            out_config,
+                            end_id,
+                            pad_id,
+                            position_ids,
+                            bad_words_list.empty() ? std::nullopt : std::make_optional(bad_words_list),
+                            stop_words_list.empty() ? std::nullopt : std::make_optional(stop_words_list),
+                            embedding_bias,
+                            external_draft_tokens_config,
+                            p_tuning_config,
+                            rope_config,
+                            lora_config,
+                            lookahead_config,
+                            kv_cache_retention_config,
+                            logits_post_processor_name,
+                            encoder_input_tokens,
+                            client_id,
+                            return_all_generated_tokens,
+                            priority,
+                            type,
+                            context_phase_params,
+                            encoder_input_features,
+                            encoder_output_length,
+                            cross_attention_mask,
+                            num_return_sequences,
+                            eagle_config,
+                            skip_cross_attn_blocks}};
 }
 
 } // namespace netease::grps::utils

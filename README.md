@@ -4,6 +4,12 @@
 
 <img src="docs/gradio.gif" alt="gradio.gif">
 
+## Release Note
+
+* 2024-12-17
+    * 增加grps1.1.0_cuda12.5_cudnn9.2_trtllm0.16.0_py3.12_beta镜像（目前镜像较大，后续正式版会精简）。
+    * 增加qwen2-vl的支持。
+
 ## 目录
 
 * [1. 说明](#1-说明)
@@ -48,10 +54,11 @@
 | internvl2-qwen2     | internvl2 | ✅    | ❌             | InternVL2-1B                              | [internvl2](docs%2Finternvl2.md) |
 | internvl2-phi3      | internvl2 | ✅    | ❌             | InternVL2-4B                              | [internvl2](docs%2Finternvl2.md) |
 | qwenvl              | qwenvl    | ✅    | ❌             | Qwen-VL-Chat, Qwen-VL                     | [qwenvl](docs%2Fqwenvl.md)       |
+| qwen2vl             | qwen2vl   | ✅    | ❌             | Qwen2-VL-Instruct                         | [qwen2vl](docs%2Fqwen2vl.md)     |
 
 TODO：
 
-* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.12.0```
+* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.16.0```
   （主分支），具体见仓库的分支信息。由于人力受限，一些bug不能及时在每一个分支修复，请尽量使用最新版本分支。
 * 由于不同家族系的```LLM```的```chat```和```function call```
   的```prompt```构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```
@@ -111,7 +118,7 @@ git submodule update --init --recursive
 
 ### 3.2 创建容器
 
-使用```registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.5_cudnn9.2_trtllm0.12.0_py3.10```镜像。
+使用```registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.5_cudnn9.2_trtllm0.16.0_py3.12_beta```镜像。
 这里挂载了当前目录用于构建工程并保留构建产物，挂载/tmp目录用于保存构建的trtllm引擎文件。参考```triton-trtllm```
 设置共享内存大小，解除物理内存锁定限制，设置栈大小，配置参数
 ```--shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864```。
@@ -120,7 +127,7 @@ git submodule update --init --recursive
 # 创建容器
 docker run -itd --name grps_trtllm_dev --runtime=nvidia --network host --shm-size=2g --ulimit memlock=-1 --ulimit stack=67108864 \
 -v $(pwd):/grps_dev -v /tmp:/tmp -w /grps_dev \
-registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.5_cudnn9.2_trtllm0.12.0_py3.10 bash
+registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.5_cudnn9.2_trtllm0.16.0_py3.12_beta bash
 # 进入开发容器
 docker exec -it grps_trtllm_dev bash
 ```
@@ -378,6 +385,7 @@ Final server response: The postcode for Boston, MA is 02138. The current tempera
 '
 
 # llama-index ai agent模拟
+pip install llama_index llama_index.llms.openai_like
 python3 client/llamaindex_ai_agent.py 127.0.0.1:9997
 # 返回如下：
 : '
@@ -453,6 +461,9 @@ python3 tools/gradio/llm_app.py internvl2 0.0.0.0:9997
 
 # 启动多模态聊天界面，使用qwenvl多模态模型，支持输出检测框
 python3 tools/gradio/llm_app.py qwenvl 0.0.0.0:9997
+
+# 启动多模态聊天界面，使用qwen2vl多模态模型
+python3 tools/gradio/llm_app.py qwen2vl 0.0.0.0:9997
 ```
 
 启动后日志会显示服务端口号，默认为7860如下：

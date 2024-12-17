@@ -343,6 +343,7 @@ if __name__ == '__main__':
         device_map='cpu',
         torch_dtype=str_dtype_to_torch(args.dtype),
         trust_remote_code=True,
+        use_flash_attn=False
     ).eval()
     vision_encoder = (VisionEncoderWrapper(hf_model.vision_model, hf_model.mlp1, select_layer=-1))
 
