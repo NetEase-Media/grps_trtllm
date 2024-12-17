@@ -51,7 +51,7 @@
 
 TODO：
 
-* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.12.0```
+* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.16.0```
   （主分支），具体见仓库的分支信息。由于人力受限，一些bug不能及时在每一个分支修复，请尽量使用最新版本分支。
 * 由于不同家族系的```LLM```的```chat```和```function call```
   的```prompt```构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```
@@ -106,6 +106,7 @@ TODO：
 ```bash
 git clone https://github.com/NetEase-Media/grps_trtllm.git
 cd grps_trtllm
+git checkout -b v0.12.0 remotes/origin/v0.12.0
 git submodule update --init --recursive
 ```
 
