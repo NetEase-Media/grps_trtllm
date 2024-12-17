@@ -88,8 +88,8 @@ models:
       # default sampling config, sampling param in request will overwrite these. Support sampling params see
       # @ref(src/constants.h - SamplingConfig)
       sampling:
-        top_k: 50
-        top_p: 1.0
+      #  top_k: 50
+      #  top_p: 1.0
 
       # trtllm config.
       gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).

@@ -28,6 +28,7 @@ python3 ./third_party/TensorRT-LLM/examples/qwen/convert_checkpoint.py \
 --dtype bfloat16 --load_model_on_cpu
 
 # 构建llm引擎，根据具体显存情况可以配置不同。
+# 这里设置支持最大batch_size为4，即支持4个并发同时推理，超过4个排队处理。
 rm -rf /tmp/Qwen2-VL-2B-Instruct/trt_engines
 trtllm-build --checkpoint_dir /tmp/Qwen2-VL-2B-Instruct//tllm_checkpoint/ \
 --output_dir /tmp/Qwen2-VL-2B-Instruct/trt_engines \
@@ -72,6 +73,7 @@ python3 ./third_party/TensorRT-LLM/examples/qwen/convert_checkpoint.py \
 --dtype bfloat16 --load_model_on_cpu
 
 # 构建llm引擎，根据具体显存情况可以配置不同。
+# 这里设置支持最大batch_size为4，即支持4个并发同时推理，超过4个排队处理。
 rm -rf /tmp/Qwen2-VL-7B-Instruct/trt_engines
 trtllm-build --checkpoint_dir /tmp/Qwen2-VL-7B-Instruct//tllm_checkpoint/ \
 --output_dir /tmp/Qwen2-VL-7B-Instruct/trt_engines \

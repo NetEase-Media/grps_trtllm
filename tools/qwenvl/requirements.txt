@@ -7,6 +7,6 @@ transformers-stream-generator
 sentencepiece~=0.1.99
 tiktoken
 einops
-auto-gptq
+#auto-gptq
 matplotlib
 #torchvision==0.17.1
