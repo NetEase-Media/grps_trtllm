@@ -12,7 +12,7 @@
 ![Ai-Agent](https://img.shields.io/badge/Ai_Agent-blue)
 ![Multi-Modal](https://img.shields.io/badge/Multi_Modal-green)
 
-[开发与调试](#3-本地开发与调试) | [模型文档](./docs) | [更新历史](./docs/release_note.md) | [镜像列表](./docs/images.md) | [性能](#7-与xinference-vllm性能比较)
+[开发与调试](#3-本地开发与调试) | [模型列表](#11-模型列表) | [镜像列表](./docs/images.md) | [更新历史](./docs/release_note.md) | [性能](#7-与xinference-vllm性能比较)
 
 <div align="left">
 
@@ -45,7 +45,9 @@
 * 通过集成```tensorrt```推理后端与```opencv```库，支持多模态```LLM```。
 * 通过测试，```grps-trtllm```相比较```triton-trtllm```性能有稳定的提升。
 
-支持的```LLM styler```家族：
+### 1.1 模型列表
+
+支持的文本LLM：
 
 | llm_styler | chat | function_call | supported model                                                    | doc                                                                      |
 |------------|------|---------------|--------------------------------------------------------------------|--------------------------------------------------------------------------|
@@ -67,7 +69,7 @@
 | qwenvl              | qwenvl    | ✅    | ❌             | Qwen-VL-Chat, Qwen-VL                     | [qwenvl](docs%2Fqwenvl.md)           |
 | qwen2vl             | qwen2vl   | ✅    | ❌             | Qwen2-VL-Instruct                         | [qwen2vl](docs%2Fqwen2vl.md)         |
 
-TODO：
+### 1.2 TODO
 
 * 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.16.0```
   （主分支），具体见仓库的分支信息。由于人力受限，一些bug不能及时在每一个分支修复，请尽量使用最新版本分支。
