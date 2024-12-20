@@ -2,7 +2,7 @@
 
 # grps-trtllm
 
-[GRPS](https://github.com/NetEase-Media/grps) + [TensorRT-LLM]((https://github.com/NVIDIA/TensorRT-LLM))
+[GRPS](https://github.com/NetEase-Media/grps) + [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM)
 实现纯```C++```版高性能```OpenAI LLM```服务，支持```Chat```、```Ai-agent```、```Multi-modal```等。
 
 ![GRPS](https://img.shields.io/badge/GRPS-blue)
