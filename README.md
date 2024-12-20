@@ -12,7 +12,7 @@
 ![Ai-Agent](https://img.shields.io/badge/Ai_Agent-blue)
 ![Multi-Modal](https://img.shields.io/badge/Multi_Modal-green)
 
-[模型文档](./docs) | [性能](#7-与xinference-vllm性能比较) | [更新说明](./docs/release_note.md)
+[开发与调试](#3-本地开发与调试) | [模型文档](./docs) | [更新历史](./docs/release_note.md) | [镜像列表](./docs/images.md) | [性能](#7-与xinference-vllm性能比较)
 
 <div align="left">
 
