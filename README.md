@@ -1,14 +1,24 @@
+<div align="center">
+
 # grps-trtllm
+
+[GRPS](https://github.com/NetEase-Media/grps) + [TensorRT-LLM]((https://github.com/NVIDIA/TensorRT-LLM))
+实现纯```C++```版高性能```OpenAI LLM```服务，支持```Chat```、```Ai-agent```、```Multi-modal```等。
+
+![GRPS](https://img.shields.io/badge/GRPS-blue)
+![TensorRT-LLM](https://img.shields.io/badge/TensorRT_LLM-green)
+![Tokenizer-CPP](https://img.shields.io/badge/Tokenizer_CPP-blue)
+![OpenAI](https://img.shields.io/badge/OpenAI-green)
+![Ai-Agent](https://img.shields.io/badge/Ai_Agent-blue)
+![Multi-Modal](https://img.shields.io/badge/Multi_Modal-green)
+
+[模型文档](./docs) | [性能](#7-与xinference-vllm性能比较) | [更新说明](./docs/release_note.md)
+
+<div align="left">
 
 ## 演示
 
 <img src="docs/gradio.gif" alt="gradio.gif">
-
-## Release Note
-
-* 2024-12-17
-    * 增加grps1.1.0_cuda12.5_cudnn9.2_trtllm0.16.0_py3.12_beta镜像（目前镜像较大，后续正式版会精简）。
-    * 增加qwen2-vl的支持。
 
 ## 目录
 
@@ -48,13 +58,14 @@
 
 支持的多模态LLM：
 
-| llm_styler          | vit       | chat | function_call | supported model                           | doc                              |
-|---------------------|-----------|------|---------------|-------------------------------------------|----------------------------------|
-| internvl2-internlm2 | internvl2 | ✅    | ❌             | InternVL2-2B, InternVL2-8B, InternVL2-26B | [internvl2](docs%2Finternvl2.md) |
-| internvl2-qwen2     | internvl2 | ✅    | ❌             | InternVL2-1B                              | [internvl2](docs%2Finternvl2.md) |
-| internvl2-phi3      | internvl2 | ✅    | ❌             | InternVL2-4B                              | [internvl2](docs%2Finternvl2.md) |
-| qwenvl              | qwenvl    | ✅    | ❌             | Qwen-VL-Chat, Qwen-VL                     | [qwenvl](docs%2Fqwenvl.md)       |
-| qwen2vl             | qwen2vl   | ✅    | ❌             | Qwen2-VL-Instruct                         | [qwen2vl](docs%2Fqwen2vl.md)     |
+| llm_styler          | vit       | chat | function_call | supported model                           | doc                                  |
+|---------------------|-----------|------|---------------|-------------------------------------------|--------------------------------------|
+| internvl2-internlm2 | internvl2 | ✅    | ❌             | InternVL2-2B, InternVL2-8B, InternVL2-26B | [internvl2](docs%2Finternvl2.md)     |
+| internvl2-qwen2     | internvl2 | ✅    | ❌             | InternVL2-1B                              | [internvl2](docs%2Finternvl2.md)     |
+| internvl2-phi3      | internvl2 | ✅    | ❌             | InternVL2-4B                              | [internvl2](docs%2Finternvl2.md)     |
+| internvl2.5         | internvl2 | ✅    | ❌             | InternVL2_5                               | [internvl2.5](docs%2Finternvl2.5.md) |
+| qwenvl              | qwenvl    | ✅    | ❌             | Qwen-VL-Chat, Qwen-VL                     | [qwenvl](docs%2Fqwenvl.md)           |
+| qwen2vl             | qwen2vl   | ✅    | ❌             | Qwen2-VL-Instruct                         | [qwen2vl](docs%2Fqwen2vl.md)         |
 
 TODO：
 

@@ -1,0 +1,137 @@
+models:
+  - name: trtllm_model
+    version: 1.0.0
+    device: auto
+    inferer_type: customized
+    inferer_name: trtllm_inferer
+    inferer_path:
+    inferer_args: # more args of model inferer.
+      # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
+      # Support llm_style see README.md.
+      llm_style: internvl2.5
+
+      # tokenizer config.
+      tokenizer_type: sentencepiece # can be `huggingface`, `sentencepiece`. Must be set.
+      tokenizer_path: /tmp/InternVL2_5-8B/ # path of tokenizer. Must be set.
+      tokenizer_parallelism: 16 # tokenizers count for parallel tokenization. Will be set to 1 if not set.
+      end_token_id: 2 # "</s>"
+      pad_token_id: 2 # "</s>"
+      skip_special_tokens: # skip special tokens when decoding. Empty if not set.
+        - 92546 # "<IMG_CONTEXT>"
+        - 92545 # "</img>"
+        - 92544 # "<img>"
+        - 92543 # "<|im_start|>"
+        - 92542 # "<|im_end|>"
+        - 92541 # "<|action_start|>"
+        - 92540 # "<|action_end|>"
+        - 92539 # "<|interpreter|>"
+        - 92538 # "<|plugin|>"
+        - 0 # "<unk>"
+        - 1 # "<s>"
+        - 2 # "</s>"
+      force_tokens_dict: # will be used to force map tokens to ids when encode and decode instead of using tokenizer. Empty if not set.
+        - token: "</box>"
+          id: 92552
+        - token: "<box>"
+          id: 92551
+        - token: "</ref>"
+          id: 92550
+        - token: "<ref>"
+          id: 92549
+        - token: "</quad>"
+          id: 92548
+        - token: "<quad>"
+          id: 92547
+        - token: "<IMG_CONTEXT>"
+          id: 92546
+        - token: "</img>"
+          id: 92545
+        - token: "<img>"
+          id: 92544
+        - token: "<|im_start|>"
+          id: 92543
+        - token: "<|im_end|>"
+          id: 92542
+        - token: "<|action_start|>"
+          id: 92541
+        - token: "<|action_end|>"
+          id: 92540
+        - token: "<|interpreter|>"
+          id: 92539
+        - token: "<|plugin|>"
+          id: 92538
+        - token: "<unk>"
+          id: 0
+        - token: "<s>"
+          id: 1
+        - token: "</s>"
+          id: 2
+      prefix_tokens_id: [ 1 ] # prefix tokens id will be added to the beginning of the input ids. Empty if not set.
+      suffix_tokens_id: # suffix tokens id will be added to the end of the input ids. Empty if not set.
+
+      # multi-modal model config.
+      img_token: "<IMG_CONTEXT>" # image token text.
+      # the beginning token id used to mark the image tokens. Multi img_tokens will be mapped to consecutive token ids
+      # with the beginning token id. The beginning token id must be the (max-token-id + 1), that is the true vocab size.
+      # Such as: "<IMG_TOKEN><IMG_TOKEN><IMG_TOKEN>" will be mapped to
+      # [img_begin_token_id, img_begin_token_id + 1, img_begin_token_id + 2].
+      img_begin_token_id: 92553
+      vit_type: internvl2 # Support vit_type see README.md.
+      vit_path: /tmp/InternVL2_5-8B/vision_encoder_bfp16.trt # path of vision transformer model.
+      vit_worker_tp: 8 # worker thread pool size for load image, preprocessing, postprocessing...
+      vit_trt_args:
+        streams: 1 # number of streams for trt infer, used for multi-stream parallel infer. More streams will use more gpu memory.
+        #dla_cores: 0 # number of dla cores for trt infer.
+        customized_op_paths: # customized op paths.
+        #  - /path/to/your/customized_op.so
+
+      # default sampling config, sampling param in request will overwrite these. Support sampling params see
+      # @ref(src/constants.h - SamplingConfig)
+      sampling:
+      #  top_k: 50
+      #  top_p: 1.0
+
+      # trtllm config.
+      gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
+      gpt_model_path: /tmp/InternVL2_5-8B/trt_engines/ # path of decoder model. Must be set.
+      encoder_model_path: # path of encoder model. Null if not set.
+      stop_words: # additional stop words. Empty if not set.
+        - "<|im_start|>"
+        - "<|im_end|>"
+      bad_words: # additional bad words. Empty if not set.
+      max_tokens_in_paged_kv_cache: # use default if not set.
+      max_attention_window_size: # use default (i.e. max_sequence_length) if not set.
+      sink_token_length: # use default if not set.
+      batch_scheduler_policy: guaranteed_no_evict # must be `max_utilization` or `guaranteed_no_evict`.
+      kv_cache_free_gpu_mem_fraction: 0.7 # will be set to 0.9 or `max_tokens_in_paged_kv_cache` if not set.
+      kv_cache_host_memory_bytes: # will be set to 0 if not set.
+      kv_cache_onboard_blocks: # will be set to true if not set.
+      exclude_input_in_output: true # will be set to false if not set.
+      cancellation_check_period_ms: # will be set to 100 (ms) if not set.
+      stats_check_period_ms: # will be set to 100 (ms) if not set.
+      iter_stats_max_iterations: # will be set to 1000 if not set.
+      request_stats_max_iterations: # will be set to 0 if not set.
+      enable_kv_cache_reuse: # will be set to false if not set.
+      normalize_log_probs: # will be set to true if not set.
+      enable_chunked_context: # will be set to false if not set.
+      gpu_device_ids: # will be automatically set if not set.
+      lora_cache_optimal_adapter_size: # will be set to 8 if not set.
+      lora_cache_max_adapter_size: # will be set to 64 if not set.
+      lora_cache_gpu_memory_fraction: # will be set to 0.05 if not set.
+      lora_cache_host_memory_bytes: # will be set to 1073741824(1GB) if not set.
+      decoding_mode: # must be one of the {`top_k`, `top_p`, `top_k_top_p`, `beam_search`}. Use default: `top_k_top_p` if max_beam_width == 1, beam_search otherwise.
+      executor_worker_path: # will be set to `/opt/tritonserver/backends/tensorrtllm/trtllmExecutorWorker` if not set.
+      medusa_choices: # will be set to `mc_sim_7b_63` if not set.
+      gpu_weights_percent: # will be set to 1.0 if not set.
+    converter_type: none # only support `torch` (torch tensor converter), `tensorflow` (tf tensor converter), `tensorrt` (tensorrt tensor converter), `customized`  or `none`(no converter mode) now.
+    converter_name: # converter name that has registered in src/customized_converter.h. Not none when converter_type is `customized`.
+    converter_path: # path of converter.
+    converter_args: # more args of converter.
+
+dag:
+  type: sequential # only support `sequential` now.
+  name: your_dag # dag name.
+  nodes: # sequential mode will run node in the order of nodes.
+    - name: node-1
+      type: model # only support `model` now.
+      model: trtllm_model-1.0.0  # model(name-version format) that has been declared in models.
