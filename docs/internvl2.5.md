@@ -1,6 +1,6 @@
 # grps-trtllm
 
-InternVL2_5多模态LLM模型的部署示例。具体不同尺寸的vit和llm组合如下表格：
+InternVL2_5与InternVL2_5-MPO多模态LLM模型的部署示例。具体不同尺寸的vit和llm组合如下表格：
 
 |   Model Name    |                                       Vision Part                                       |                                 Language Part                                  |                           HF Link                           |
 |:---------------:|:---------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------:|:-----------------------------------------------------------:|
@@ -12,6 +12,16 @@ InternVL2_5多模态LLM模型的部署示例。具体不同尺寸的vit和llm组
 | InternVL2_5-38B |   [InternViT-6B-448px-V2_5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V2_5)   |    [Qwen2.5-32B-Instruct](https://huggingface.co/Qwen/Qwen2.5-32B-Instruct)    | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2_5-38B) |
 | InternVL2_5-78B |   [InternViT-6B-448px-V2_5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V2_5)   |    [Qwen2.5-72B-Instruct](https://huggingface.co/Qwen/Qwen2.5-72B-Instruct)    | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2_5-78B) |
 
+|     Model Name      |                                       Vision Part                                       |                                 Language Part                                  |                             HF Link                             |
+|:-------------------:|:---------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------:|:---------------------------------------------------------------:|
+| InternVL2_5-1B-MPO  | [InternViT-300M-448px-V2_5](https://huggingface.co/OpenGVLab/InternViT-300M-448px-V2_5) |   [Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct)   | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2_5-1B-MPO)  |
+| InternVL2_5-2B-MPO  | [InternViT-300M-448px-V2_5](https://huggingface.co/OpenGVLab/InternViT-300M-448px-V2_5) | [internlm2_5-1_8b-chat](https://huggingface.co/internlm/internlm2_5-1_8b-chat) | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2_5-2B-MPO)  |
+| InternVL2_5-4B-MPO  | [InternViT-300M-448px-V2_5](https://huggingface.co/OpenGVLab/InternViT-300M-448px-V2_5) |     [Qwen2.5-3B-Instruct](https://huggingface.co/Qwen/Qwen2.5-3B-Instruct)     | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2_5-4B-MPO)  |
+| InternVL2_5-8B-MPO  | [InternViT-300M-448px-V2_5](https://huggingface.co/OpenGVLab/InternViT-300M-448px-V2_5) |   [internlm2_5-7b-chat](https://huggingface.co/internlm/internlm2_5-7b-chat)   | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2_5-8B-MPO)  |
+| InternVL2_5-26B-MPO |   [InternViT-6B-448px-V2_5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V2_5)   |  [internlm2_5-20b-chat](https://huggingface.co/internlm/internlm2_5-20b-chat)  | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2_5-26B-MPO) |
+| InternVL2_5-38B-MPO |   [InternViT-6B-448px-V2_5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V2_5)   |    [Qwen2.5-32B-Instruct](https://huggingface.co/Qwen/Qwen2.5-32B-Instruct)    | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2_5-38B-MPO) |
+| InternVL2_5-78B-MPO |   [InternViT-6B-448px-V2_5](https://huggingface.co/OpenGVLab/InternViT-6B-448px-V2_5)   |    [Qwen2.5-72B-Instruct](https://huggingface.co/Qwen/Qwen2.5-72B-Instruct)    | [🤗 link](https://huggingface.co/OpenGVLab/InternVL2_5-78B-MPO) |
+
 ## 演示
 
 <img src="gradio.gif" alt="gradio.gif">
@@ -22,9 +32,9 @@ InternVL2_5多模态LLM模型的部署示例。具体不同尺寸的vit和llm组
 
 ## 构建trtllm引擎
 
-### 2B\8B\26B模型
+### 2B\8B\26B InternVL2_5与InternVL2_5-MPO模型
 
-以8B模型为例，其他模型类似。
+以InternVL2_5-8B模型为例，其他模型类似。
 
 ```bash
 # 下载InternVL2_5-8B模型
@@ -59,9 +69,9 @@ python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2
 --dtype bfloat16 --minBS 1 --optBS 13 --maxBS 26
 ```
 
-### 1B\4B\38B\78B模型
+### 1B\4B\38B\78B InternVL2_5与InternVL2_5-MPO模型
 
-以4B模型为例，其他模型类似。
+以InternVL2_5-4B模型为例，其他模型类似。
 
 ```bash
 # 下载InternVL2_5-4B模型
