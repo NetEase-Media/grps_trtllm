@@ -1,7 +1,7 @@
 # Build grps customized project image.
 
 # --------Building stage.--------
-FROM registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.5_cudnn9.2_trtllm0.16.0_py3.12_beta AS build
+FROM registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.6_cudnn9.6_trtllm0.16.0_py3.12 AS build
 ENV LD_LIBRARY_PATH /usr/local/cuda/compat/lib.real:$LD_LIBRARY_PATH
 
 # grps archive.
@@ -18,7 +18,7 @@ RUN cd /my_grps && \
     grpst archive . --skip_unittest --output_path server.mar
 
 # --------Release stage.--------
-FROM registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.5_cudnn9.2_trtllm0.16.0_py3.12_beta
+FROM registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.6_cudnn9.6_trtllm0.16.0_py3.12
 ENV LD_LIBRARY_PATH /usr/local/cuda/compat/lib.real:$LD_LIBRARY_PATH
 
 WORKDIR /my_grps
