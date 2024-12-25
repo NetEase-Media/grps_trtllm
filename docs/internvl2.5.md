@@ -111,6 +111,9 @@ python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2
 
 ## 构建与部署
 
+注意不同尺寸的inference.yml可以根据LLM类型分别参考4B和8B的inference.yml文件并改模型路径。基于Qwen2.5（1B\4B\38B\78B）的LLM参考[inference_internvl2.5-4B.yml](../conf/inference_internvl2.5-4B.yml)
+，基于InternLM2.5（2B\8B\26B）的LLM参考[inference_internvl2.5-8B.yml](../conf/inference_internvl2.5-8B.yml)。
+
 ```bash
 # 构建
 grpst archive .
@@ -119,6 +122,7 @@ grpst archive .
 # 通过--inference_conf参数指定模型对应的inference.yml配置文件启动服务。
 # 如需修改服务端口，并发限制等，可以修改conf/server.yml文件，然后启动时指定--server_conf参数指定新的server.yml文件。
 # 注意如果使用多卡推理，需要使用mpi方式启动，--mpi_np参数为并行推理的GPU数量。
+# grpst start ./server.mar --inference_conf=conf/inference_internvl2.5-4B.yml
 grpst start ./server.mar --inference_conf=conf/inference_internvl2.5-8B.yml
 
 # 查看服务状态
