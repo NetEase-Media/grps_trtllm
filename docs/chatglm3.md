@@ -24,7 +24,7 @@ python3 convert_checkpoint.py --model_dir /tmp/chatglm3-6b \
 rm -rf /tmp/chatglm3-6b/trt_engines/
 trtllm-build --checkpoint_dir /tmp/chatglm3-6b/tllm_checkpoint/ \
 --output_dir /tmp/chatglm3-6b/trt_engines/ \
---gemm_plugin float16 --max_batch_size 16 --paged_kv_cache enable \
+--gemm_plugin float16 --max_batch_size 16 --paged_kv_cache enable --use_paged_context_fmha enable \
 --max_input_len 32256 --max_seq_len 32768 --max_num_tokens 32256
 # 运行测试
 python3 ../run.py --input_text "你好，你是谁？" --max_output_len=50 \

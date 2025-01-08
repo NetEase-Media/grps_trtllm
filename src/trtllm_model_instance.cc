@@ -94,6 +94,11 @@ executor::KvCacheConfig TrtLlmModelInstance::GetKvCacheConfigFromParams() {
     CLOG4(WARN, "enable_kv_cache_reuse is not specified, will be set to false");
   }
 
+  if (enable_kv_cache_reuse && vit_ != nullptr) {
+    CLOG4(WARN, "Not support enable_kv_cache_reuse for vLLM now, will be set to false");
+    enable_kv_cache_reuse = false;
+  }
+
   std::optional<float> cross_kv_cache_fraction = std::nullopt;
   try {
     cross_kv_cache_fraction = model_state_->GetParameter<float>("cross_kv_cache_fraction");

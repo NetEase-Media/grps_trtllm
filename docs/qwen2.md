@@ -24,7 +24,7 @@ python3 convert_checkpoint.py --model_dir /tmp/Qwen2-7B-Instruct \
 rm -rf /tmp/Qwen2-7B-Instruct/trt_engines/
 trtllm-build --checkpoint_dir /tmp/Qwen2-7B-Instruct/tllm_checkpoint/ \
 --output_dir /tmp/Qwen2-7B-Instruct/trt_engines/ \
---gemm_plugin bfloat16 --max_batch_size 16 --paged_kv_cache enable \
+--gemm_plugin bfloat16 --max_batch_size 16 --paged_kv_cache enable --use_paged_context_fmha enable \
 --max_input_len 32256 --max_seq_len 32768 --max_num_tokens 32256
 # 运行测试
 python3 ../run.py --input_text "你好，你是谁？" --max_output_len=50 \

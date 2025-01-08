@@ -163,7 +163,7 @@ python3 convert_checkpoint.py --model_dir /tmp/Qwen2.5-7B-Instruct \
 rm -rf /tmp/Qwen2.5-7B-Instruct/trt_engines/
 trtllm-build --checkpoint_dir /tmp/Qwen2.5-7B-Instruct/tllm_checkpoint/ \
 --output_dir /tmp/Qwen2.5-7B-Instruct/trt_engines/ \
---gemm_plugin bfloat16 --max_batch_size 16 --paged_kv_cache enable \
+--gemm_plugin bfloat16 --max_batch_size 16 --paged_kv_cache enable --use_paged_context_fmha enable \
 --max_input_len 32256 --max_seq_len 32768 --max_num_tokens 32256
 # 运行测试
 python3 ../run.py --input_text "你好，你是谁？" --max_output_len=50 \
@@ -517,33 +517,35 @@ docker rm -f grps_trtllm_server
 
 ## 7. 与xinference-vllm性能比较
 
-这里不再比较与```triton-trtllm```性能，因为它不是```OpenAI```协议。比较与```xinference-vllm```服务的性能差异。
+这里不再比较与```triton-trtllm```性能，因为它不是```OpenAI```协议。比较与```xinference-vllm```
+服务的性能差异。Trtllm打开[kv cache ruse](https://nvidia.github.io/TensorRT-LLM/advanced/kv-cache-reuse.html)
+，xinference-vllm打开[automatic prefix caching](https://docs.vllm.ai/en/stable/automatic_prefix_caching/apc.html)。
 
 ```
-GPU: RTX 2080Ti * 4
-CUDA: cuda_12.4
-Trtllm: 0.10.0
-xinference: 0.14.1
-vLLM: 0.5.4
+GPU: A10 * 1
+CUDA: cuda_12.6
+Trtllm: 0.16.0
+xinference: 1.1.1
+vLLM: 0.6.6
 CPU: Intel(R) Xeon(R) Gold 6242R CPU @ 3.10GHz
 Mem：128G
-LLM: Qwen2-7B
+LLM: Qwen2.5-7B-Instruct
 ```
 
 短输入输出：
-固定输入（华盛顿是谁？），输入输出总长度140 tokens左右。
+固定输入（华盛顿是谁？），120 tokens左右。
 
 | 服务 \ 吞吐(tokens/s) \ 并发 | 1       | 2       | 4       | 6       | 8       | 10      | 16      |
 |------------------------|---------|---------|---------|---------|---------|---------|---------|
-| xinference-vllm        | 98.79   | 181.76  | 343.55  | 436.62  | 580.80  | 660.71  | 968.86  |
-| grps-trtllm            | 128.57  | 231.68  | 429.19  | 561.54  | 714.15  | 836.60  | 1226.88 |
-| 同比                     | +30.14% | +27.46% | +24.93% | +28.61% | +22.96% | +26.62% | +26.63% |
+| xinference-vllm        | 34.28   | 66.68   | 132.96  | 193.38  | 259.02  | 315.72  | 494.42  |
+| grps-trtllm            | 41.36   | 81.49   | 161.45  | 225.40  | 287.35  | 355.39  | 557.89  |
+| 同比                     | +20.65% | +22.21% | +21.43% | +15.56% | +10.94% | +12.56% | +12.84% |
 
 长输入输出：
-固定输入为1.2k左右tokens数量的文章，输出为150左右token数量的总结。
+固定输入为1.2k左右tokens数量的文章，输出为190左右token数量的总结。
 
 | 服务 \ 吞吐(tokens/s) \ 并发 | 1       | 2       | 4       | 6       | 8       | 10      | 16      |
 |------------------------|---------|---------|---------|---------|---------|---------|---------|
-| xinference-vllm        | 681.38  | 1112.14 | 1797.84 | 2135.98 | 2507.70 | 2669.51 | 3511.76 |
-| grps-trtllm            | 797.51  | 1300.54 | 2042.17 | 2400.99 | 2763.28 | 2947.73 | 3637.28 |
-| 同比                     | +17.04% | +16.94% | +13.59% | +12.41% | +10.19% | +10.42% | +3.57%  |
+| xinference-vllm        | 217.51  | 426.68  | 835.96  | 1225.67 | 1616.11 | 1944.35 | 3009.80 |
+| grps-trtllm            | 250.77  | 519.31  | 1016.36 | 1383.31 | 1672.20 | 2064.29 | 3297.62 |
+| 同比                     | +15.29% | +21.70% | +21.58% | +12.86% | +3.47%  | +6.17%  | +9.56%  |
