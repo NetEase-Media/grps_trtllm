@@ -5,6 +5,7 @@
 #include <boost/asio/post.hpp>
 #include <boost/thread/latch.hpp>
 
+#include "config/global_config.h"
 #include "src/utils.h"
 
 namespace netease::grps {
@@ -205,14 +206,32 @@ VitModelInputType Internvl2VIT::Preprocess(const std::vector<std::vector<char>>&
 PtuningEmbeddingTableType Internvl2VIT::Postprocess(VitModelOutputType& model_out, std::string& prompt) {
   auto out = model_out[0].second;
 
-  // reshape.
-  auto& tensor = out->tensor;
-  auto cur_shape = tensor->getShape();
-  nvinfer1::Dims true_shape;
-  true_shape.nbDims = 2;
-  true_shape.d[0] = cur_shape.d[0] * cur_shape.d[1];
-  true_shape.d[1] = cur_shape.d[2];
-  tensor->reshape(true_shape);
-  return out;
+  static bool first = true;
+  if (GlobalConfig::Instance().mpi().world_size > 1 && first) {
+    // Fix and work around tensorrt-llm tensor parallel infer bug:
+    // https://github.com/NVIDIA/TensorRT-LLM/issues/2358
+    auto stream = std::make_shared<tensorrt_llm::runtime::CudaStream>();
+    auto manager = tensorrt_llm::runtime::BufferManager{std::move(stream)};
+    std::vector<int64_t> shape = {out->tensor->getShape().d[0] * out->tensor->getShape().d[1],
+                                  out->tensor->getShape().d[2]};
+    auto embedding_table_copy = std::make_shared<tensorrt_llm::batch_manager::NamedTensor>(
+      out->tensor->getDataType(), shape, model_out[0].second->name);
+    embedding_table_copy->tensor = manager.cpu(embedding_table_copy->tensor->getShape(), out->tensor->getDataType());
+    TLLM_CUDA_CHECK(cudaMemcpyAsync(static_cast<char*>(embedding_table_copy->tensor->data()), out->tensor->data(),
+                                    out->tensor->getSizeInBytes(), cudaMemcpyDeviceToHost, manager.getStream().get()));
+    manager.getStream().synchronize();
+    first = false;
+    return embedding_table_copy;
+  } else {
+    // reshape.
+    auto& tensor = out->tensor;
+    auto cur_shape = tensor->getShape();
+    nvinfer1::Dims true_shape;
+    true_shape.nbDims = 2;
+    true_shape.d[0] = cur_shape.d[0] * cur_shape.d[1];
+    true_shape.d[1] = cur_shape.d[2];
+    tensor->reshape(true_shape);
+    return out;
+  }
 }
 } // namespace netease::grps

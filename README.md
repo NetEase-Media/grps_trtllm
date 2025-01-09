@@ -42,12 +42,13 @@
 
 支持的多模态LLM：
 
-| llm_styler          | vit       | chat | function_call | supported model                           | doc                              |
-|---------------------|-----------|------|---------------|-------------------------------------------|----------------------------------|
-| internvl2-internlm2 | internvl2 | ✅    | ❌             | InternVL2-2B, InternVL2-8B, InternVL2-26B | [internvl2](docs%2Finternvl2.md) |
-| internvl2-qwen2     | internvl2 | ✅    | ❌             | InternVL2-1B                              | [internvl2](docs%2Finternvl2.md) |
-| internvl2-phi3      | internvl2 | ✅    | ❌             | InternVL2-4B                              | [internvl2](docs%2Finternvl2.md) |
-| qwenvl              | qwenvl    | ✅    | ❌             | Qwen-VL-Chat, Qwen-VL                     | [qwenvl](docs%2Fqwenvl.md)       |
+| llm_styler          | vit       | chat | function_call | supported model                           | doc                                  |
+|---------------------|-----------|------|---------------|-------------------------------------------|--------------------------------------|
+| internvl2-internlm2 | internvl2 | ✅    | ❌             | InternVL2-2B, InternVL2-8B, InternVL2-26B | [internvl2](docs%2Finternvl2.md)     |
+| internvl2-qwen2     | internvl2 | ✅    | ❌             | InternVL2-1B                              | [internvl2](docs%2Finternvl2.md)     |
+| internvl2-phi3      | internvl2 | ✅    | ❌             | InternVL2-4B                              | [internvl2](docs%2Finternvl2.md)     |
+| internvl2.5         | internvl2 | ✅    | ❌             | InternVL2_5, InternVL2_5-MPO              | [internvl2.5](docs%2Finternvl2.5.md) |
+| qwenvl              | qwenvl    | ✅    | ❌             | Qwen-VL-Chat, Qwen-VL                     | [qwenvl](docs%2Fqwenvl.md)           |
 
 TODO：
 
