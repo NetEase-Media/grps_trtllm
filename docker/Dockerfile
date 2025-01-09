@@ -19,7 +19,6 @@ RUN cd /my_grps && \
 
 # --------Release stage.--------
 FROM registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.6_cudnn9.6_trtllm0.16.0_py3.12
-ENV LD_LIBRARY_PATH /usr/local/cuda/compat/lib.real:$LD_LIBRARY_PATH
 
 WORKDIR /my_grps
 COPY --from=build /my_grps/server.mar /my_grps/server.mar
