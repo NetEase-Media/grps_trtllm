@@ -77,6 +77,11 @@ std::string DownloadFile(const std::string& url, int timeout_s) {
     throw std::runtime_error("Fail to call " + url + ", error: " + cntl.ErrorText());
   }
 
+  if (cntl.response_attachment().size() == 0) {
+    CLOG4(ERROR, "Downloaded data is empty from " + url);
+    throw std::runtime_error("Downloaded data is empty from " + url);
+  }
+
   return cntl.response_attachment().to_string();
 }
 
@@ -104,6 +109,10 @@ std::vector<char> DownloadFile(const std::string& url, int timeout_s) {
   }
 
   std::vector<char> data(cntl.response_attachment().size());
+  if (data.empty()) {
+    CLOG4(ERROR, "Downloaded data is empty from " + url);
+    throw std::runtime_error("Downloaded data is empty from " + url);
+  }
   cntl.response_attachment().copy_to_cstr(data.data(), data.size());
 
   return data;
@@ -123,6 +132,12 @@ std::string LoadBytesFromFile(const std::string& path) {
   std::string data;
   fs.seekg(0, std::ios::end);
   size_t size = static_cast<size_t>(fs.tellg());
+
+  if (size == 0) {
+    CLOG4(ERROR, "File is empty: " + path);
+    throw std::invalid_argument("File is empty: " + path);
+  }
+
   fs.seekg(0, std::ios::beg);
   data.resize(size);
   fs.read(data.data(), long(size));
@@ -143,6 +158,12 @@ std::vector<char> LoadBytesFromFile(const std::string& path) {
   std::vector<char> data;
   fs.seekg(0, std::ios::end);
   size_t size = static_cast<size_t>(fs.tellg());
+
+  if (size == 0) {
+    CLOG4(ERROR, "File is empty: " + path);
+    throw std::invalid_argument("File is empty: " + path);
+  }
+
   fs.seekg(0, std::ios::beg);
   data.resize(size);
   fs.read(data.data(), long(size));
