@@ -1,6 +1,6 @@
 # grps-trtllm
 
-Qwen2-7B-Instruct模型的部署示例。
+Qwen2模型的部署示例，以Qwen2-7B-Instruct为例。
 
 ## 开发环境
 

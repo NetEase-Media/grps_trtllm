@@ -1,6 +1,6 @@
 # grps-trtllm
 
-Qwen2.5-Coder-7B-Instruct模型的部署示例。
+Qwen2.5-Coder模型的部署示例，以Qwen2.5-Coder-7B-Instruct为例。
 
 ## 开发环境
 

@@ -1,6 +1,6 @@
 # grps-trtllm
 
-glm-4-9b-chat模型的部署示例。
+glm-4模型的部署示例，以glm-4-9b-chat为例。
 
 ## 开发环境
 

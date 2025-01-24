@@ -1,5 +1,8 @@
 # 重要更新
 
+* 2025-01-24
+    * 支持phi3系列文本模型。
+
 * 2025-01-08
     * 支持并测试tensorrt-llm [kv cache reuse](https://nvidia.github.io/TensorRT-LLM/advanced/kv-cache-reuse.html)
       功能。可以显著提高类似“多轮对话”（prompt比较长并且重复比较多）场景的推理性能。暂不支持多模态模型。

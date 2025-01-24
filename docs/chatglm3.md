@@ -1,6 +1,6 @@
 # grps-trtllm
 
-chatglm3-6b模型的部署示例。
+chatglm3模型的部署示例，以chatglm3-6b为例。
 
 ## 开发环境
 

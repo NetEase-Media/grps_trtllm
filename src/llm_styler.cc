@@ -1784,6 +1784,73 @@ std::string Qwen2vlStyler::ParseFunctionCall(const std::string& gen_txt,
   return "";
 }
 
+std::tuple<bool, std::string, std::vector<std::string>> Phi3Styler::BuildPrompt(const rapidjson::Document& json_body) {
+  std::string prompt;
+
+  // Parse messages.
+  if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
+    throw std::invalid_argument("`messages` not found or not an array");
+  }
+  if (json_body["messages"].Empty()) {
+    throw std::invalid_argument("`messages` is empty");
+  }
+
+  bool skip_first = false;
+  // System message.
+  if (json_body["messages"][0].HasMember("role") && json_body["messages"][0]["role"].IsString() &&
+      std::string(json_body["messages"][0]["role"].GetString()) == "system") {
+    // If the first message is a system message, use it as the system prompt.
+    if (!json_body["messages"][0].HasMember("content") || !json_body["messages"][0]["content"].IsString()) {
+      throw std::invalid_argument("`content` not found or not a string");
+    }
+    prompt.append(GetRole("system"));
+    prompt.append(json_body["messages"][0]["content"].GetString());
+    prompt.append("<|end|>\n");
+    skip_first = true;
+  } else {
+    // If the first message is not a system message, add a system message.
+    prompt.append(GetRole("system"));
+    prompt.append(system_prompt());
+    prompt.append("<|end|>\n");
+  }
+  // Following messages.
+  for (auto& message : json_body["messages"].GetArray()) {
+    if (skip_first) {
+      skip_first = false;
+      continue;
+    }
+
+    if (!message.HasMember("role") || !message["role"].IsString()) {
+      throw std::invalid_argument("`role` not found or not a string");
+    }
+    std::string role = GetRole(message["role"].GetString());
+    if (!message.HasMember("content")) {
+      throw std::invalid_argument("`content` not found or not a string");
+    }
+
+    std::string content;
+    if (message["content"].IsString()) {
+      content = message["content"].GetString();
+    }
+
+    prompt.append(role);
+    prompt.append(content);
+    prompt.append("<|end|>\n");
+  }
+
+  if (add_generation_prompt()) {
+    prompt.append(GetRole("assistant"));
+  }
+  return {false, prompt, {}};
+}
+
+std::string Phi3Styler::ParseFunctionCall(const std::string& gen_txt,
+                                          int64_t req_id,
+                                          rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                          rapidjson::MemoryPoolAllocator<>& allocator) {
+  return "";
+}
+
 std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& llm_style) {
   if (llm_style == "qwen") {
     return std::make_unique<QwenStyler>();
@@ -1809,6 +1876,8 @@ std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& 
     return std::make_unique<QwenvlStyler>();
   } else if (llm_style == "qwen2vl") {
     return std::make_unique<Qwen2vlStyler>();
+  } else if (llm_style == "phi3") {
+    return std::make_unique<Phi3Styler>();
   } else {
     throw std::runtime_error("LLM style " + llm_style + " not supported now.");
   }
