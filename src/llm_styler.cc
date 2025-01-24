@@ -502,7 +502,11 @@ std::string Qwen25Styler::ParseFunctionCall(const std::string& gen_txt,
     if (tool_call.size() < 4) {
       throw std::invalid_argument("Invalid tool call: " + tool_call);
     }
-    tool_calls.emplace_back(tool_call.substr(1, tool_call.size() - 2)); // strip {}
+    if (utils::StartsWith(tool_call, "{{") && utils::EndsWith(tool_call, "}}")) {
+      tool_calls.emplace_back(tool_call.substr(1, tool_call.size() - 2)); // strip {}
+    } else {
+      tool_calls.emplace_back(tool_call);
+    }
     start = tool_call_end + 12;
   }
 

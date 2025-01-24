@@ -42,6 +42,12 @@ namespace netease::grps {
 
 namespace utils {
 // --------------------------------------- String utils [BEGIN] ---------------------------------------
+static inline bool StartsWith(const std::string& str, const std::string& prefix) {
+  return str.size() >= prefix.size() && str.compare(0, prefix.size(), prefix) == 0;
+}
+static inline bool EndsWith(const std::string& str, const std::string& suffix) {
+  return str.size() >= suffix.size() && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
 bool IsValidUTF8(const std::string& str);
 // Get word count in string.
 size_t GetWordCount(const std::string& str, const std::string& word);
