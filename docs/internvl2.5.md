@@ -28,7 +28,7 @@ InternVL2_5与InternVL2_5-MPO多模态LLM模型的部署示例。具体不同尺
 
 ## 开发环境
 
-见[本地开发与调试拉取代码和创建容器部分](../README.md#3-本地开发与调试)。
+见[快速开始](../README.md#快速开始)的拉取代码和创建容器部分。
 
 ## 构建trtllm引擎
 
@@ -98,8 +98,8 @@ python3 tools/internvl2/convert_qwen2_ckpt.py --model_dir /tmp/InternVL2_5-4B/ \
 rm -rf /tmp/InternVL2_5-4B/trt_engines/
 trtllm-build --checkpoint_dir /tmp/InternVL2_5-4B/tllm_checkpoint/ \
 --output_dir /tmp/InternVL2_5-4B/trt_engines/ \
---gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
---max_input_len 32768 --max_seq_len 36960 --max_num_tokens 32768 --max_multimodal_len 13312
+--gemm_plugin bfloat16 --max_batch_size 4 --paged_kv_cache enable \
+--max_input_len 32768 --max_seq_len 36960 --max_num_tokens 32768 --max_multimodal_len 26624
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2.5中每个图片根据不同的尺寸最多产生13个patch）。
 python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2_5-4B \

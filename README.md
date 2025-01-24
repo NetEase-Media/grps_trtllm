@@ -12,7 +12,7 @@
 ![Ai-Agent](https://img.shields.io/badge/Ai_Agent-blue)
 ![Multi-Modal](https://img.shields.io/badge/Multi_Modal-green)
 
-[开发与调试](#3-本地开发与调试) | [模型列表](#11-模型列表) | [镜像列表](./docs/images.md) | [更新历史](./docs/release_note.md) | [性能](#7-与xinference-vllm性能比较)
+[快速开始](#快速开始) | [模型列表](#模型列表) | [镜像列表](./docs/images.md) | [更新历史](./docs/release_note.md) | [性能](./docs/performance.md)
 
 <div align="left">
 
@@ -20,17 +20,7 @@
 
 <img src="docs/gradio.gif" alt="gradio.gif">
 
-## 目录
-
-* [1. 说明](#1-说明)
-* [2. 工程结构](#2-工程结构)
-* [3. 本地开发与调试](#3-本地开发与调试)
-* [4. 采样参数配置](#4-采样参数配置)
-* [5. 启动gradio服务](#5-启动gradio服务)
-* [6. docker部署](#6-docker部署)
-* [7. 与xinference-vllm性能比较](#7-与xinference-vllm性能比较)
-
-## 1. 说明
+## 说明
 
 [grps](https://github.com/NetEase-Media/grps)接入[trtllm](https://github.com/NVIDIA/TensorRT-LLM)
 实现更高性能的、支持```OpenAI```模式访问、支持多模态的```LLM```
@@ -45,18 +35,21 @@
 * 通过集成```tensorrt```推理后端与```opencv```库，支持多模态```LLM```。
 * 通过测试，```grps-trtllm```相比较```triton-trtllm```性能有稳定的提升。
 
-### 1.1 模型列表
+欢迎各位使用和提[issue](https://github.com/NetEase-Media/grps_trtllm/issues)
+，欢迎提交[pr](https://github.com/NetEase-Media/grps_trtllm/pulls)支持新的模型，感谢star⭐️。
+
+## 模型列表
 
 支持的文本LLM：
 
-| llm_styler | chat | function_call | supported model                                                    | doc                                                                          |
-|------------|------|---------------|--------------------------------------------------------------------|------------------------------------------------------------------------------|
-| qwen2.5    | ✅    | ✅             | qwen2.5-instruct, qwen2.5-coder-instruct                           | [qwen2.5-instruct](./README.md)<br> [qwen2.5-coder](docs%2Fqwen2.5-coder.md) |
-| qwen       | ✅    | ✅             | qwen1.5-chat, qwen1.5-moe-chat, qwen2-instruct, qwen2-moe-instruct | [qwen2](docs%2Fqwen2.md)                                                     |
-| chatglm3   | ✅    | ✅             | chatglm3                                                           | [chatglm3](docs%2Fchatglm3.md)                                               |
-| glm4       | ✅    | ✅             | glm4-chat, glm4-chat-1m                                            | [glm4](docs%2Fglm4.md)                                                       |
-| internlm2  | ✅    | ✅             | internlm2_5-chat, internlm2-chat                                   | [internlm2.5](docs%2Finternlm2.5.md)                                         |
-| llama3     | ✅    | ❌             | llama-3-instruct, llama-3.1-instruct                               | [llama3](docs%2Fllama3.md)                                                   |
+| llm_styler | chat | function_call | supported model                                                    | doc                                                                                |
+|------------|------|---------------|--------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| qwen2.5    | ✅    | ✅             | qwen2.5-instruct, qwen2.5-coder-instruct                           | [qwen2.5-instruct](docs%2Fqwen2.5.md)<br> [qwen2.5-coder](docs%2Fqwen2.5-coder.md) |
+| qwen       | ✅    | ✅             | qwen1.5-chat, qwen1.5-moe-chat, qwen2-instruct, qwen2-moe-instruct | [qwen2](docs%2Fqwen2.md)                                                           |
+| chatglm3   | ✅    | ✅             | chatglm3                                                           | [chatglm3](docs%2Fchatglm3.md)                                                     |
+| glm4       | ✅    | ✅             | glm4-chat, glm4-chat-1m                                            | [glm4](docs%2Fglm4.md)                                                             |
+| internlm2  | ✅    | ✅             | internlm2_5-chat, internlm2-chat                                   | [internlm2.5](docs%2Finternlm2.5.md)                                               |
+| llama3     | ✅    | ❌             | llama-3-instruct, llama-3.1-instruct                               | [llama3](docs%2Fllama3.md)                                                         |
 
 支持的多模态LLM：
 
@@ -69,20 +62,17 @@
 | qwenvl              | qwenvl    | ✅    | ❌             | Qwen-VL-Chat, Qwen-VL                     | [qwenvl](docs%2Fqwenvl.md)           |
 | qwen2vl             | qwen2vl   | ✅    | ❌             | Qwen2-VL-Instruct                         | [qwen2vl](docs%2Fqwen2vl.md)         |
 
-### 1.2 TODO
+## 文档教程
 
-* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.16.0```
-  （主分支），具体见仓库的分支信息。由于人力受限，一些bug不能及时在每一个分支修复，请尽量使用最新版本分支。
-* 由于不同家族系的```LLM```的```chat```和```function call```
-  的```prompt```构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```
-  ，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
-  不同家族的```styler```持续开发中...。
-* 不同多模态模型的```vit```实现不同，见```src/vit```，用户可以自行扩展。拓展后需要修改```conf/inference.yml```
-  的```vit_type```为对应的类型名。
-  不同多模态模型的```vit```持续开发中...。
-* 书写用户自定义拓展```llm_styler```与```vit```开发文档。
+* [快速开始](#快速开始)
+* [采样参数配置](docs/sampling.md)
+* [启动gradio服务](docs/gradio.md)
+* [docker部署](docs/docker.md)
+* [性能比较](docs/performance.md)
+* [镜像列表](docs/images.md)
+* [TODO](#todo)
 
-## 2. 工程结构
+## 工程结构
 
 ```text
 |-- client                              # 客户端样例
@@ -117,11 +107,11 @@
 |-- .config                             # 工程配置文件，包含一些工程配置开关
 ```
 
-## 3. 本地开发与调试
+## 快速开始
 
-以qwen2.5-instruct为例。更多llm示例见[docs](./docs)，拉取代码与创建容器步骤相同。
+以qwen2.5-instruct为例。更多llm示例见[模型列表](#模型列表)，拉取代码与创建容器步骤相同。
 
-### 3.1 拉取代码
+### 拉取代码
 
 ```bash
 git clone https://github.com/NetEase-Media/grps_trtllm.git
@@ -129,7 +119,7 @@ cd grps_trtllm
 git submodule update --init --recursive
 ```
 
-### 3.2 创建容器
+### 创建容器
 
 使用```registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.6_cudnn9.6_trtllm0.16.0_py3.12```镜像。
 这里挂载了当前目录用于构建工程并保留构建产物，挂载/tmp目录用于保存构建的trtllm引擎文件。参考```triton-trtllm```
@@ -145,7 +135,7 @@ registry.cn-hangzhou.aliyuncs.com/opengrps/grps_gpu:grps1.1.0_cuda12.6_cudnn9.6_
 docker exec -it grps_trtllm_dev bash
 ```
 
-### 3.3 构建trtllm引擎
+### 构建trtllm引擎
 
 ```bash
 # 下载Qwen2.5-7B-Instruct模型
@@ -173,7 +163,7 @@ python3 ../run.py --input_text "你好，你是谁？" --max_output_len=50 \
 cd ../../../../
 ```
 
-### 3.3 修改inference.yml配置
+### 修改inference.yml配置
 
 修改llm对应的conf/inference*.yml中```inferer_args```相关参数。注意修改```tokenizer_path```
 和```gpt_model_path```为新路径，更多核心参数见如下：
@@ -185,7 +175,7 @@ models:
     inferer_args:
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
       # Current support {`qwen2.5`, `qwen`, `chatglm3`, `glm4`, `internlm2`, `internvl2-internlm2`,
-      #  `internvl2-phi3`, `internvl2-qwen2`}.
+      #  `internvl2-phi3`, `internvl2-qwen2`, `internvl2.5`}.
       llm_style: qwen2.5
 
       # tokenizer config.
@@ -225,7 +215,7 @@ models:
       exclude_input_in_output: true # will be set to false if not set.
 ```
 
-### 3.5 构建与部署
+### 构建与部署
 
 ```bash
 # 构建
@@ -244,7 +234,7 @@ PORT(HTTP,RPC)      NAME                PID                 DEPLOY_PATH
 9997                my_grps             65322               /home/appops/.grps/my_grps
 ```
 
-### 3.6 模拟请求
+### 模拟请求
 
 ```bash
 # curl命令非stream请求``
@@ -413,139 +403,29 @@ Response: The current temperature in Boston is 59.0 degrees Fahrenheit.
 '
 ```
 
-### 3.7 指标观测
+### 指标观测
 
 通过访问```http://ip:9997/``` 可以查看服务的指标信息。如下指标：
 
 ![metrics_0.png](docs/metrics_0.png)<br>
 ![metrics_1.png](docs/metrics_1.png)
 
-### 3.8 关闭服务
+### 关闭服务
 
 ```bash
 # 关闭服务
 grpst stop my_grps
 ```
 
-## 4. 采样参数配置
+## TODO
 
-通过请求参数可以指定采样参数，例如：
-
-```json
-{
-  "model": "qwen2.5-instruct",
-  "messages": [
-    {
-      "role": "user",
-      "content": "你好，你是谁？"
-    }
-  ],
-  "top_k": 50,
-  "top_p": 1.0
-}
-```
-
-同时也支持在部署模型服务时通过配置的方式设置模型默认的采样参数，见```inference.yml```文件中的```sampling```字段，这有助于设置一些
-```OpenAI```
-协议不支持的采样参数。例如：
-
-```yaml
-sampling:
-  top_k: 50
-  top_p: 1.0
-```
-
-注意，当请求参数中指定了采样参数时，会覆盖默认的采样参数。
-具体支持的采样参数见[src/constants.h](src/constants.h)文件中的```SamplingConfig```。
-
-## 5. 启动gradio服务
-
-通过[gradio](https://www.gradio.app/)我们可以快速启动一个与LLM进行聊天的web界面，支持启动纯文本聊天界面和多模态聊天界面两种。如下启动命令：
-
-```bash
-# 安装gradio
-pip install -r tools/gradio/requirements.txt
-
-# 启动纯文本聊天界面，llm代表纯文本聊天，0.0.0.0:9997表示llm后端服务地址
-python3 tools/gradio/llm_app.py llm 0.0.0.0:9997
-
-# 启动多模态聊天界面，使用internvl2多模态模型，支持视频输入，由于显存限制，视频默认只截取了8帧，且可能不支持比较大的分别率，可以根据实际情况进行调整。
-python3 tools/gradio/llm_app.py internvl2 0.0.0.0:9997
-
-# 启动多模态聊天界面，使用qwenvl多模态模型，支持输出检测框
-python3 tools/gradio/llm_app.py qwenvl 0.0.0.0:9997
-
-# 启动多模态聊天界面，使用qwen2vl多模态模型
-python3 tools/gradio/llm_app.py qwen2vl 0.0.0.0:9997
-```
-
-启动后日志会显示服务端口号，默认为7860如下：
-
-```bash
-Running on local URL:  http://0.0.0.0:7860
-```
-
-通过浏览器访问```http://ip:7860```即可进入聊天界面。如下图：
-
-![gradio.png](docs/gradio.png)
-
-## 6. docker部署
-
-```bash
-# 更新conf/inference.yml软链接为具体的inference*.yml配置文件
-rm -f conf/inference.yml
-ln -s conf/inference_qwen2.5.yml conf/inference.yml
-# 构建自定义工程docker镜像
-docker build -t grps_trtllm_server:1.0.0 -f docker/Dockerfile .
-
-# 使用上面构建好的镜像启动docker容器
-# 注意挂载/tmp目录，因为构建的trtllm引擎文件在/tmp目录下
-# 映射服务端口9997
-# 注意如果使用多卡推理，需要使用mpi方式启动，--mpi_np参数为并行推理的GPU数量。
-docker run -itd --runtime=nvidia --name="grps_trtllm_server" --shm-size=2g --ulimit memlock=-1 \
---ulimit stack=67108864 -v /tmp:/tmp -p 9997:9997 \
-grps_trtllm_server:1.0.0 grpst start server.mar
-
-# 使用docker logs可以跟踪服务日志
-docker logs -f grps_trtllm_server
-
-# 模拟请求见3.6章节所述
-
-# 关闭容器
-docker rm -f grps_trtllm_server
-```
-
-## 7. 与xinference-vllm性能比较
-
-这里不再比较与```triton-trtllm```性能，因为它不是```OpenAI```协议。比较与```xinference-vllm```
-服务的性能差异。Trtllm打开[kv cache ruse](https://nvidia.github.io/TensorRT-LLM/advanced/kv-cache-reuse.html)
-，xinference-vllm打开[automatic prefix caching](https://docs.vllm.ai/en/stable/automatic_prefix_caching/apc.html)。
-
-```
-GPU: A10 * 1
-CUDA: cuda_12.6
-Trtllm: 0.16.0
-xinference: 1.1.1
-vLLM: 0.6.6
-CPU: Intel(R) Xeon(R) Gold 6242R CPU @ 3.10GHz
-Mem：128G
-LLM: Qwen2.5-7B-Instruct
-```
-
-短输入输出：
-固定输入（华盛顿是谁？），120 tokens左右。
-
-| 服务 \ 吞吐(tokens/s) \ 并发 | 1       | 2       | 4       | 6       | 8       | 10      | 16      |
-|------------------------|---------|---------|---------|---------|---------|---------|---------|
-| xinference-vllm        | 34.28   | 66.68   | 132.96  | 193.38  | 259.02  | 315.72  | 494.42  |
-| grps-trtllm            | 41.36   | 81.49   | 161.45  | 225.40  | 287.35  | 355.39  | 557.89  |
-| 同比                     | +20.65% | +22.21% | +21.43% | +15.56% | +10.94% | +12.56% | +12.84% |
-
-长输入输出：
-固定输入为1.2k左右tokens数量的文章，输出为190左右token数量的总结。
-
-| 服务 \ 吞吐(tokens/s) \ 并发 | 1       | 2       | 4       | 6       | 8       | 10      | 16      |
-|------------------------|---------|---------|---------|---------|---------|---------|---------|
-| xinference-vllm        | 217.51  | 426.68  | 835.96  | 1225.67 | 1616.11 | 1944.35 | 3009.80 |
-| grps-trtllm            | 250.77  | 519.31  | 1016.36 | 1383.31 | 1672.20 | 2064.29 | 3297.62 |
-| 同比                     | +15.29% | +21.70% | +21.58% | +12.86% | +3.47%  | +6.17%  | +9.56%  |
+* 当前基于```tensorrt-llm v0.10.0```之后的版本进行的实现，最新支持到```v0.16.0```
+  （主分支），具体见仓库的分支信息。由于人力受限，一些bug不能及时在每一个分支修复，请尽量使用最新版本分支。
+* 由于不同家族系的```LLM```的```chat```和```function call```
+  的```prompt```构建以及结果解析风格不同，所以需要实现不同```LLM```家族的```styler```，见```src/llm_styler.cc/.h```
+  ，用户可以自行扩展。拓展后需要修改```conf/inference.yml```的```llm_style```为对应的家族名。
+  不同家族的```styler```持续开发中...。
+* 不同多模态模型的```vit```实现不同，见```src/vit```，用户可以自行扩展。拓展后需要修改```conf/inference.yml```
+  的```vit_type```为对应的类型名。
+  不同多模态模型的```vit```持续开发中...。
+* 书写用户自定义拓展```llm_styler```与```vit```开发文档。
