@@ -1,4 +1,4 @@
-# grps-trtllm
+# llama3
 
 llama3模型的部署示例，以llama-3-chinese-8b-instruct-v3为例。
 

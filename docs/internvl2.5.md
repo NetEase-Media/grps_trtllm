@@ -1,4 +1,4 @@
-# grps-trtllm
+# InternVL2.5
 
 InternVL2_5与InternVL2_5-MPO多模态LLM模型的部署示例。具体不同尺寸的vit和llm组合如下表格：
 

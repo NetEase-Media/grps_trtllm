@@ -1,4 +1,4 @@
-# grps-trtllm
+# glm-4
 
 glm-4模型的部署示例，以glm-4-9b-chat为例。
 

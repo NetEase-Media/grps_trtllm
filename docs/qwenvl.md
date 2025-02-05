@@ -1,4 +1,4 @@
-# grps-trtllm
+# Qwen-VL-Chat
 
 Qwen-VL-Chat模型的部署示例。
 

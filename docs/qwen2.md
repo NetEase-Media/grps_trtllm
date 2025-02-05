@@ -1,4 +1,4 @@
-# grps-trtllm
+# Qwen2
 
 Qwen2模型的部署示例，以Qwen2-7B-Instruct为例。
 

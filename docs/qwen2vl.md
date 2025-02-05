@@ -1,4 +1,4 @@
-# grps-trtllm
+# Qwen2-VL-Instruct
 
 Qwen2-VL-Instruct模型的部署示例。
 

@@ -96,7 +96,8 @@ def llm_fn(message, history):
     res = client.chat.completions.create(
         model="",
         messages=messages,
-        stream=True
+        stream=True,
+        max_tokens=4096
     )
     # print('res: ', res)
 
@@ -105,7 +106,8 @@ def llm_fn(message, history):
         for msg in res:
             # print('msg:', msg)
             if msg.choices[0].delta.content is not None:
-                content += msg.choices[0].delta.content
+                content += msg.choices[0].delta.content.replace('<think>', '```\n<think>\n').replace('</think>',
+                                                                                                     '\n</think>\n```')
                 yield content
     except openai.APIError as e:
         print('error:', e)

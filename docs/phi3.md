@@ -1,4 +1,4 @@
-# grps-trtllm
+# Phi3
 
 Phi3与Phi3.5模型的部署示例，以Phi-3.5-mini-instruct为例。
 

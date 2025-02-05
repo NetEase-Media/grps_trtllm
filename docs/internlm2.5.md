@@ -1,4 +1,4 @@
-# grps-trtllm
+# InternLM2.5
 
 InternLM2.5模型的部署示例，以InternLM2.5-7B-Chat为例。
 

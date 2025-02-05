@@ -1,4 +1,4 @@
-# grps-trtllm
+# InternVL2
 
 InternVL2多模态LLM模型的部署示例。由于InternVL2不同尺寸对应的LLM可能不一样，目前支持了```Internlm2```、```Qwen2```、
 ```Phi3```作为LLM模型的尺寸，即1B、2B、4B、8B、26B。

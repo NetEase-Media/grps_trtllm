@@ -1,4 +1,4 @@
-# grps-trtllm
+# chatglm3
 
 chatglm3模型的部署示例，以chatglm3-6b为例。
 

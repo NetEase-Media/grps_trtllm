@@ -449,13 +449,37 @@ public:
 class Phi3Styler : public LLMStyler {
 public:
   Phi3Styler()
-      : LLMStyler("phi3",
-                  "You are a helpful assistant.",
-                  {"<|system|>\n", "<|user|>\n", "<|assistant|>\n"},
-                  false,
-                  "",
-                  true) {}
+      : LLMStyler(
+          "phi3", "You are a helpful assistant.", {"<|system|>\n", "<|user|>\n", "<|assistant|>\n"}, false, "", true) {}
   ~Phi3Styler() override = default;
+
+  /**
+   * @brief Build prompt for model input from OpenAI interface json body request.
+   * @param json_body: Json body from client.
+   * @return <if_function_call, prompt, img_urls>: if_function_call is true if the prompt contains function call.
+   */
+  std::tuple<bool, std::string, std::vector<std::string>> BuildPrompt(const rapidjson::Document& json_body) override;
+
+  /**
+   * @brief Parse function call response from generated text and build content and tool_calls array of message
+   * member of OpenAI interface response.
+   * @param gen_txt: Generated text.
+   * @param req_id: Request id.
+   * @param message: Message member of OpenAI interface response format.
+   * @param allocator: Json allocator.
+   * @return stop reason.
+   */
+  std::string ParseFunctionCall(const std::string& gen_txt,
+                                int64_t req_id,
+                                rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                rapidjson::MemoryPoolAllocator<>& allocator) override;
+};
+
+class DeepSeekR1DistillStyler : public LLMStyler {
+public:
+  DeepSeekR1DistillStyler()
+      : LLMStyler("deepseek-r1-distill", "", {"", "<｜User｜>", "<｜Assistant｜>"}, false, "", true) {}
+  ~DeepSeekR1DistillStyler() override = default;
 
   /**
    * @brief Build prompt for model input from OpenAI interface json body request.
