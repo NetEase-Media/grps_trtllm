@@ -507,14 +507,14 @@ def qwen2vl_llm_fn(message, history):
 
 
 if app_type == 'llm':
-    demo = gr.ChatInterface(fn=llm_fn, type="messages", examples=[
+    demo = gr.ChatInterface(concurrency_limit=32, fn=llm_fn, type="messages", examples=[
         "你好，你是谁？",
         "提供一段快速排序的c++代码：",
         "中国长城有多长？",
         "世界上第一高峰是哪座山？",
     ], title="grps-trtllm", multimodal=False)
 elif app_type == 'internvl2':
-    demo = gr.ChatInterface(fn=internvl2_llm_fn, type="messages", examples=[
+    demo = gr.ChatInterface(concurrency_limit=32, fn=internvl2_llm_fn, type="messages", examples=[
         {"text": "你好，你是谁？"},
         {"text": "描述一下这张图片：",
          "files": ['https://i2.hdslb.com/bfs/archive/7172d7a46e2703e0bd5eabda22f8d8ac70025c76.jpg']},
@@ -532,7 +532,7 @@ elif app_type == 'qwenvl':
         print("Please download the qwenvl to /tmp/Qwen-VL-Chat first.")
         exit(1)
     qwenvl_tokenizer = AutoTokenizer.from_pretrained("/tmp/Qwen-VL-Chat", trust_remote_code=True)
-    demo = gr.ChatInterface(fn=qwenvl_llm_fn, type="messages", examples=[
+    demo = gr.ChatInterface(concurrency_limit=32, fn=qwenvl_llm_fn, type="messages", examples=[
         {"text": "你好，你是谁？"},
         {"text": "描述一下两张图片的不同。",
          "files": [
@@ -544,7 +544,7 @@ elif app_type == 'qwenvl':
                             title="qwenvl-grps-trtllm",
                             multimodal=True)
 elif app_type == 'qwen2vl':
-    demo = gr.ChatInterface(fn=qwen2vl_llm_fn, type="messages", examples=[
+    demo = gr.ChatInterface(concurrency_limit=32, fn=qwen2vl_llm_fn, type="messages", examples=[
         {"text": "你好，你是谁？"},
         {"text": "描述一下这张图片：",
          "files": ['https://i2.hdslb.com/bfs/archive/7172d7a46e2703e0bd5eabda22f8d8ac70025c76.jpg']},
