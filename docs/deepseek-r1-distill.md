@@ -228,8 +228,8 @@ ChatCompletion(id='chatcmpl-7', choices=[Choice(finish_reason='stop', index=0, l
 # 安装gradio
 pip install -r tools/gradio/requirements.txt
 
-# 启动纯文本聊天界面，llm代表纯文本聊天，0.0.0.0:9997表示llm后端服务地址
-python3 tools/gradio/llm_app.py llm 0.0.0.0:9997
+# 启动纯文本聊天界面，deepseek-r1支持COT过程的纯文本聊天，0.0.0.0:9997表示llm后端服务地址
+python3 tools/gradio/llm_app.py deepseek-r1 0.0.0.0:9997
 ```
 
 ## 关闭服务

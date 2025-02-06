@@ -20,7 +20,7 @@ if len(sys.argv) < 3:
     exit(1)
 
 app_type = sys.argv[1]
-if app_type not in ['llm', 'internvl2', 'qwenvl', 'qwen2vl']:
+if app_type not in ['llm', 'internvl2', 'qwenvl', 'qwen2vl', 'deepseek-r1']:
     print(
         '`app_type` only support `llm`(all text llm) or `internvl2`(multi-modal) or `qwenvl`(multi-modal) or `qwen2vl`(multi-modal).')
     exit(1)
@@ -106,8 +106,58 @@ def llm_fn(message, history):
         for msg in res:
             # print('msg:', msg)
             if msg.choices[0].delta.content is not None:
-                content += msg.choices[0].delta.content.replace('<think>', '```\n<think>\n').replace('</think>',
-                                                                                                     '\n</think>\n```')
+                content += msg.choices[0].delta.content
+                yield content
+    except openai.APIError as e:
+        print('error:', e)
+        yield 'error: ' + e.message
+    except Exception as e:
+        print('error:', e)
+        yield 'error: ' + str(e)
+
+
+def deepseek_llm_fn(message, history):
+    # print('message:', message)
+    # print('history:', history)
+
+    # History messages.
+    messages = []
+    for his in history:
+        messages.append({
+            "role": his['role'],
+            "content": his['content'].replace('```\n<think>🤔\n', '<think>').replace('\n🤔</think>\n```',
+                                                                                    '</think>')
+        })
+
+    # New message.
+    new_message = {
+        "role": "user",
+        "content": message
+    }
+    messages.append(new_message)
+    # print('messages:', messages)
+
+    # Request to openai llm server.
+    client = openai.Client(
+        api_key="cannot be empty",
+        base_url=f"http://{llm_server}/v1"
+    )
+
+    res = client.chat.completions.create(
+        model="",
+        messages=messages,
+        stream=True,
+        max_tokens=4096
+    )
+    # print('res: ', res)
+
+    content = ''
+    try:
+        for msg in res:
+            # print('msg:', msg)
+            if msg.choices[0].delta.content is not None:
+                content += msg.choices[0].delta.content.replace('<think>', '```\n<think>🤔\n').replace('</think>',
+                                                                                                      '\n🤔</think>\n```')
                 yield content
     except openai.APIError as e:
         print('error:', e)
@@ -555,7 +605,15 @@ elif app_type == 'qwen2vl':
     ],
                             title="qwen2vl-grps-trtllm",
                             multimodal=True)
+elif app_type == 'deepseek-r1':
+    demo = gr.ChatInterface(concurrency_limit=32, fn=deepseek_llm_fn, type="messages", examples=[
+        "你好，你是谁？",
+        "提供一段快速排序的c++代码：",
+        "中国长城有多长？",
+        "世界上第一高峰是哪座山？",
+    ], title="deepseek-r1-grps-trtllm", multimodal=False)
 else:
-    print('`app_type` only support `llm`(all text llm) or `internvl2`(multi-modal) or `qwenvl`(multi-modal).')
+    print('`app_type` only support `llm`(text llm) or `internvl2`(multi-modal) or `qwenvl`(multi-modal), '
+          '`qwen2vl`(multi-modal), `deepseek-r1`(deepseek-r1 text llm).')
     exit(1)
 demo.launch(server_name='0.0.0.0', server_port=SERVER_PORT)

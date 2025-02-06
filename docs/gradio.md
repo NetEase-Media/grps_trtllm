@@ -17,6 +17,9 @@ python3 tools/gradio/llm_app.py qwenvl 0.0.0.0:9997
 
 # 启动多模态聊天界面，使用qwen2vl多模态模型
 python3 tools/gradio/llm_app.py qwen2vl 0.0.0.0:9997
+
+# 启动纯文本聊天界面，deepseek-r1支持COT过程的纯文本聊天，0.0.0.0:9997表示llm后端服务地址
+python3 tools/gradio/llm_app.py deepseek-r1 0.0.0.0:9997
 ```
 
 启动后日志会显示服务端口号，默认为7860如下：
