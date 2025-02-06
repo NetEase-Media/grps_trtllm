@@ -1202,7 +1202,7 @@ std::tuple<bool, std::string, std::vector<std::string>> Internvl2Internlm2Styler
     }
     std::string role = GetRole(message["role"].GetString());
     if (!message.HasMember("content")) {
-      throw std::invalid_argument("`content` not found or not a string");
+      throw std::invalid_argument("`content` not found");
     }
 
     std::string content;
@@ -1328,7 +1328,7 @@ std::tuple<bool, std::string, std::vector<std::string>> Internvl2Phi3Styler::Bui
     }
     std::string role = GetRole(message["role"].GetString());
     if (!message.HasMember("content")) {
-      throw std::invalid_argument("`content` not found or not a string");
+      throw std::invalid_argument("`content` not found");
     }
 
     std::string content;
@@ -1451,7 +1451,7 @@ std::tuple<bool, std::string, std::vector<std::string>> Internvl25Styler::BuildP
     }
     std::string role = GetRole(message["role"].GetString());
     if (!message.HasMember("content")) {
-      throw std::invalid_argument("`content` not found or not a string");
+      throw std::invalid_argument("`content` not found");
     }
 
     std::string content;
@@ -1577,7 +1577,7 @@ std::tuple<bool, std::string, std::vector<std::string>> QwenvlStyler::BuildPromp
     }
     std::string role = GetRole(message["role"].GetString());
     if (!message.HasMember("content")) {
-      throw std::invalid_argument("`content` not found or not a string");
+      throw std::invalid_argument("`content` not found");
     }
 
     std::string content;
@@ -1703,7 +1703,7 @@ std::tuple<bool, std::string, std::vector<std::string>> Qwen2vlStyler::BuildProm
     }
     std::string role = GetRole(message["role"].GetString());
     if (!message.HasMember("content")) {
-      throw std::invalid_argument("`content` not found or not a string");
+      throw std::invalid_argument("`content` not found");
     }
 
     std::string content;
@@ -1824,14 +1824,10 @@ std::tuple<bool, std::string, std::vector<std::string>> Phi3Styler::BuildPrompt(
       throw std::invalid_argument("`role` not found or not a string");
     }
     std::string role = GetRole(message["role"].GetString());
-    if (!message.HasMember("content")) {
+    if (!message.HasMember("content") || !message["content"].IsString()) {
       throw std::invalid_argument("`content` not found or not a string");
     }
-
-    std::string content;
-    if (message["content"].IsString()) {
-      content = message["content"].GetString();
-    }
+    std::string content = message["content"].GetString();
 
     prompt.append(role);
     prompt.append(content);
@@ -1862,19 +1858,38 @@ std::tuple<bool, std::string, std::vector<std::string>> DeepSeekR1DistillStyler:
   if (json_body["messages"].Empty()) {
     throw std::invalid_argument("`messages` is empty");
   }
+
+  // Only use the last system message.
+  std::string system_content;
   for (auto& message : json_body["messages"].GetArray()) {
     if (!message.HasMember("role") || !message["role"].IsString()) {
       throw std::invalid_argument("`role` not found or not a string");
     }
-    std::string role = GetRole(message["role"].GetString());
-    if (!message.HasMember("content")) {
-      throw std::invalid_argument("`content` not found or not a string");
+    if (std::string(message["role"].GetString()) != "system") {
+      continue;
     }
 
-    std::string content;
-    if (message["content"].IsString()) {
-      content = message["content"].GetString();
+    if (!message.HasMember("content") || !message["content"].IsString()) {
+      throw std::invalid_argument("`content` not found or not a string");
     }
+    system_content = message["content"].GetString();
+  }
+  prompt.append(system_content);
+
+  // Following messages.
+  for (auto& message : json_body["messages"].GetArray()) {
+    if (!message.HasMember("role") || !message["role"].IsString()) {
+      throw std::invalid_argument("`role` not found or not a string");
+    }
+    if (std::string(message["role"].GetString()) == "system") { // Skip system message.
+      continue;
+    }
+    std::string role = GetRole(message["role"].GetString());
+
+    if (!message.HasMember("content") || !message["content"].IsString()) {
+      throw std::invalid_argument("`content` not found or not a string");
+    }
+    std::string content = message["content"].GetString();
 
     prompt.append(role);
 
