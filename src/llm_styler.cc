@@ -1847,7 +1847,7 @@ std::string Phi3Styler::ParseFunctionCall(const std::string& gen_txt,
   return "";
 }
 
-std::tuple<bool, std::string, std::vector<std::string>> DeepSeekR1DistillStyler::BuildPrompt(
+std::tuple<bool, std::string, std::vector<std::string>> DeepSeekR1Styler::BuildPrompt(
   const rapidjson::Document& json_body) {
   std::string prompt = "<｜begin▁of▁sentence｜>";
 
@@ -1907,14 +1907,15 @@ std::tuple<bool, std::string, std::vector<std::string>> DeepSeekR1DistillStyler:
 
   if (add_generation_prompt()) {
     prompt.append(GetRole("assistant"));
+    prompt.append("<think>\n");
   }
   return {false, prompt, {}};
 }
 
-std::string DeepSeekR1DistillStyler::ParseFunctionCall(const std::string& gen_txt,
-                                                       int64_t req_id,
-                                                       rapidjson::GenericValue<rapidjson::UTF8<>>& message,
-                                                       rapidjson::MemoryPoolAllocator<>& allocator) {
+std::string DeepSeekR1Styler::ParseFunctionCall(const std::string& gen_txt,
+                                                int64_t req_id,
+                                                rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                                rapidjson::MemoryPoolAllocator<>& allocator) {
   return "";
 }
 
@@ -1945,8 +1946,8 @@ std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& 
     return std::make_unique<Qwen2vlStyler>();
   } else if (llm_style == "phi3") {
     return std::make_unique<Phi3Styler>();
-  } else if (llm_style == "deepseek-r1-distill") {
-    return std::make_unique<DeepSeekR1DistillStyler>();
+  } else if (llm_style == "deepseek-r1") {
+    return std::make_unique<DeepSeekR1Styler>();
   } else {
     throw std::runtime_error("LLM style " + llm_style + " not supported now.");
   }

@@ -116,7 +116,7 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
 {
  "id": "chatcmpl-1",
  "object": "chat.completion",
- "created": 1738733164,
+ "created": 1739277438,
  "model": "DeepSeek-R1-Distill-Qwen-7B",
  "system_fingerprint": "grps-trtllm-server",
  "choices": [
@@ -124,16 +124,16 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
    "index": 0,
    "message": {
     "role": "assistant",
-    "content": "<think>\n\n</think>\n\n您好！我是由中国的深度求索（DeepSeek）公司开发的智能助手DeepSeek-R1。如您有任何任何问题，我会尽我所能为您提供帮助。"
+    "content": "您好！我是由中国的深度求索（DeepSeek）公司开发的智能助手DeepSeek-R1。如您有任何任何问题，我会尽我所能为您提供帮助。\n</think>\n\n您好！我是由中国的深度求索（DeepSeek）公司开发的智能助手DeepSeek-R1。如您有任何任何问题，我会尽我所能为您提供帮助。"
    },
    "logprobs": null,
    "finish_reason": "stop"
   }
  ],
  "usage": {
-  "prompt_tokens": 8,
-  "completion_tokens": 39,
-  "total_tokens": 47
+  "prompt_tokens": 10,
+  "completion_tokens": 72,
+  "total_tokens": 82
  }
 }
 '
@@ -153,9 +153,9 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   }'
 # 返回如下：
 : '
-data: {"id":"chatcmpl-2","object":"chat.completion.chunk","created":1738733202,"model":"DeepSeek-R1-Distill-Qwen-7B","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"role":"assistant","content":"<think>"},"logprobs":null,"finish_reason":null}]}
-data: {"id":"chatcmpl-2","object":"chat.completion.chunk","created":1738733202,"model":"DeepSeek-R1-Distill-Qwen-7B","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"\n\n"},"logprobs":null,"finish_reason":null}]}
-data: {"id":"chatcmpl-2","object":"chat.completion.chunk","created":1738733202,"model":"DeepSeek-R1-Distill-Qwen-7B","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"</think>"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-2","object":"chat.completion.chunk","created":1739277462,"model":"DeepSeek-R1-Distill-Qwen-7B","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"role":"assistant","content":"您好"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-2","object":"chat.completion.chunk","created":1739277462,"model":"DeepSeek-R1-Distill-Qwen-7B","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"！"},"logprobs":null,"finish_reason":null}]}
+data: {"id":"chatcmpl-2","object":"chat.completion.chunk","created":1739277462,"model":"DeepSeek-R1-Distill-Qwen-7B","system_fingerprint":"grps-trtllm-server","choices":[{"index":0,"delta":{"content":"我是"},"logprobs":null,"finish_reason":null}]}
 '
 
 # 测试stop参数
@@ -176,7 +176,7 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
 {
  "id": "chatcmpl-3",
  "object": "chat.completion",
- "created": 1738733221,
+ "created": 1739277489,
  "model": "DeepSeek-R1-Distill-Qwen-7B",
  "system_fingerprint": "grps-trtllm-server",
  "choices": [
@@ -184,15 +184,15 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
    "index": 0,
    "message": {
     "role": "assistant",
-    "content": "<think>\n嗯，用户发来的信息是“重复1234#END#"
+    "content": "嗯，用户发来的信息是“重复1234#END#"
    },
    "logprobs": null,
    "finish_reason": "stop"
   }
  ],
  "usage": {
-  "prompt_tokens": 15,
-  "completion_tokens": 18,
+  "prompt_tokens": 17,
+  "completion_tokens": 16,
   "total_tokens": 33
  }
 }
@@ -202,23 +202,23 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" false
 # 返回如下：
 : '
-ChatCompletion(id='chatcmpl-4', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='<think>\n\n</think>\n\n您好！我是由中国的深度求索（DeepSeek）公司开发的智能助手DeepSeek-R1。如您有任何任何问题，我会尽我所能为您提供帮助。', refusal=None, role='assistant', audio=None, function_call=None, tool_calls=None))], created=1738733258, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=39, prompt_tokens=8, total_tokens=47, completion_tokens_details=None, prompt_tokens_details=None))
+ChatCompletion(id='chatcmpl-4', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='您好！我是由中国的深度求索（DeepSeek）公司开发的智能助手DeepSeek-R1。如您有任何任何问题，我会尽我所能为您提供帮助。\n</think>\n\n您好！我是由中国的深度求索（DeepSeek）公司开发的智能助手DeepSeek-R1。如您有任何任何问题，我会尽我所能为您提供帮助。', refusal=None, role='assistant', audio=None, function_call=None, tool_calls=None))], created=1739277506, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=72, prompt_tokens=10, total_tokens=82, completion_tokens_details=None, prompt_tokens_details=None))
 '
 
 # openai_cli.py stream请求
 python3 client/openai_cli.py 127.0.0.1:9997 "你好，你是谁？" true
 # 返回如下：
 : '
-ChatCompletionChunk(id='chatcmpl-5', choices=[Choice(delta=ChoiceDelta(content='<think>', function_call=None, refusal=None, role='assistant', tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1738733273, model='', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
-ChatCompletionChunk(id='chatcmpl-5', choices=[Choice(delta=ChoiceDelta(content='\n\n', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1738733273, model='', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
-ChatCompletionChunk(id='chatcmpl-5', choices=[Choice(delta=ChoiceDelta(content='</think>', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1738733273, model='', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-5', choices=[Choice(delta=ChoiceDelta(content='您好', function_call=None, refusal=None, role='assistant', tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1739277521, model='', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-5', choices=[Choice(delta=ChoiceDelta(content='！', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1739277521, model='', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
+ChatCompletionChunk(id='chatcmpl-5', choices=[Choice(delta=ChoiceDelta(content='我是', function_call=None, refusal=None, role=None, tool_calls=None), finish_reason=None, index=0, logprobs=None)], created=1739277521, model='', object='chat.completion.chunk', service_tier=None, system_fingerprint='grps-trtllm-server', usage=None)
 '
 
 # 输入32k长文本小说进行总结
 python3 client/openai_txt_cli.py 127.0.0.1:9997 ./data/32k_novel.txt "简述一下上面这篇小说的前几章内容。" false
 # 返回如下：
 : '
-ChatCompletion(id='chatcmpl-7', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='<think>\n嗯，用户让我简述小说的前几章内容。首先，我需要仔细阅读用户提供的章节内容，理解每一章的主要情节和人物发展。\n\n章节1描述了楚云霁和白狼相遇的情景，以及他如何说服白狼帮助自己捕猎北极熊。这里重点是楚云霁的聪明和勇气，还有他如何利用地形和动物的习性来解决问题。\n\n章节2主要讲述了楚云霁在冰洞里寻找食物的过程，以及他如何发现并捕获北极熊。这里展示了他体力和智慧的应用，同时描绘了冰洞的环境和食物的稀缺性。\n\n章节3描述了楚云霁在冰洞里遇到白狼，白狼帮助他捕猎北极熊。这里展示了人与狼的互动，以及白狼的忠诚和聪明。\n\n章节4讲述了楚云霁在冰洞里寻找食物的过程，以及他如何利用雪的特性找到食物。同时，他遇到了一只海豹，这增加了故事的复杂性。\n\n章节5描述了楚云霁在冰洞里寻找食物，遇到海豹后继续寻找其他食物，最终成功捕获海豹。这里展示了他耐心和毅力。\n\n章节6讲述了楚云霁在冰洞里捕获海豹后，如何用绳子绑住它，以及他如何让海豹自己移动。同时，他遇到了其他动物，增加了故事的丰富性。\n\n章节7描述了楚云霁在冰洞里捕获海豹后，如何用绳子绑住它，以及他如何让海豹自己移动。同时，他遇到了其他动物，增加了故事的丰富性。\n\n章节8讲述了楚云霁在冰洞里捕获海豹后，如何用绳子绑住它，以及他如何让海豹自己移动。同时，他遇到了其他动物，增加了故事的丰富性。\n\n章节9描述了楚云霁在冰洞里捕获海豹后，如何用绳子绑住它，以及他如何让海豹自己移动。同时，他遇到了其他动物，增加了故事的丰富性。\n\n章节10讲述了楚云霁在冰洞里捕获海豹后，如何用绳子绑住它，以及他如何让海豹自己移动。同时，他遇到了其他动物，增加了故事的丰富性。\n\n章节11描述了楚云霁在冰洞里捕获海豹后，如何用绳子绑住它，以及他如何让海豹自己移动。同时，他遇到了其他动物，增加了故事的丰富性。\n\n章节12讲述了楚云霁在冰洞里捕获海豹后，如何用绳子绑住它，以及他如何让海豹自己移动。同时，他遇到了其他动物，增加了故事的丰富性。\n\n综上所述，前几章主要讲述了楚云霁如何利用智慧和勇气在寒冷的冰洞里寻找食物，捕获北极熊和海豹的过程，同时展示了他与白狼的关系，以及他如何与动物互动，增加了故事的趣味性和可玩性。\n</think>\n\n前几章主要讲述了楚云霁在寒冷的北极冰洞中寻找食物的故事。以下是简要内容概述：\n\n1. **楚云霁的背景**  \n   楚云霁来自一个寒冷的北极小镇，性格勇敢但有些孤寂。他来到南极捕猎，遇到了聪明的白狼，白狼帮助他捕获北极熊，展现了人与狼的互动。\n\n2. **捕猎过程**  \n   楚云霁在寒冷的冰洞中寻找食物，遇到北极熊和海豹。他利用地形和动物习性，通过雪地的结冰和动物的活动寻找食物。尽管食物稀缺，但他坚持不懈，最终成功捕获北极熊和海豹。\n\n3. **与白狼的关系**  \n   楚云霁与白狼建立了深厚的感情，白狼帮助他捕猎，展现了忠诚与智慧。白狼在寒冷中也能准确判断食物的位置，体现了它们的聪明。\n\n4. **环境描写**  \n   冰洞寒冷而美丽，食物稀缺但美味。楚云霁通过观察动物的习性，灵活地寻找食物，展现了他在寒冷环境中的生存能力。\n\n5. **互动与挑战**  \n   楚云霁在捕猎过程中遇到了各种挑战，如如何利用绳子绑住动物，如何与动物互动等。这些互动不仅增加了故事的趣味性，也展示了他与动物之间的独特关系。\n\n这些内容为读者提供了关于南极生态和捕猎生活的生动画面，同时为玩家提供了丰富的互动体验。', refusal=None, role='assistant', audio=None, function_call=None, tool_calls=None))], created=1738733449, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=959, prompt_tokens=31595, total_tokens=32554, completion_tokens_details=None, prompt_tokens_details=None))
+ChatCompletion(id='chatcmpl-6', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='嗯，用户让我总结一下小说的前几章内容。首先，我需要仔细阅读并理解每一章的主要情节和主题。第1章主要介绍了主人公楚云霁和白狼的关系，以及他来到北极的原因。第2章描述了他如何进入北极，以及在冰洞里遇到小北极熊的过程。第3章讲述了他如何训练北极熊，以及他们一起捕猎海豹和海象的故事。第4章描述了他如何在冰洞里钓鱼，遇到了小北极熊和白狼，以及他们一起捕猎海豹的过程。第5章讲述了他如何在冰洞里制作鱼竿，以及如何在雪地里钓鱼。第6章描述了他如何在雪地里钓鱼，遇到了小北极熊和白狼，以及他们一起捕猎海豹的过程。第7章讲述了他如何在雪地里钓鱼，遇到了小北极熊和白狼，以及他们一起捕猎海豹的过程。第8章描述了他如何在雪地里钓鱼，遇到了小北极熊和白狼，以及他们一起捕猎海豹的过程。第9章讲述了他如何在雪地里钓鱼，遇到了小北极熊和白狼，以及他们一起捕猎海豹的过程。第10章描述了他如何在雪地里钓鱼，遇到了小北极熊和白狼，以及他们一起捕猎海豹的过程。第11章讲述了他如何在雪地里钓鱼，遇到了小北极熊和白狼，以及他们一起捕猎海豹的过程。第12章描述了他如何在雪地里钓鱼，遇到了小北极熊和白狼，以及他们一起捕猎海豹的过程。\n\n在总结时，我需要涵盖每一章的主要情节，包括楚云霁与白狼的关系发展、他在北极的捕猎活动、与小北极熊的互动以及雪地钓鱼的过程。同时，要注意保持语言的简洁和流畅，确保读者能够清晰理解每一章的内容。\n\n总结起来，楚云霁在前几章主要是在探索北极，学习捕猎技能，与小北极熊建立关系，并在雪地里进行钓鱼活动。这些内容为后续章节中更深入的捕猎和冒险打下了基础。\n</think>\n\n### 前几章内容总结\n\n#### 第1章：楚云霁的来到北极\n- **楚云霁**：主人公，来自南方，性格孤僻，喜欢钓鱼。性格孤僻但内心细腻，对自然充满好奇。\n- **白狼**：他的宠物，是一只北极狼，性格温顺，对食物有明确的偏好。\n- **白狼的特性**：温性动物，对食物有明确的偏好，会攻击体型较小的猎物。\n- **楚云霁与白狼的关系**：楚云霁对白狼的依赖较强，但并不完全依赖，偶尔也会单独行动。\n\n#### 第2章：进入北极\n- **楚云霁的冰地冒险**：为了寻找食物，楚云霁来到北极，穿越了寒冷的冰地，最终到达了北极冰洞。\n- **冰洞的环境**：寒冷干燥，适合 freeze-think 的环境，适合捕猎和生存。\n\n#### 第3章：训练北极熊\n- **楚云霁的训练**：通过与小北极熊的互动，学习了如何捕猎海豹和海象。\n- **捕猎过程**：楚云霁使用鱼竿和网进行捕猎，展现了他在捕猎中的经验和技能。\n\n#### 第4章：雪地里的钓鱼\n- **雪地的环境**：雪覆盖的冰地适合钓鱼，但需要特别的技巧。\n- **楚云霁的钓鱼**：通过使用鱼竿和网，成功捕获海豹和海象。\n\n#### 第5章：雪地里的钓鱼\n- **雪地钓鱼的技巧**：雪覆盖的冰地增加了难度，但通过掌握技巧，可以成功钓鱼。\n- **捕猎过程**：楚云霁与白狼一起捕猎海豹和海象。\n\n#### 第6章：雪地里的钓鱼\n- **雪地钓鱼的挑战**：雪覆盖的冰地增加了捕猎的难度，但通过掌握技巧，可以成功完成。\n- **捕猎过程**：楚云霁与白狼一起捕猎海豹和海象。\n\n#### 第7章：雪地里的钓鱼\n- **雪地钓鱼的挑战**：雪覆盖的冰地增加了捕猎的难度，但通过掌握技巧，可以成功完成。\n- **捕猎过程**：楚云霁与白狼一起捕猎海豹和海象。\n\n#### 第8章：雪地里的钓鱼\n- **雪地钓鱼的挑战**：雪覆盖的冰地增加了捕猎的难度，但通过掌握技巧，可以成功完成。\n- **捕猎过程**：楚云霁与白狼一起捕', refusal=None, role='assistant', audio=None, function_call=None, tool_calls=None))], created=1739277536, model='', object='chat.completion', service_tier=None, system_fingerprint='grps-trtllm-server', usage=CompletionUsage(completion_tokens=1024, prompt_tokens=31597, total_tokens=32621, completion_tokens_details=None, prompt_tokens_details=None))
 '
 ```
 
@@ -228,7 +228,7 @@ ChatCompletion(id='chatcmpl-7', choices=[Choice(finish_reason='stop', index=0, l
 # 安装gradio
 pip install -r tools/gradio/requirements.txt
 
-# 启动纯文本聊天界面，deepseek-r1支持COT过程的纯文本聊天，0.0.0.0:9997表示llm后端服务地址
+# 启动纯文本聊天界面，deepseek-r1支持CoT过程的纯文本聊天，0.0.0.0:9997表示llm后端服务地址
 python3 tools/gradio/llm_app.py deepseek-r1 0.0.0.0:9997
 ```
 

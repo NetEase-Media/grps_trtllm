@@ -475,11 +475,10 @@ public:
                                 rapidjson::MemoryPoolAllocator<>& allocator) override;
 };
 
-class DeepSeekR1DistillStyler : public LLMStyler {
+class DeepSeekR1Styler : public LLMStyler {
 public:
-  DeepSeekR1DistillStyler()
-      : LLMStyler("deepseek-r1-distill", "", {"", "<｜User｜>", "<｜Assistant｜>"}, false, "", true) {}
-  ~DeepSeekR1DistillStyler() override = default;
+  DeepSeekR1Styler() : LLMStyler("deepseek-r1", "", {"", "<｜User｜>", "<｜Assistant｜>"}, false, "", true) {}
+  ~DeepSeekR1Styler() override = default;
 
   /**
    * @brief Build prompt for model input from OpenAI interface json body request.

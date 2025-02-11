@@ -125,7 +125,7 @@ def deepseek_llm_fn(message, history):
     for his in history:
         messages.append({
             "role": his['role'],
-            "content": his['content'].replace('```\n<think>🤔\n', '<think>').replace('\n🤔</think>\n```',
+            "content": his['content'].replace('```\n<think>🤔\n\n', '').replace('\n🤔</think>\n```',
                                                                                     '</think>')
         })
 
@@ -151,13 +151,12 @@ def deepseek_llm_fn(message, history):
     )
     # print('res: ', res)
 
-    content = ''
+    content = '```\n<think>🤔\n\n'
     try:
         for msg in res:
             # print('msg:', msg)
             if msg.choices[0].delta.content is not None:
-                content += msg.choices[0].delta.content.replace('<think>', '```\n<think>🤔\n').replace('</think>',
-                                                                                                      '\n🤔</think>\n```')
+                content += msg.choices[0].delta.content.replace('</think>', '\n🤔</think>\n```')
                 yield content
     except openai.APIError as e:
         print('error:', e)

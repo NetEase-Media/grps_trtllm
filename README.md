@@ -42,16 +42,16 @@
 
 支持的文本LLM：
 
-| llm_styler          | chat | function_call | supported model                                                    | doc                                                                                |
-|---------------------|------|---------------|--------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| deepseek-r1-distill | ✅    | ❌             | DeepSeek-R1-Distill                                                | [deepseek-r1-distill](docs%2Fdeepseek-r1-distill.md)                               |
-| qwen2.5             | ✅    | ✅             | Qwen2.5-Instruct, Qwen2.5-Coder-Instruct                           | [qwen2.5-instruct](docs%2Fqwen2.5.md)<br> [qwen2.5-coder](docs%2Fqwen2.5-coder.md) |
-| qwen                | ✅    | ✅             | Qwen1.5-Chat, Qwen1.5-Moe-Chat, Qwen2-Instruct, Qwen2-Moe-Instruct | [qwen2](docs%2Fqwen2.md)                                                           |
-| chatglm3            | ✅    | ✅             | chatglm3                                                           | [chatglm3](docs%2Fchatglm3.md)                                                     |
-| glm4                | ✅    | ✅             | glm4-chat, glm4-chat-1m                                            | [glm4](docs%2Fglm4.md)                                                             |
-| internlm2           | ✅    | ✅             | internlm2_5-chat, internlm2-chat                                   | [internlm2.5](docs%2Finternlm2.5.md)                                               |
-| llama3              | ✅    | ❌             | llama-3-instruct, llama-3.1-instruct                               | [llama3](docs%2Fllama3.md)                                                         |
-| phi3                | ✅    | ❌             | Phi3, Phi3.5                                                       | [phi3](docs%2Fphi3.md)                                                             |
+| llm_styler  | chat | function_call | supported model                                                    | doc                                                                                |
+|-------------|------|---------------|--------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| deepseek-r1 | ✅    | ❌             | DeepSeek-R1-Distill                                                | [deepseek-r1-distill](docs%2Fdeepseek-r1-distill.md)                               |
+| qwen2.5     | ✅    | ✅             | Qwen2.5-Instruct, Qwen2.5-Coder-Instruct                           | [qwen2.5-instruct](docs%2Fqwen2.5.md)<br> [qwen2.5-coder](docs%2Fqwen2.5-coder.md) |
+| qwen        | ✅    | ✅             | Qwen1.5-Chat, Qwen1.5-Moe-Chat, Qwen2-Instruct, Qwen2-Moe-Instruct | [qwen2](docs%2Fqwen2.md)                                                           |
+| chatglm3    | ✅    | ✅             | chatglm3                                                           | [chatglm3](docs%2Fchatglm3.md)                                                     |
+| glm4        | ✅    | ✅             | glm4-chat, glm4-chat-1m                                            | [glm4](docs%2Fglm4.md)                                                             |
+| internlm2   | ✅    | ✅             | internlm2_5-chat, internlm2-chat                                   | [internlm2.5](docs%2Finternlm2.5.md)                                               |
+| llama3      | ✅    | ❌             | llama-3-instruct, llama-3.1-instruct                               | [llama3](docs%2Fllama3.md)                                                         |
+| phi3        | ✅    | ❌             | Phi3, Phi3.5                                                       | [phi3](docs%2Fphi3.md)                                                             |
 
 支持的多模态LLM：
 

@@ -8,7 +8,7 @@ models:
     inferer_args: # more args of model inferer.
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
       # Support llm_style see README.md.
-      llm_style: deepseek-r1-distill
+      llm_style: deepseek-r1
 
       # tokenizer config.
       tokenizer_type: huggingface # can be `huggingface`, `sentencepiece`. Must be set.
