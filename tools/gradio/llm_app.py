@@ -97,7 +97,7 @@ def llm_fn(message, history):
         model="",
         messages=messages,
         stream=True,
-        max_tokens=4096
+        max_tokens=16384
     )
     # print('res: ', res)
 
@@ -147,7 +147,7 @@ def deepseek_llm_fn(message, history):
         model="",
         messages=messages,
         stream=True,
-        max_tokens=4096
+        max_tokens=16384
     )
     # print('res: ', res)
 
