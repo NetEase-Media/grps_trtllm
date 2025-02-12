@@ -125,8 +125,8 @@ def deepseek_llm_fn(message, history):
     for his in history:
         messages.append({
             "role": his['role'],
-            "content": his['content'].replace('```\n<think>🤔\n\n', '').replace('\n🤔</think>\n```',
-                                                                                    '</think>')
+            "content": his['content'][8:].replace('\n```\n</think>', '</think>') if his['role'] == 'assistant' else his[
+                'content']
         })
 
     # New message.
@@ -150,13 +150,12 @@ def deepseek_llm_fn(message, history):
         max_tokens=16384
     )
     # print('res: ', res)
-
-    content = '```\n<think>🤔\n\n'
+    content = '```text\n'
     try:
         for msg in res:
             # print('msg:', msg)
             if msg.choices[0].delta.content is not None:
-                content += msg.choices[0].delta.content.replace('</think>', '\n🤔</think>\n```')
+                content += msg.choices[0].delta.content.replace('</think>', '\n```\n</think>')
                 yield content
     except openai.APIError as e:
         print('error:', e)
