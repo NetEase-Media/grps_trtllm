@@ -1,5 +1,5 @@
 // Trt llm model instance.
-// Porting from:
+// Refer to:
 // https://github.com/triton-inference-server/tensorrtllm_backend/blob/main/inflight_batcher_llm/src/model_instance_state.h
 
 #pragma once

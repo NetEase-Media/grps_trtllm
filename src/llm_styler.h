@@ -502,6 +502,49 @@ public:
                                 rapidjson::MemoryPoolAllocator<>& allocator) override;
 };
 
+class JanusProStyler : public LLMStyler {
+public:
+  JanusProStyler()
+      : LLMStyler("janus-pro",
+                  "You are a helpful language and vision assistant. You are able to understand the visual content that "
+                  "the user provides, and assist the user with a variety of tasks using natural language.",
+                  {"", "<|User|>", "<|Assistant|>"},
+                  false,
+                  "",
+                  true) {
+    img_ctx_replace_str_.append("<begin_of_image>");
+    for (size_t k = 0; k < 576; k++) { // 576: token count for every image patch.
+      img_ctx_replace_str_.append("<image_placeholder>");
+    }
+    img_ctx_replace_str_.append("<end_of_image>");
+  }
+  ~JanusProStyler() override = default;
+
+  /**
+   * @brief Build prompt for model input from OpenAI interface json body request.
+   * @param json_body: Json body from client.
+   * @return <if_function_call, prompt, img_urls>: if_function_call is true if the prompt contains function call.
+   */
+  std::tuple<bool, std::string, std::vector<std::string>> BuildPrompt(const rapidjson::Document& json_body) override;
+
+  /**
+   * @brief Parse function call response from generated text and build content and tool_calls array of message
+   * member of OpenAI interface response.
+   * @param gen_txt: Generated text.
+   * @param req_id: Request id.
+   * @param message: Message member of OpenAI interface response format.
+   * @param allocator: Json allocator.
+   * @return stop reason.
+   */
+  std::string ParseFunctionCall(const std::string& gen_txt,
+                                int64_t req_id,
+                                rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                rapidjson::MemoryPoolAllocator<>& allocator) override;
+
+private:
+  std::string img_ctx_replace_str_{}; // Image context replace string.
+};
+
 class LLMStylerFactory {
 public:
   LLMStylerFactory() = default;

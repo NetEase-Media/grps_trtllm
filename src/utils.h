@@ -1,5 +1,5 @@
 // Utils.
-// Porting from:
+// Refer to:
 // https://github.com/triton-inference-server/tensorrtllm_backend/blob/main/inflight_batcher_llm/src/utils.h
 
 #pragma once
@@ -48,6 +48,9 @@ static inline bool StartsWith(const std::string& str, const std::string& prefix)
 static inline bool EndsWith(const std::string& str, const std::string& suffix) {
   return str.size() >= suffix.size() && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
+std::string Lstrip(const std::string& str);
+std::string Rstrip(const std::string& str);
+std::string Strip(const std::string& str);
 bool IsValidUTF8(const std::string& str);
 // Get word count in string.
 size_t GetWordCount(const std::string& str, const std::string& word);

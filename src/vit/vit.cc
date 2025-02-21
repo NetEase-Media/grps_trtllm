@@ -10,6 +10,7 @@
 
 #include "src/utils.h"
 #include "src/vit/internvl2_vit.h"
+#include "src/vit/janus_pro_vit.h"
 #include "src/vit/qwen2vl_vit.h"
 #include "src/vit/qwenvl_vit.h"
 
@@ -126,6 +127,8 @@ std::unique_ptr<VIT> VITFactory::CreateVIT(const std::string& type_name) {
     return std::make_unique<QwenvlVIT>();
   } else if (type_name == "qwen2vl") {
     return std::make_unique<Qwen2vlVIT>();
+  } else if (type_name == "janus-pro") {
+    return std::make_unique<JanusProVIT>();
   } else {
     return nullptr;
   }

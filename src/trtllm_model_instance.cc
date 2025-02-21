@@ -1,5 +1,5 @@
 // State associated with a model instance.
-// Porting from:
+// Refer to:
 // https://github.com/triton-inference-server/tensorrtllm_backend/blob/main/inflight_batcher_llm/src/model_instance_state.cc
 
 #include "trtllm_model_instance.h"

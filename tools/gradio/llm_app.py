@@ -20,7 +20,7 @@ if len(sys.argv) < 3:
     exit(1)
 
 app_type = sys.argv[1]
-if app_type not in ['llm', 'internvl2', 'qwenvl', 'qwen2vl', 'deepseek-r1']:
+if app_type not in ['llm', 'internvl2', 'qwenvl', 'qwen2vl', 'deepseek-r1', 'janus-pro']:
     print(
         '`app_type` only support `llm`(all text llm) or `internvl2`(multi-modal) or `qwenvl`(multi-modal) or `qwen2vl`(multi-modal).')
     exit(1)
@@ -554,6 +554,128 @@ def qwen2vl_llm_fn(message, history):
         yield 'error: ' + str(e)
 
 
+def janus_pro_llm_fn(message, history):
+    # print('message:', message)
+    # print('history:', history)
+
+    img_dir = None
+
+    # History messages.
+    messages = []
+    pre_messages = []
+    for his in history:
+        if his['role'] == 'user':
+            pre_messages.append(his['content'])
+        elif his['role'] == 'assistant':
+            msg = {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": pre_messages[-1]  # last is the text content
+                    }
+                ]
+            }
+            if len(pre_messages) > 1:
+                for pre_message in pre_messages[:-1]:  # image content
+                    msg['content'].append({
+                        "type": "image_url",
+                        "image_url": {
+                            "url": 'file://' + pre_message[0]
+                        }
+                    })
+            image_flag_count = pre_messages[-1].count('<image_placeholder>')
+            if image_flag_count == 0:
+                # insert <image_placeholder> in text start
+                if len(pre_messages[:-1]) == 1:
+                    msg['content'][0]['text'] = '<image_placeholder>' + pre_messages[-1]
+                elif len(pre_messages[:-1]) > 1:
+                    pre_text = ''
+                    for i in range(len(pre_messages[:-1])):
+                        pre_text += 'Image-' + str(i + 1) + ': <image_placeholder>\n'
+                    msg['content'][0]['text'] = pre_text + pre_messages[-1]
+            if 0 < image_flag_count != len(pre_messages[:-1]):
+                yield 'error: `<image_placeholder>`与实际图片数量不一致。'
+                return
+
+            messages.append(msg)
+            messages.append({
+                "role": "assistant",
+                "content": his['content']
+            })
+            pre_messages = []
+
+    # New message.
+    new_message = {
+        "role": "user",
+        "content": [
+            {
+                "type": "text",
+                "text": message['text']
+            }
+        ]
+    }
+    if 'files' in message:
+        for file in message['files']:
+            new_message['content'].append({
+                "type": "image_url",
+                "image_url": {
+                    "url": 'file://' + file['path']
+                }
+            })
+    messages.append(new_message)
+
+    image_flag_count = message['text'].count('<image_placeholder>')
+    if image_flag_count == 0:
+        # insert <image_placeholder> in text start
+        if len(message['files']) == 1:
+            new_message['content'][0]['text'] = '<image_placeholder>' + message['text']
+        elif len(message['files']) > 1:
+            pre_text = ''
+            for i in range(len(message['files'])):
+                pre_text += 'Image-' + str(i + 1) + ': <image_placeholder>\n'
+            new_message['content'][0]['text'] = pre_text + message['text']
+    if 0 < image_flag_count != len(message['files']):
+        yield 'error: `<image_placeholder>`与实际图片数量不一致。'
+        return
+
+    # print('messages:', messages)
+
+    # Request to openai llm server.
+    client = openai.Client(
+        api_key="cannot be empty",
+        base_url=f"http://{llm_server}/v1"
+    )
+
+    res = client.chat.completions.create(
+        model="",
+        messages=messages,
+        stream=True
+    )
+    # print('res: ', res)
+
+    if img_dir is not None:
+        shutil.rmtree(img_dir)
+
+    content = ''
+    try:
+        for msg in res:
+            # print('msg:', msg)
+            if msg.choices[0].delta.content is not None:
+                content += msg.choices[0].delta.content
+                yield content
+        # print('response:', content)
+    except openai.APIError as e:
+        print('error:', e)
+        if '[TrtInfererException] Dims not match' in e.message:
+            yield 'error: 图片尺寸过大或超过图片个数限制。'
+        else:
+            yield 'error: ' + e.message.replace('<image_placeholder>', '`<image_placeholder>`')
+    except Exception as e:
+        print('error:', e)
+        yield 'error: ' + str(e)
+
+
 if app_type == 'llm':
     demo = gr.ChatInterface(concurrency_limit=32, fn=llm_fn, type="messages", examples=[
         "你好，你是谁？",
@@ -610,8 +732,20 @@ elif app_type == 'deepseek-r1':
         "中国长城有多长？",
         "世界上第一高峰是哪座山？",
     ], title="deepseek-r1-grps-trtllm", multimodal=False)
+elif app_type == 'janus-pro':
+    demo = gr.ChatInterface(concurrency_limit=32, fn=janus_pro_llm_fn, type="messages", examples=[
+        {"text": "你好，你是谁？"},
+        {"text": "这是什么？",
+         "files": ['https://raw.githubusercontent.com/deepseek-ai/Janus/refs/heads/main/images/logo.png']},
+        {"text": "描述一下这两张图片：",
+         "files": [
+             'https://p6.itc.cn/q_70/images03/20230821/69b103277521450e89090a24df1327d7.jpeg',
+             'https://i0.hdslb.com/bfs/archive/dd8dfe1126b847e00573dbda617180da77a38a06.jpg']},
+    ],
+                            title="janus-pro-grps-trtllm",
+                            multimodal=True)
 else:
     print('`app_type` only support `llm`(text llm) or `internvl2`(multi-modal) or `qwenvl`(multi-modal), '
-          '`qwen2vl`(multi-modal), `deepseek-r1`(deepseek-r1 text llm).')
+          '`qwen2vl`(multi-modal), `deepseek-r1`(deepseek-r1 text llm), `janus-pro`(multi-modal).')
     exit(1)
 demo.launch(server_name='0.0.0.0', server_port=SERVER_PORT)

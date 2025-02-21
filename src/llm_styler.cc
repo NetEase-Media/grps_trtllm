@@ -1919,6 +1919,110 @@ std::string DeepSeekR1Styler::ParseFunctionCall(const std::string& gen_txt,
   return "";
 }
 
+std::tuple<bool, std::string, std::vector<std::string>> JanusProStyler::BuildPrompt(
+  const rapidjson::Document& json_body) {
+  std::string prompt = "";
+  prompt.append(GetRole("system"));
+  prompt.append(system_prompt());
+  prompt.append("\n\n");
+
+  // Following messages.
+  // Parse images urls.
+  std::vector<std::string> image_urls;
+  for (auto& message : json_body["messages"].GetArray()) {
+    if (!message.HasMember("role") || !message["role"].IsString()) {
+      throw std::invalid_argument("`role` not found or not a string");
+    }
+    std::string role = GetRole(message["role"].GetString());
+    if (!message.HasMember("content")) {
+      throw std::invalid_argument("`content` not found");
+    }
+
+    std::string content;
+    if (message["content"].IsString()) {
+      content = message["content"].GetString();
+    } else if (message["content"].IsArray()) {
+      //  "content": [
+      //           {
+      //             "type": "text",
+      //             "text": "<image_placeholder>\nWhat'\''s in this image?"
+      //           },
+      //           {
+      //             "type": "image_url",
+      //             "image_url": {
+      //               "url": "https://**"
+      //             }
+      //           }
+      //         ]
+      std::vector<std::string> cur_img_urls;
+      for (auto& item : message["content"].GetArray()) {
+        if (!item.HasMember("type") || !item["type"].IsString()) {
+          throw std::invalid_argument("`type` not found or not a string");
+        }
+        std::string type = item["type"].GetString();
+        if (type == "text") {
+          if (!item.HasMember("text") || !item["text"].IsString()) {
+            throw std::invalid_argument("`text` not found or not a string");
+          }
+          content.append(item["text"].GetString());
+        } else if (type == "image_url") {
+          if (!item.HasMember("image_url") || !item["image_url"].IsObject()) {
+            throw std::invalid_argument("`image_url` not found or not an object");
+          }
+          auto& image_url = item["image_url"];
+          if (!image_url.HasMember("url") || !image_url["url"].IsString()) {
+            throw std::invalid_argument("`url` not found or not a string");
+          }
+          cur_img_urls.emplace_back(image_url["url"].GetString());
+        } else {
+          throw std::invalid_argument("Unsupported content type: " + type);
+        }
+      }
+      size_t img_count = utils::GetWordCount(content, "<image_placeholder>");
+      if (img_count != cur_img_urls.size()) {
+        throw std::invalid_argument("The number of <image_placeholder> tokens does not match the number of image urls");
+      }
+
+      // Replace <image_placeholder> with (<begin_of_image><image_placeholder>*576<end_of_image>)
+      // 576: token count for every image.
+      if (img_count > 0) {
+        utils::ReplaceWorld(content, "<image_placeholder>", img_ctx_replace_str_, 0, img_count);
+      }
+
+      image_urls.insert(image_urls.end(), cur_img_urls.begin(), cur_img_urls.end());
+    }
+
+    if (!content.empty()) {
+      // content.strip()
+      content = utils::Strip(content);
+      prompt.append(role);
+      prompt.append(": ");
+      prompt.append(content);
+      if (role == GetRole("assistant")) {
+        prompt.append("<｜end▁of▁sentence｜>");
+      } else {
+        prompt.append("\n\n");
+      }
+    } else {
+      prompt.append(role);
+      prompt.append(":");
+    }
+  }
+
+  if (add_generation_prompt()) {
+    prompt.append(GetRole("assistant"));
+    prompt.append(":");
+  }
+  return {false, prompt, image_urls};
+}
+
+std::string JanusProStyler::ParseFunctionCall(const std::string& gen_txt,
+                                              int64_t req_id,
+                                              rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                              rapidjson::MemoryPoolAllocator<>& allocator) {
+  return "";
+}
+
 std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& llm_style) {
   if (llm_style == "qwen") {
     return std::make_unique<QwenStyler>();
@@ -1948,6 +2052,8 @@ std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& 
     return std::make_unique<Phi3Styler>();
   } else if (llm_style == "deepseek-r1") {
     return std::make_unique<DeepSeekR1Styler>();
+  } else if (llm_style == "janus-pro") {
+    return std::make_unique<JanusProStyler>();
   } else {
     throw std::runtime_error("LLM style " + llm_style + " not supported now.");
   }

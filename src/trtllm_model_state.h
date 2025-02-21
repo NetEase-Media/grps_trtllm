@@ -1,5 +1,5 @@
 // State associated with a trtllm model that is using this backend.
-// Porting from:
+// Refer to:
 // https://github.com/triton-inference-server/tensorrtllm_backend/blob/main/inflight_batcher_llm/src/model_state.h
 
 #pragma once

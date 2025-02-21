@@ -1,5 +1,5 @@
 // Utils.
-// Porting from:
+// Refer to:
 // https://github.com/triton-inference-server/tensorrtllm_backend/blob/main/inflight_batcher_llm/src/utils.cc
 
 #include "utils.h"
@@ -18,6 +18,31 @@
 using namespace tensorrt_llm::batch_manager;
 
 namespace netease::grps::utils {
+
+std::string Lstrip(const std::string& str) {
+  size_t start = str.find_first_not_of(" \t\n\r");
+  if (start == std::string::npos) {
+    return "";
+  }
+  return str.substr(start);
+}
+
+std::string Rstrip(const std::string& str) {
+  size_t end = str.find_last_not_of(" \t\n\r");
+  if (end == std::string::npos) {
+    return "";
+  }
+  return str.substr(0, end + 1);
+}
+
+std::string Strip(const std::string& str) {
+  size_t start = str.find_first_not_of(" \t\n\r");
+  if (start == std::string::npos) {
+    return "";
+  }
+  size_t end = str.find_last_not_of(" \t\n\r");
+  return str.substr(start, end - start + 1);
+}
 
 bool IsValidUTF8(const std::string& str) {
   std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;

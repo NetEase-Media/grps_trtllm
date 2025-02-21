@@ -114,6 +114,7 @@ set(COMMON_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/internvl2_vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/qwenvl_vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/qwen2vl_vit.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/vit/janus_pro_vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tokenizer.cc
 )
 
