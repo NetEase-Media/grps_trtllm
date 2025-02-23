@@ -8,58 +8,18 @@ models:
     inferer_args: # more args of model inferer.
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
       # Support llm_style see README.md.
-      llm_style: phi3
+      llm_style: phi4
 
       # tokenizer config.
-      tokenizer_type: sentencepiece # can be `huggingface`, `sentencepiece`. Must be set.
-      tokenizer_path: /tmp/Phi-3.5-mini-instruct/ # path of tokenizer. Must be set.
+      tokenizer_type: huggingface # can be `huggingface`, `sentencepiece`. Must be set.
+      tokenizer_path: /tmp/phi-4/ # path of tokenizer. Must be set.
       tokenizer_parallelism: 16 # tokenizers count for parallel tokenization. Will be set to 1 if not set.
-      end_token_id: 32000 # "<|endoftext|>\n"
-      pad_token_id: 32000 # "<|endoftext|>\n"
+      end_token_id: 100265 # "<|im_end|>"
+      pad_token_id: 100349 # "<|dummy_85|>"
       skip_special_tokens: # skip special tokens when decoding. Empty if not set.
-        - 32010 # "<|user|>\n"
-        - 32009 # "<|placeholder6|>\n"
-        - 32008 # "<|placeholder5|>\n"
-        - 32007 # "<|end|>\n"
-        - 32006 # "<|system|>\n"
-        - 32005 # "<|placeholder4|>\n"
-        - 32004 # "<|placeholder3|>\n"
-        - 32003 # "<|placeholder2|>\n"
-        - 32002 # " <|placeholder1|>\n"
-        - 32001 # "<|assistant|>\n"
-        - 32000 # "<|endoftext|>\n"
-        - 0 # "<unk>"
-        - 1 # "<s>"
-        - 2 # "</s>"
+        - 100265 # "<|im_end|>"
+        - 100349 # "<|dummy_85|>"
       force_tokens_dict: # will be used to force map tokens to ids when encode and decode instead of using tokenizer. Empty if not set.
-        - token: "<|user|>\n"
-          id: 32010
-        - token: "<|placeholder6|>\n"
-          id: 32009
-        - token: "<|placeholder5|>\n"
-          id: 32008
-        - token: "<|end|>\n"
-          id: 32007
-        - token: "<|system|>\n"
-          id: 32006
-        - token: "<|placeholder4|>\n"
-          id: 32005
-        - token: "<|placeholder3|>\n"
-          id: 32004
-        - token: "<|placeholder2|>\n"
-          id: 32003
-        - token: "<|placeholder1|>\n"
-          id: 32002
-        - token: "<|assistant|>\n"
-          id: 32001
-        - token: "<|endoftext|>\n"
-          id: 32000
-        - token: "<unk>"
-          id: 0
-        - token: "<s>"
-          id: 1
-        - token: "</s>"
-          id: 2
       prefix_tokens_id: # prefix tokens id will be added to the beginning of the input ids. Empty if not set.
       suffix_tokens_id: # suffix tokens id will be added to the end of the input ids. Empty if not set.
 
@@ -69,12 +29,10 @@ models:
 
       # trtllm config.
       gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
-      gpt_model_path: /tmp/Phi-3.5-mini-instruct/trt_engines/ # path of decoder model. Must be set.
+      gpt_model_path: /tmp/phi-4/trt_engines/ # path of decoder model. Must be set.
       encoder_model_path: # path of encoder model. Null if not set.
       stop_words: # additional stop words. Empty if not set.
-        - "<|assistant|>\n"
-        - "<|endoftext|>\n"
-        - "<|end|>\n"
+        - "<|im_end|>"
       bad_words: # additional bad words. Empty if not set.
       max_tokens_in_paged_kv_cache: # use default if not set.
       max_attention_window_size: # use default (i.e. max_sequence_length) if not set.

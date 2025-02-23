@@ -42,28 +42,29 @@
 
 支持的文本LLM：
 
-| llm_styler  | chat | function_call | supported model                                                    | doc                                                                                |
-|-------------|------|---------------|--------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| deepseek-r1 | ✅    | ❌             | DeepSeek-R1-Distill                                                | [deepseek-r1-distill](docs%2Fdeepseek-r1-distill.md)                               |
-| qwen2.5     | ✅    | ✅             | Qwen2.5-Instruct, Qwen2.5-Coder-Instruct                           | [qwen2.5-instruct](docs%2Fqwen2.5.md)<br> [qwen2.5-coder](docs%2Fqwen2.5-coder.md) |
-| qwen        | ✅    | ✅             | Qwen1.5-Chat, Qwen1.5-Moe-Chat, Qwen2-Instruct, Qwen2-Moe-Instruct | [qwen2](docs%2Fqwen2.md)                                                           |
-| chatglm3    | ✅    | ✅             | chatglm3                                                           | [chatglm3](docs%2Fchatglm3.md)                                                     |
-| glm4        | ✅    | ✅             | glm4-chat, glm4-chat-1m                                            | [glm4](docs%2Fglm4.md)                                                             |
-| internlm2   | ✅    | ✅             | internlm2_5-chat, internlm2-chat                                   | [internlm2.5](docs%2Finternlm2.5.md)                                               |
-| llama3      | ✅    | ❌             | llama-3-instruct, llama-3.1-instruct                               | [llama3](docs%2Fllama3.md)                                                         |
-| phi3        | ✅    | ❌             | Phi3, Phi3.5                                                       | [phi3](docs%2Fphi3.md)                                                             |
+| supported model                                                          | llm_styler  | chat | function_call | doc                                                                                |
+|--------------------------------------------------------------------------|-------------|------|---------------|------------------------------------------------------------------------------------|
+| DeepSeek-R1-Distill                                                      | deepseek-r1 | ✅    | ❌             | [deepseek-r1-distill](docs%2Fdeepseek-r1-distill.md)                               |
+| QwQ                                                                      | qwq         | ✅    | ❌             | [qwq](docs%2Fqwq.md)                                                               |
+| Qwen2.5-Instruct<br>Qwen2.5-Coder-Instruct                               | qwen2.5     | ✅    | ✅             | [qwen2.5-instruct](docs%2Fqwen2.5.md)<br> [qwen2.5-coder](docs%2Fqwen2.5-coder.md) |
+| Qwen1.5-Chat<br>Qwen1.5-Moe-Chat<br>Qwen2-Instruct<br>Qwen2-Moe-Instruct | qwen        | ✅    | ✅             | [qwen2](docs%2Fqwen2.md)                                                           |
+| chatglm3                                                                 | chatglm3    | ✅    | ✅             | [chatglm3](docs%2Fchatglm3.md)                                                     |                                                     |
+| internlm2_5-chat<br>internlm2-chat                                       | internlm2   | ✅    | ✅             | [internlm2.5](docs%2Finternlm2.5.md)                                               |
+| llama-3-instruct<br>llama-3.1-instruct                                   | llama3      | ✅    | ❌             | [llama3](docs%2Fllama3.md)                                                         |
+| phi-4                                                                    | phi4        | ✅    | ❌             | [phi4](docs%2Fphi4.md)                                                             |
+| Phi-3, Phi-3.5                                                           | phi3        | ✅    | ❌             | [phi3](docs%2Fphi3.md)                                                             |
 
 支持的多模态LLM：
 
-| llm_styler          | vit       | chat | function_call | supported model                           | doc                             |
-|---------------------|-----------|------|---------------|-------------------------------------------|---------------------------------|
-| internvl2.5         | internvl2 | ✅    | ❌             | InternVL2_5, InternVL2_5-MPO              | [internvl2.5](docs%2Finternvl2.5.md) |
-| internvl2-internlm2 | internvl2 | ✅    | ❌             | InternVL2-2B, InternVL2-8B, InternVL2-26B | [internvl2](docs%2Finternvl2.md) |
-| internvl2-qwen2     | internvl2 | ✅    | ❌             | InternVL2-1B                              | [internvl2](docs%2Finternvl2.md) |
-| internvl2-phi3      | internvl2 | ✅    | ❌             | InternVL2-4B                              | [internvl2](docs%2Finternvl2.md) |
-| qwen2vl             | qwen2vl   | ✅    | ❌             | Qwen2-VL-Instruct                         | [qwen2vl](docs%2Fqwen2vl.md)    |
-| qwenvl              | qwenvl    | ✅    | ❌             | Qwen-VL-Chat, Qwen-VL                     | [qwenvl](docs%2Fqwenvl.md)      |
-| janus-pro           | janus-pro | ✅    | ❌             | Janus-Pro                                 | [janus-pro](docs%2Fjanus-pro.md)   |
+| supported model                               | llm_styler          | vit       | chat | function_call | doc                                  |
+|-----------------------------------------------|---------------------|-----------|------|---------------|--------------------------------------|
+| InternVL2_5<br>InternVL2_5-MPO                | internvl2.5         | internvl2 | ✅    | ❌             | [internvl2.5](docs%2Finternvl2.5.md) |
+| InternVL2-2B<br>InternVL2-8B<br>InternVL2-26B | internvl2-internlm2 | internvl2 | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)     |
+| InternVL2-1B                                  | internvl2-qwen2     | internvl2 | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)     |
+| InternVL2-4B                                  | internvl2-phi3      | internvl2 | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)     |
+| Qwen2-VL-Instruct                             | qwen2vl             | qwen2vl   | ✅    | ❌             | [qwen2vl](docs%2Fqwen2vl.md)         |
+| Qwen-VL-Chat<br>Qwen-VL                       | qwenvl              | qwenvl    | ✅    | ❌             | [qwenvl](docs%2Fqwenvl.md)           |
+| Janus-Pro                                     | janus-pro           | janus-pro | ✅    | ❌             | [janus-pro](docs%2Fjanus-pro.md)     |
 
 ## 文档教程
 

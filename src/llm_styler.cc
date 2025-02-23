@@ -345,9 +345,7 @@ std::tuple<bool, std::string, std::vector<std::string>> Qwen25Styler::BuildPromp
   std::string tool_system;
   if (json_body.HasMember("tools") && json_body["tools"].IsArray()) {
     has_tools = true;
-    tool_system =
-      "\n\n# Tools\n\nYou may call one or more functions to assist with the user query.\n\nYou are "
-      "provided with function signatures within <tools></tools> XML tags:\n<tools>";
+    tool_system = tool_prompt_pre_;
     for (auto& tool : json_body["tools"].GetArray()) {
       tool_system.append("\n");
       rapidjson::StringBuffer buffer;
@@ -355,10 +353,7 @@ std::tuple<bool, std::string, std::vector<std::string>> Qwen25Styler::BuildPromp
       tool.Accept(writer);
       tool_system.append(buffer.GetString());
     }
-    tool_system.append(
-      "\n</tools>\n\nFor each function call, return a json object with function name and arguments within"
-      "<tool_call></tool_call> XML tags:\n<tool_call>\n{{\"name\": <function-name>, \"arguments\":"
-      "<args-json-object>}}\n</tool_call>");
+    tool_system.append(tool_prompt_post_);
   }
 
   // Parse messages.
@@ -1847,6 +1842,76 @@ std::string Phi3Styler::ParseFunctionCall(const std::string& gen_txt,
   return "";
 }
 
+std::tuple<bool, std::string, std::vector<std::string>> Phi4Styler::BuildPrompt(const rapidjson::Document& json_body) {
+  std::string prompt;
+
+  // Parse messages.
+  if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
+    throw std::invalid_argument("`messages` not found or not an array");
+  }
+  if (json_body["messages"].Empty()) {
+    throw std::invalid_argument("`messages` is empty");
+  }
+
+  bool skip_first = false;
+  std::string sys_prompt;
+  // System message.
+  if (json_body["messages"][0].HasMember("role") && json_body["messages"][0]["role"].IsString() &&
+      std::string(json_body["messages"][0]["role"].GetString()) == "system") {
+    // If the first message is a system message, use it as the system prompt.
+    if (!json_body["messages"][0].HasMember("content") || !json_body["messages"][0]["content"].IsString()) {
+      throw std::invalid_argument("`content` not found or not a string");
+    }
+    sys_prompt = json_body["messages"][0]["content"].GetString();
+    skip_first = true;
+  } else {
+    // If the first message is not a system message, add a system message.
+    sys_prompt = system_prompt();
+  }
+  prompt.append("<|im_start|>");
+  prompt.append(GetRole("system"));
+  prompt.append("<|im_sep|>");
+  prompt.append(sys_prompt);
+  prompt.append("<|im_end|>");
+
+  // Following messages.
+  for (auto& message : json_body["messages"].GetArray()) {
+    if (skip_first) {
+      skip_first = false;
+      continue;
+    }
+
+    if (!message.HasMember("role") || !message["role"].IsString()) {
+      throw std::invalid_argument("`role` not found or not a string");
+    }
+    std::string role = GetRole(message["role"].GetString());
+    if (!message.HasMember("content") || !message["content"].IsString()) {
+      throw std::invalid_argument("`content` not found or not a string");
+    }
+    std::string content = message["content"].GetString();
+
+    prompt.append("<|im_start|>");
+    prompt.append(role);
+    prompt.append("<|im_sep|>");
+    prompt.append(content);
+    prompt.append("<|im_end|>");
+  }
+
+  if (add_generation_prompt()) {
+    prompt.append("<|im_start|>");
+    prompt.append(GetRole("assistant"));
+    prompt.append("<|im_sep|>");
+  }
+  return {false, prompt, {}};
+}
+
+std::string Phi4Styler::ParseFunctionCall(const std::string& gen_txt,
+                                          int64_t req_id,
+                                          rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                          rapidjson::MemoryPoolAllocator<>& allocator) {
+  return "";
+}
+
 std::tuple<bool, std::string, std::vector<std::string>> DeepSeekR1Styler::BuildPrompt(
   const rapidjson::Document& json_body) {
   std::string prompt = "<｜begin▁of▁sentence｜>";
@@ -2028,6 +2093,8 @@ std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& 
     return std::make_unique<QwenStyler>();
   } else if (llm_style == "qwen2.5") {
     return std::make_unique<Qwen25Styler>();
+  } else if (llm_style == "qwq") {
+    return std::make_unique<QwQStyler>();
   } else if (llm_style == "chatglm3") {
     return std::make_unique<ChatGlm3Styler>();
   } else if (llm_style == "glm4") {
@@ -2050,6 +2117,8 @@ std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& 
     return std::make_unique<Qwen2vlStyler>();
   } else if (llm_style == "phi3") {
     return std::make_unique<Phi3Styler>();
+  } else if (llm_style == "phi4") {
+    return std::make_unique<Phi4Styler>();
   } else if (llm_style == "deepseek-r1") {
     return std::make_unique<DeepSeekR1Styler>();
   } else if (llm_style == "janus-pro") {
