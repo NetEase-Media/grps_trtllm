@@ -336,6 +336,34 @@ std::string QwenStyler::ParseFunctionCall(const std::string& gen_txt,
   }
 }
 
+void Qwen25Styler::ApplyChatTemplate(const std::string& chat_template) {
+  LLMStyler::ApplyChatTemplate(chat_template);
+
+  // Parse system prompt from chat_template.
+  if (chat_template.empty()) {
+    CLOG4(WARN, "chat_template is empty, will use default system prompt: `" << system_prompt_ << "`.");
+    return;
+  }
+  auto pre = std::string(
+    "{%- if tools %}\n    {{- '<|im_start|>system\\n' }}\n    {%- if messages[0]['role'] == 'system' %}\n        "
+    "{{- messages[0]['content'] }}\n    {%- else %}\n        {{- '");
+  if (chat_template.find(pre) != 0) {
+    CLOG4(WARN, "Failed to parse system prompt from chat_template, will use default system prompt: `" << system_prompt_
+                                                                                                      << "`.");
+    return;
+  }
+  auto sub_str = chat_template.substr(pre.size());
+  auto post = std::string("' }}\n    {%- endif %}\n");
+  auto end = sub_str.find(post);
+  if (end == std::string::npos) {
+    CLOG4(WARN, "Failed to parse system prompt from chat_template, will use default system prompt: `" << system_prompt_
+                                                                                                      << "`.");
+    return;
+  }
+  system_prompt_ = sub_str.substr(0, end);
+  CLOG4(INFO, "Parse system prompt from chat_template success: `" << system_prompt_ << "`.");
+}
+
 std::tuple<bool, std::string, std::vector<std::string>> Qwen25Styler::BuildPrompt(
   const rapidjson::Document& json_body) {
   std::string prompt;
@@ -2088,43 +2116,48 @@ std::string JanusProStyler::ParseFunctionCall(const std::string& gen_txt,
   return "";
 }
 
-std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& llm_style) {
+std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& llm_style,
+                                                             const std::string& chat_template) {
+  std::unique_ptr<LLMStyler> llm_styler;
   if (llm_style == "qwen") {
-    return std::make_unique<QwenStyler>();
+    llm_styler = std::make_unique<QwenStyler>();
   } else if (llm_style == "qwen2.5") {
-    return std::make_unique<Qwen25Styler>();
+    llm_styler = std::make_unique<Qwen25Styler>();
   } else if (llm_style == "qwq") {
-    return std::make_unique<QwQStyler>();
+    llm_styler = std::make_unique<QwQStyler>();
   } else if (llm_style == "chatglm3") {
-    return std::make_unique<ChatGlm3Styler>();
+    llm_styler = std::make_unique<ChatGlm3Styler>();
   } else if (llm_style == "glm4") {
-    return std::make_unique<Glm4Styler>();
+    llm_styler = std::make_unique<Glm4Styler>();
   } else if (llm_style == "llama3") {
-    return std::make_unique<Llama3Styler>();
+    llm_styler = std::make_unique<Llama3Styler>();
   } else if (llm_style == "internlm2") {
-    return std::make_unique<Internlm2Styler>();
+    llm_styler = std::make_unique<Internlm2Styler>();
   } else if (llm_style == "internvl2-internlm2") {
-    return std::make_unique<Internvl2Internlm2Styler>();
+    llm_styler = std::make_unique<Internvl2Internlm2Styler>();
   } else if (llm_style == "internvl2-phi3") {
-    return std::make_unique<Internvl2Phi3Styler>();
+    llm_styler = std::make_unique<Internvl2Phi3Styler>();
   } else if (llm_style == "internvl2-qwen2") {
-    return std::make_unique<Internvl2Qwen2Styler>();
+    llm_styler = std::make_unique<Internvl2Qwen2Styler>();
   } else if (llm_style == "internvl2.5") {
-    return std::make_unique<Internvl25Styler>();
+    llm_styler = std::make_unique<Internvl25Styler>();
   } else if (llm_style == "qwenvl") {
-    return std::make_unique<QwenvlStyler>();
+    llm_styler = std::make_unique<QwenvlStyler>();
   } else if (llm_style == "qwen2vl") {
-    return std::make_unique<Qwen2vlStyler>();
+    llm_styler = std::make_unique<Qwen2vlStyler>();
   } else if (llm_style == "phi3") {
-    return std::make_unique<Phi3Styler>();
+    llm_styler = std::make_unique<Phi3Styler>();
   } else if (llm_style == "phi4") {
-    return std::make_unique<Phi4Styler>();
+    llm_styler = std::make_unique<Phi4Styler>();
   } else if (llm_style == "deepseek-r1") {
-    return std::make_unique<DeepSeekR1Styler>();
+    llm_styler = std::make_unique<DeepSeekR1Styler>();
   } else if (llm_style == "janus-pro") {
-    return std::make_unique<JanusProStyler>();
+    llm_styler = std::make_unique<JanusProStyler>();
   } else {
     throw std::runtime_error("LLM style " + llm_style + " not supported now.");
   }
+
+  llm_styler->ApplyChatTemplate(chat_template);
+  return llm_styler;
 }
 } // namespace netease::grps

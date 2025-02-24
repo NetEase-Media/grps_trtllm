@@ -20,6 +20,7 @@ void TrtllmInferer::Init(const std::string& path, const std::string& device, con
 
 void TrtllmInferer::Load() {
   // 1. Load tokenizer.
+  std::string tokenizer_path;
   try {
     tokenizer_ = std::make_unique<MultiInstanceTokenizer>();
 
@@ -27,7 +28,7 @@ void TrtllmInferer::Load() {
     if (tokenizer_type.empty()) {
       throw std::invalid_argument("tokenizer_type is not specified.");
     }
-    std::string tokenizer_path = model_state_->GetParameter<std::string>("tokenizer_path");
+    tokenizer_path = model_state_->GetParameter<std::string>("tokenizer_path");
     if (tokenizer_path.empty()) {
       throw std::invalid_argument("tokenizer_path is not specified.");
     }
@@ -111,8 +112,25 @@ void TrtllmInferer::Load() {
   }
 
   // 2. Load llm styler.
+  std::string chat_template;
+  try {
+    auto tokenizer_config_path = tokenizer_path + "/tokenizer_config.json";
+    auto tokenizer_config_content = utils::LoadBytesFromFile<std::string>(tokenizer_config_path);
+    rapidjson::Document tokenizer_config_doc;
+    tokenizer_config_doc.Parse(tokenizer_config_content.c_str());
+    if (tokenizer_config_doc.HasParseError()) {
+      throw std::runtime_error("Parse tokenizer_config.json failed.");
+    }
+    if (!tokenizer_config_doc.HasMember("chat_template") || !tokenizer_config_doc["chat_template"].IsString()) {
+      throw std::invalid_argument("chat_template not found or not a string.");
+    }
+    chat_template = tokenizer_config_doc["chat_template"].GetString();
+  } catch (const std::exception& e) {
+    CLOG4(WARN, "Failed to load chat_template from tokenizer_config.json, will use default value of empty, error: "
+                  << e.what());
+  }
   std::string llm_style = model_state_->GetParameter<std::string>("llm_style");
-  llm_styler_ = LLMStylerFactory::CreateLLMStyler(llm_style);
+  llm_styler_ = LLMStylerFactory::CreateLLMStyler(llm_style, chat_template);
 
   // 3. Load vit if multi-modal model.
   std::string vit_type;

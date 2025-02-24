@@ -38,6 +38,12 @@ public:
   virtual ~LLMStyler() = default;
 
   /**
+   * Apply chat template.
+   * @param chat_template: chat_template in tokenizer_config.json.
+   */
+  virtual void ApplyChatTemplate(const std::string& chat_template) { chat_template_ = chat_template; }
+
+  /**
    * @brief Build prompt for model input from OpenAI interface json body request.
    * @param json_body: Json body from client.
    * @return <if_function_call, prompt, img_urls>: if_function_call is true if the prompt contains function call.
@@ -77,13 +83,14 @@ public:
   [[nodiscard]] const std::string& func_call_observation_words() const { return func_call_observation_words_; }
   [[nodiscard]] bool add_generation_prompt() const { return add_generation_prompt_; }
 
-private:
+protected:
   std::string style_name_;                  // Style name.
   std::string system_prompt_;               // System role prompt.
   std::vector<std::string> roles_;          // Roles name. [`system_name`, `user_name`, `assistant_name`]
   bool support_func_call_ = false;          // If support function call.
   std::string func_call_observation_words_; // Function call observation words. Used to early stop.
   bool add_generation_prompt_ = false;      // If true, will add generation prompt in the end of prompt.
+  std::string chat_template_;               // chat_template in tokenizer_config.json.
 };
 
 class QwenStyler : public LLMStyler {
@@ -150,6 +157,12 @@ public:
     tool_prompt_post_ = std::move(tool_prompt_post);
   }
   ~Qwen25Styler() override = default;
+
+  /**
+   * Apply chat template.
+   * @param chat_template: chat_template in tokenizer_config.json.
+   */
+  void ApplyChatTemplate(const std::string& chat_template) override;
 
   /**
    * @brief Build prompt for model input from OpenAI interface json body request.
@@ -623,7 +636,7 @@ class LLMStylerFactory {
 public:
   LLMStylerFactory() = default;
   virtual ~LLMStylerFactory() = default;
-  static std::unique_ptr<LLMStyler> CreateLLMStyler(const std::string& llm_style);
+  static std::unique_ptr<LLMStyler> CreateLLMStyler(const std::string& llm_style, const std::string& chat_template);
 };
 
 } // namespace netease::grps
