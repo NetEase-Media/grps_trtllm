@@ -58,6 +58,7 @@
 
 | supported model                               | llm_styler          | vit             | chat | function_call | doc                                          |
 |-----------------------------------------------|---------------------|-----------------|------|---------------|----------------------------------------------|
+| Janus-Pro                                     | janus-pro           | janus-pro       | ✅    | ❌             | [janus-pro](docs%2Fjanus-pro.md)             |
 | InternVideo2.5                                | intern-video2.5     | intern-video2.5 | ✅    | ❌             | [intern-video2.5](docs%2Fintern-video2.5.md) |
 | InternVL2_5<br>InternVL2_5-MPO                | internvl2.5         | internvl2       | ✅    | ❌             | [internvl2.5](docs%2Finternvl2.5.md)         |
 | InternVL2-2B<br>InternVL2-8B<br>InternVL2-26B | internvl2-internlm2 | internvl2       | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
@@ -65,7 +66,6 @@
 | InternVL2-4B                                  | internvl2-phi3      | internvl2       | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
 | Qwen2-VL-Instruct                             | qwen2vl             | qwen2vl         | ✅    | ❌             | [qwen2vl](docs%2Fqwen2vl.md)                 |
 | Qwen-VL-Chat<br>Qwen-VL                       | qwenvl              | qwenvl          | ✅    | ❌             | [qwenvl](docs%2Fqwenvl.md)                   |
-| Janus-Pro                                     | janus-pro           | janus-pro       | ✅    | ❌             | [janus-pro](docs%2Fjanus-pro.md)             |
 
 ## 文档教程
 
@@ -81,17 +81,13 @@
 
 ```text
 |-- client                              # 客户端样例
-|   |--llamaindex_ai_agent.py           # 通过LlamaIndex实现AI Agent
-|   |--openai_benchmark.py              # 通过OpenAI客户端进行benchmark
-|   |--openai_cli.py                    # 通过OpenAI客户端进行chat
-|   |--openai_func_call*.py             # 通过OpenAI客户端进行function call
-|   |--openai_txt_cli.py                # 通过OpenAI客户端输入文本文件内容进行chat
 |-- conf                                # 配置文件
 |   |-- inference*.yml                  # 各类llm推理配置
 |   |-- server.yml                      # 服务配置
 |-- data                                # 数据文件
 |-- docker                              # docker镜像构建
 |-- docs                                # 文档
+|-- processors                          # 远程处理器
 |-- second_party                        # grps框架依赖
 |-- src                                 # 自定义源码
 |   |-- tensorrt                        # tensorrt推理后端
@@ -179,8 +175,7 @@ models:
     ...
     inferer_args:
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
-      # Current support {`qwen2.5`, `qwen`, `chatglm3`, `glm4`, `internlm2`, `internvl2-internlm2`,
-      #  `internvl2-phi3`, `internvl2-qwen2`, `internvl2.5`, `phi3`}.
+      # Support llm_style see README.md.
       llm_style: qwen2.5
 
       # tokenizer config.
