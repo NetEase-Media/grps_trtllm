@@ -1,4 +1,4 @@
-// InternVL2 VIT(Vision transformer).
+// JanusPro VIT(Vision transformer).
 
 #pragma once
 

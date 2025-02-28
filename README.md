@@ -56,15 +56,16 @@
 
 支持的多模态LLM：
 
-| supported model                               | llm_styler          | vit       | chat | function_call | doc                                  |
-|-----------------------------------------------|---------------------|-----------|------|---------------|--------------------------------------|
-| InternVL2_5<br>InternVL2_5-MPO                | internvl2.5         | internvl2 | ✅    | ❌             | [internvl2.5](docs%2Finternvl2.5.md) |
-| InternVL2-2B<br>InternVL2-8B<br>InternVL2-26B | internvl2-internlm2 | internvl2 | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)     |
-| InternVL2-1B                                  | internvl2-qwen2     | internvl2 | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)     |
-| InternVL2-4B                                  | internvl2-phi3      | internvl2 | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)     |
-| Qwen2-VL-Instruct                             | qwen2vl             | qwen2vl   | ✅    | ❌             | [qwen2vl](docs%2Fqwen2vl.md)         |
-| Qwen-VL-Chat<br>Qwen-VL                       | qwenvl              | qwenvl    | ✅    | ❌             | [qwenvl](docs%2Fqwenvl.md)           |
-| Janus-Pro                                     | janus-pro           | janus-pro | ✅    | ❌             | [janus-pro](docs%2Fjanus-pro.md)     |
+| supported model                               | llm_styler          | vit             | chat | function_call | doc                                          |
+|-----------------------------------------------|---------------------|-----------------|------|---------------|----------------------------------------------|
+| InternVideo2.5                                | intern-video2.5     | intern-video2.5 | ✅    | ❌             | [intern-video2.5](docs%2Fintern-video2.5.md) |
+| InternVL2_5<br>InternVL2_5-MPO                | internvl2.5         | internvl2       | ✅    | ❌             | [internvl2.5](docs%2Finternvl2.5.md)         |
+| InternVL2-2B<br>InternVL2-8B<br>InternVL2-26B | internvl2-internlm2 | internvl2       | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
+| InternVL2-1B                                  | internvl2-qwen2     | internvl2       | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
+| InternVL2-4B                                  | internvl2-phi3      | internvl2       | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
+| Qwen2-VL-Instruct                             | qwen2vl             | qwen2vl         | ✅    | ❌             | [qwen2vl](docs%2Fqwen2vl.md)                 |
+| Qwen-VL-Chat<br>Qwen-VL                       | qwenvl              | qwenvl          | ✅    | ❌             | [qwenvl](docs%2Fqwenvl.md)                   |
+| Janus-Pro                                     | janus-pro           | janus-pro       | ✅    | ❌             | [janus-pro](docs%2Fjanus-pro.md)             |
 
 ## 文档教程
 

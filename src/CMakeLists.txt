@@ -115,7 +115,9 @@ set(COMMON_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/qwenvl_vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/qwen2vl_vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/janus_pro_vit.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/vit/intern_video_2_5_vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tokenizer.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/grps_cli.cc
 )
 
 add_library(grps-tensorrt-llm-common SHARED ${COMMON_SRCS})

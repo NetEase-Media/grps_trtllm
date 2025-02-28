@@ -1,4 +1,12 @@
 # 重要更新
+
+* 2025-02-28
+    * 支持InternVideo2.5。
+    * grps1.1.0_cuda12.6_cudnn9.6_trtllm0.16.0_py3.12镜像增加grps-py功能。
+
+* 2025-02-24
+    * qwen2.5 llm_styler支持Qwen2.5-Math、Qwen2.5-Coder、Qwen2.5-1M。
+
 * 2025-02-23
     * 支持QwQ与phi-4。
 

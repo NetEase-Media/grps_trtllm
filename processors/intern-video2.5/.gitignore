@@ -1,0 +1,10 @@
+# ide
+.idea
+
+# python
+**/__pycache__/
+
+# server generated files
+logs
+
+grps_framework-1.1.0-py3-none-any.whl

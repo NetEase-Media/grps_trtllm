@@ -9,6 +9,7 @@
 #include <regex>
 
 #include "src/utils.h"
+#include "src/vit/intern_video_2_5_vit.h"
 #include "src/vit/internvl2_vit.h"
 #include "src/vit/janus_pro_vit.h"
 #include "src/vit/qwen2vl_vit.h"
@@ -123,6 +124,8 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> VIT::Encode(const std::vect
 std::unique_ptr<VIT> VITFactory::CreateVIT(const std::string& type_name) {
   if (type_name == "internvl2") {
     return std::make_unique<Internvl2VIT>();
+  } else if (type_name == "intern-video2.5") {
+    return std::make_unique<InternVideo25VIT>();
   } else if (type_name == "qwenvl") {
     return std::make_unique<QwenvlVIT>();
   } else if (type_name == "qwen2vl") {

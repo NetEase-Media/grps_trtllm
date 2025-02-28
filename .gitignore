@@ -7,3 +7,4 @@ output
 cmake-build-*
 client/cmake-build-*
 .listing
+.DS_Store

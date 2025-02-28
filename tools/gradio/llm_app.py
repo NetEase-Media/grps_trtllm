@@ -20,7 +20,7 @@ if len(sys.argv) < 3:
     exit(1)
 
 app_type = sys.argv[1]
-if app_type not in ['llm', 'internvl2', 'qwenvl', 'qwen2vl', 'deepseek-r1', 'janus-pro']:
+if app_type not in ['llm', 'internvl2', 'intern-video2.5', 'qwenvl', 'qwen2vl', 'deepseek-r1', 'janus-pro']:
     print(
         '`app_type` only support `llm`(all text llm) or `internvl2`(multi-modal) or `qwenvl`(multi-modal) or `qwen2vl`(multi-modal).')
     exit(1)
@@ -223,7 +223,7 @@ def internvl2_llm_fn(message, history):
                 if image_flag_count == 0:
                     # insert <image> in text start
                     if len(pre_messages[:-1]) == 1:
-                        msg['content'][0]['text'] = '<image>' + pre_messages[-1]
+                        msg['content'][0]['text'] = '<image>\n' + pre_messages[-1]
                     elif len(pre_messages[:-1]) > 1:
                         pre_text = ''
                         for i in range(len(pre_messages[:-1])):
@@ -292,7 +292,7 @@ def internvl2_llm_fn(message, history):
         if image_flag_count == 0:
             # insert <image> in text start
             if len(message['files']) == 1:
-                new_message['content'][0]['text'] = '<image>' + message['text']
+                new_message['content'][0]['text'] = '<image>\n' + message['text']
             elif len(message['files']) > 1:
                 pre_text = ''
                 for i in range(len(message['files'])):
@@ -334,6 +334,106 @@ def internvl2_llm_fn(message, history):
             yield 'error: 图片尺寸过大或超过图片个数限制。'
         else:
             yield 'error: ' + e.message.replace('<image>', '`<image>`')
+    except Exception as e:
+        print('error:', e)
+        yield 'error: ' + str(e)
+
+
+def intern_video_2_5_llm_fn(message, history):
+    # print('message:', message)
+    # print('history:', history)
+
+    img_dir = None
+
+    # History messages.
+    messages = []
+    pre_messages = []
+    for his in history:
+        if his['role'] == 'user':
+            pre_messages.append(his['content'])
+        elif his['role'] == 'assistant':
+            msg = {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": pre_messages[-1]  # last is the text content
+                    }
+                ]
+            }
+            if len(pre_messages) > 1 and (pre_messages[0][0].endswith('.mp4') or pre_messages[0][0].endswith('.mov')
+                                          or pre_messages[0][0].endswith('.avi')):  # video
+                if len(pre_messages) > 2:
+                    yield 'error: 视频文件个数不能超过1个。'
+                    return
+                msg['content'].append({
+                    "type": "video_url",
+                    "video_url": {
+                        "url": 'file://' + pre_messages[0][0]
+                    }
+                })
+
+            messages.append(msg)
+            messages.append({
+                "role": "assistant",
+                "content": his['content']
+            })
+            pre_messages = []
+
+    # New message.
+    new_message = {
+        "role": "user",
+        "content": [
+            {
+                "type": "text",
+                "text": message['text']
+            }
+        ]
+    }
+    if 'files' in message and len(message['files']) > 0 and (message['files'][0]['path'].endswith('.mp4')
+                                                             or message['files'][0]['path'].endswith('.mov') or
+                                                             message['files'][0]['path'].endswith('.avi')
+    ):  # video
+        if len(message['files']) > 1:
+            yield 'error: 视频文件个数不能超过1个。'
+            return
+        new_message['content'].append({
+            "type": "video_url",
+            "video_url": {
+                "url": 'file://' + message['files'][0]['path']
+            }
+        })
+
+    messages.append(new_message)
+    # print('messages:', messages)
+
+    # Request to openai llm server.
+    client = openai.Client(
+        api_key="cannot be empty",
+        base_url=f"http://{llm_server}/v1"
+    )
+
+    res = client.chat.completions.create(
+        model="",
+        messages=messages,
+        stream=True
+    )
+    # print('res: ', res)
+
+    if img_dir is not None:
+        shutil.rmtree(img_dir)
+
+    content = ''
+    try:
+        for msg in res:
+            # print('msg:', msg)
+            if msg.choices[0].delta.content is not None:
+                content += msg.choices[0].delta.content
+                yield content
+        # print('response:', content)
+    except openai.APIError as e:
+        print('error:', e)
+        yield 'error: ' + e.message.replace('<image>', '`<image>`')
     except Exception as e:
         print('error:', e)
         yield 'error: ' + str(e)
@@ -588,7 +688,7 @@ def janus_pro_llm_fn(message, history):
             if image_flag_count == 0:
                 # insert <image_placeholder> in text start
                 if len(pre_messages[:-1]) == 1:
-                    msg['content'][0]['text'] = '<image_placeholder>' + pre_messages[-1]
+                    msg['content'][0]['text'] = '<image_placeholder>\n' + pre_messages[-1]
                 elif len(pre_messages[:-1]) > 1:
                     pre_text = ''
                     for i in range(len(pre_messages[:-1])):
@@ -629,7 +729,7 @@ def janus_pro_llm_fn(message, history):
     if image_flag_count == 0:
         # insert <image_placeholder> in text start
         if len(message['files']) == 1:
-            new_message['content'][0]['text'] = '<image_placeholder>' + message['text']
+            new_message['content'][0]['text'] = '<image_placeholder>\n' + message['text']
         elif len(message['files']) > 1:
             pre_text = ''
             for i in range(len(message['files'])):
@@ -697,6 +797,13 @@ elif app_type == 'internvl2':
     ],
                             title="internvl2-grps-trtllm",
                             multimodal=True)
+elif app_type == 'intern-video2.5':
+    demo = gr.ChatInterface(concurrency_limit=32, fn=intern_video_2_5_llm_fn, type="messages", examples=[
+        {"text": "描述一下这个视频：",
+         "files": [os.path.dirname(os.path.realpath(__file__)) + '/data/red-panda.mp4']},
+    ],
+                            title="intern-video2.5-grps-trtllm",
+                            multimodal=True)
 elif app_type == 'qwenvl':
     if not os.path.exists("/tmp/Qwen-VL-Chat"):
         print("Please download the qwenvl to /tmp/Qwen-VL-Chat first.")
@@ -745,7 +852,8 @@ elif app_type == 'janus-pro':
                             title="janus-pro-grps-trtllm",
                             multimodal=True)
 else:
-    print('`app_type` only support `llm`(text llm) or `internvl2`(multi-modal) or `qwenvl`(multi-modal), '
-          '`qwen2vl`(multi-modal), `deepseek-r1`(deepseek-r1 text llm), `janus-pro`(multi-modal).')
+    print('`app_type` only support `llm`(text llm) or `internvl2`(multi-modal) or `intern-video2.5(multi-modal)` or '
+          '`qwenvl`(multi-modal), `qwen2vl`(multi-modal), `deepseek-r1`(deepseek-r1 text llm), '
+          '`janus-pro`(multi-modal).')
     exit(1)
 demo.launch(server_name='0.0.0.0', server_port=SERVER_PORT)
