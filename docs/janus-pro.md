@@ -127,7 +127,7 @@ curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
 }
 '
 
-# 测试多轮对话与输出检测框
+# 测试多轮对话
 curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{

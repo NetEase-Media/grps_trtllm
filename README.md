@@ -44,7 +44,7 @@
 
 | supported model                                                          | llm_styler  | chat | function_call | doc                                                  |
 |--------------------------------------------------------------------------|-------------|------|---------------|------------------------------------------------------|
-| DeepSeek-R1-Distill                                                      | deepseek-r1 | ✅    | ❌             | [deepseek-r1-distill](docs%2Fdeepseek-r1-distill.md) |
+| DeepSeek-R1-Distill<br>TinyR1-32B-Preview                                | deepseek-r1 | ✅    | ❌             | [deepseek-r1-distill](docs%2Fdeepseek-r1-distill.md) |
 | QwQ                                                                      | qwq         | ✅    | ❌             | [qwq](docs%2Fqwq.md)                                 |
 | Qwen2.5-1M<br>Qwen2.5-Coder<br>Qwen2.5-Math<br>Qwen2.5                   | qwen2.5     | ✅    | ✅             | [qwen2.5](docs%2Fqwen2.5.md)                         |
 | Qwen1.5-Chat<br>Qwen1.5-Moe-Chat<br>Qwen2-Instruct<br>Qwen2-Moe-Instruct | qwen        | ✅    | ✅             | [qwen2](docs%2Fqwen2.md)                             |

@@ -8,12 +8,15 @@
 #include "grps_cli.h"
 
 #include <glog/logging.h>
-#include <google/protobuf/text_format.h>
 
 #include "logger/logger.h"
 #include "utils.h"
 
 #define GRPS_CLI_DBG 0
+
+#if GRPS_CLI_DBG
+#include <google/protobuf/text_format.h>
+#endif
 
 namespace netease::grps {
 GrpsCli::~GrpsCli() = default;
