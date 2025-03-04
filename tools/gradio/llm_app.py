@@ -1,8 +1,10 @@
+import base64
 import os
 import shutil
 import socket
 import sys
 import uuid
+from io import BytesIO
 
 import gradio as gr
 import numpy as np
@@ -20,12 +22,12 @@ if len(sys.argv) < 3:
     exit(1)
 
 app_type = sys.argv[1]
-if app_type not in ['llm', 'internvl2', 'intern-video2.5', 'qwenvl', 'qwen2vl', 'deepseek-r1', 'janus-pro']:
-    print(
-        '`app_type` only support `llm`(all text llm) or `internvl2`(multi-modal) or `qwenvl`(multi-modal) or `qwen2vl`(multi-modal).')
-    exit(1)
-
 llm_server = sys.argv[2]
+
+if app_type == 'olm-ocr':
+    from olmocr.data.renderpdf import render_pdf_to_base64png
+    from olmocr.prompts import build_finetuning_prompt
+    from olmocr.prompts.anchor import get_anchor_text
 
 
 def get_ip_socket():
@@ -776,6 +778,86 @@ def janus_pro_llm_fn(message, history):
         yield 'error: ' + str(e)
 
 
+def olm_ocr_fn(message, history):
+    # print('message:', message)
+    # print('history:', history)
+
+    if 'files' not in message or len(message['files']) != 1 or not message['files'][0]['path'].endswith('.pdf'):
+        yield 'error: 一次仅支持单个pdf文件。'
+        return
+
+    pdf_path = message['files'][0]['path']
+    num_pages = 0
+    try:
+        cmd = f'pdfinfo \'{pdf_path}\' | grep Pages | awk \'{{print $2}}\''
+        num_pages = os.popen(cmd).read().strip()
+        num_pages = int(num_pages)
+    except Exception as e:
+        yield 'error: ' + str(e)
+        return
+
+    response = ''
+    for i in range(1, num_pages + 1):
+        response += '\n# Page ' + str(i) + '\n'
+        image_base64 = render_pdf_to_base64png(pdf_path, i, target_longest_image_dim=1024)
+        # print('len(image_base64)', len(image_base64))
+        image = Image.open(BytesIO(base64.b64decode(image_base64)))
+        image.save(f'page_{i}.jpg')
+        # Build the prompt, using document metadata
+        anchor_text = get_anchor_text(pdf_path, i, pdf_engine="pdfreport", target_length=4000)
+        prompt = build_finetuning_prompt(anchor_text)
+        print(f'page{i}_prompt: {prompt}')
+
+        # Request to openai llm server.
+        new_message = {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f'data:image/png;base64,{image_base64}'
+                    }
+                },
+                {
+                    "type": "text",
+                    "text": prompt
+                }
+            ]
+        }
+        client = openai.Client(
+            api_key="cannot be empty",
+            base_url=f"http://{llm_server}/v1"
+        )
+        res = client.chat.completions.create(
+            model="",
+            messages=[new_message],
+            stream=True
+        )
+        # print('res: ', res)
+        try:
+            tmp = ''
+            pre_len = 0
+            for msg in res:
+                # print('msg:', msg)
+                if msg.choices[0].delta.content is not None:
+                    tmp += msg.choices[0].delta.content
+                    if tmp.find('"natural_text":"') == -1:
+                        continue
+                    if tmp.endswith('\\'):
+                        continue
+                text = tmp.split('"natural_text":"')[1].split('"}')[0].replace('\\n', '\n')
+                response += text[pre_len:]
+                pre_len = len(text)
+                yield response
+
+        except openai.APIError as e:
+            print('error:', e)
+            yield 'error: ' + e.message
+        except Exception as e:
+            print('error:', e)
+            yield 'error: ' + str(e)
+
+
 if app_type == 'llm':
     demo = gr.ChatInterface(concurrency_limit=32, fn=llm_fn, type="messages", examples=[
         "你好，你是谁？",
@@ -851,9 +933,16 @@ elif app_type == 'janus-pro':
     ],
                             title="janus-pro-grps-trtllm",
                             multimodal=True)
+elif app_type == 'olm-ocr':
+    demo = gr.ChatInterface(concurrency_limit=32, fn=olm_ocr_fn, type="messages", examples=[
+        {"text": "",
+         "files": ['https://molmo.allenai.org/paper.pdf']},
+    ],
+                            title="olm-ocr-grps-trtllm",
+                            multimodal=True)
 else:
     print('`app_type` only support `llm`(text llm) or `internvl2`(multi-modal) or `intern-video2.5(multi-modal)` or '
           '`qwenvl`(multi-modal), `qwen2vl`(multi-modal), `deepseek-r1`(deepseek-r1 text llm), '
-          '`janus-pro`(multi-modal).')
+          '`janus-pro`(multi-modal), `olm-ocr`(multi-modal).')
     exit(1)
 demo.launch(server_name='0.0.0.0', server_port=SERVER_PORT)

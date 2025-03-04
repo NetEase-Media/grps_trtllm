@@ -1,5 +1,8 @@
 # 重要更新
 
+* 2025-03-04
+    * 支持olmOCR。
+
 * 2025-02-28
     * 支持InternVideo2.5。
     * grps1.1.0_cuda12.6_cudnn9.6_trtllm0.16.0_py3.12镜像增加grps-py功能。

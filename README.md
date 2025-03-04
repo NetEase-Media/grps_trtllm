@@ -3,7 +3,8 @@
 # grps-trtllm
 
 [GRPS](https://github.com/NetEase-Media/grps) + [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM)
-实现纯```C++```版，相比```vllm serve```更优性能的```OpenAI LLM```服务，支持```Chat```、```Ai-agent```、```Multi-modal```、多卡推理等。
+实现纯```C++```版，相比```vllm serve```更优性能的```OpenAI LLM```服务，支持```Chat```、```Ai-agent```、```Multi-modal```
+、多卡推理等。
 
 ![GRPS](https://img.shields.io/badge/GRPS-blue)
 ![TensorRT-LLM](https://img.shields.io/badge/TensorRT_LLM-green)
@@ -64,6 +65,7 @@
 | InternVL2-2B<br>InternVL2-8B<br>InternVL2-26B | internvl2-internlm2 | internvl2       | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
 | InternVL2-1B                                  | internvl2-qwen2     | internvl2       | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
 | InternVL2-4B                                  | internvl2-phi3      | internvl2       | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
+| olmOCR                                        | qwen2vl             | qwen2vl         | ✅    | ❌             | [olm-ocr](docs%2Folm-ocr.md)                 |
 | Qwen2-VL-Instruct                             | qwen2vl             | qwen2vl         | ✅    | ❌             | [qwen2vl](docs%2Fqwen2vl.md)                 |
 | Qwen-VL-Chat<br>Qwen-VL                       | qwenvl              | qwenvl          | ✅    | ❌             | [qwenvl](docs%2Fqwenvl.md)                   |
 
