@@ -3,7 +3,7 @@
 # grps-trtllm
 
 [GRPS](https://github.com/NetEase-Media/grps) + [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM)
-实现纯```C++```版高性能```OpenAI LLM```服务，支持```Chat```、```Ai-agent```、```Multi-modal```等。
+实现纯```C++```版，相比```vllm serve```更优性能的```OpenAI LLM```服务，支持```Chat```、```Ai-agent```、```Multi-modal```、多卡推理等。
 
 ![GRPS](https://img.shields.io/badge/GRPS-blue)
 ![TensorRT-LLM](https://img.shields.io/badge/TensorRT_LLM-green)
@@ -23,8 +23,8 @@
 ## 说明
 
 [grps](https://github.com/NetEase-Media/grps)接入[trtllm](https://github.com/NVIDIA/TensorRT-LLM)
-实现更高性能的、支持```OpenAI```模式访问、支持多模态的```LLM```
-服务，相比较[triton-trtllm](https://github.com/triton-inference-server/tensorrtllm_backend)
+实现更高性能的、支持```OpenAI```模式访问、支持```Ai-agent```以及多模态的```LLM```
+服务，相比较[triton tensorrtllm_backend](https://github.com/triton-inference-server/tensorrtllm_backend)
 实现服务。有如下优势：
 
 * 通过纯```C++```实现完整```LLM```服务。包含```tokenizer```部分，支持`huggingface`, `sentencepiece`tokenizer。
@@ -36,7 +36,7 @@
 * 通过测试，```grps-trtllm```相比较```triton-trtllm```性能有稳定的提升。
 
 欢迎各位使用和提[issue](https://github.com/NetEase-Media/grps_trtllm/issues)
-，欢迎提交[pr](https://github.com/NetEase-Media/grps_trtllm/pulls)支持新的模型，感谢star⭐️。
+，欢迎提交[pr](https://github.com/NetEase-Media/grps_trtllm/pulls)支持新的模型，感谢star⭐️。也可以添加微信沟通：zhaocc1218。
 
 ## 模型列表
 
