@@ -473,6 +473,9 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
     }
     random_seed = json_body[InputFieldsNames::kRandomSeed].GetUint64();
   }
+  if (random_seed == std::nullopt) { // generate random seed
+    random_seed = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
+  }
 
   std::optional<int32_t> no_repeat_ngram_size = def_sampling_config.getNoRepeatNgramSize();
   if (json_body.HasMember(InputFieldsNames::kNoRepeatNgramSize)) {
@@ -491,6 +494,7 @@ static executor::SamplingConfig GetSamplingConfigFromJsonBody(const rapidjson::D
   //     << ", top_p_decay: " << (top_p_decay.has_value() ? std::to_string(top_p_decay.value()) : "None")
   //     << ", top_p_reset_ids: " << (top_p_reset_ids.has_value() ? std::to_string(top_p_reset_ids.value()) : "None")
   //     << ", temperature: " << (temperature.has_value() ? std::to_string(temperature.value()) : "None")
+  //     << ", random_seed: " << (random_seed.has_value() ? std::to_string(random_seed.value()) : "None")
   //     << ", min_length: " << (min_length.has_value() ? std::to_string(min_length.value()) : "None")
   //     << ", beam_search_diversity_rate: "
   //     << (beam_search_diversity_rate.has_value() ? std::to_string(beam_search_diversity_rate.value()) : "None")

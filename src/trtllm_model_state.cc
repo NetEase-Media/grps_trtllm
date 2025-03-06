@@ -273,6 +273,7 @@ tensorrt_llm::executor::SamplingConfig TrtLlmModelState::GetParameter<tensorrt_l
           << ", top_p_min: " << (top_p_min.has_value() ? std::to_string(top_p_min.value()) : "None")
           << ", top_p_decay: " << (top_p_decay.has_value() ? std::to_string(top_p_decay.value()) : "None")
           << ", top_p_reset_ids: " << (top_p_reset_ids.has_value() ? std::to_string(top_p_reset_ids.value()) : "None")
+          << ", seed: " << (random_seed.has_value() ? std::to_string(random_seed.value()) : "None")
           << ", temperature: " << (temperature.has_value() ? std::to_string(temperature.value()) : "None")
           << ", min_length: " << (min_length.has_value() ? std::to_string(min_length.value()) : "None")
           << ", beam_search_diversity_rate: "
