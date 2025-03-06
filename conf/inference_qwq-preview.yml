@@ -8,11 +8,11 @@ models:
     inferer_args: # more args of model inferer.
       # llm style used to build prompt(chat or function call) and parse generated response for openai interface.
       # Support llm_style see README.md.
-      llm_style: qwq
+      llm_style: qwq-preview
 
       # tokenizer config.
       tokenizer_type: huggingface # can be `huggingface`, `sentencepiece`. Must be set.
-      tokenizer_path: /tmp/QwQ-32B/ # path of tokenizer. Must be set.
+      tokenizer_path: /tmp/QwQ-32B-Preview/ # path of tokenizer. Must be set.
       tokenizer_parallelism: 16 # tokenizers count for parallel tokenization. Will be set to 1 if not set.
       end_token_id: 151645 # "<|im_end|>"
       pad_token_id: 151643 # "<|endoftext|>"
@@ -32,27 +32,14 @@ models:
         - 151655 # "<|image_pad|>"
         - 151656 # "<|video_pad|>"
       force_tokens_dict: # will be used to force map tokens to ids when encode and decode instead of using tokenizer. Empty if not set.
-        - token: "<tool_response>"
-          id: 151665
-        - token: "</tool_response>"
-          id: 151666
-        - token: "<think>"
-          id: 151667
-        - token: "</think>"
-          id: 151668
+      #  - token: "<|endoftext|>"
+      #    id: 151643
       prefix_tokens_id: # prefix tokens id will be added to the beginning of the input ids. Empty if not set.
       suffix_tokens_id: # suffix tokens id will be added to the end of the input ids. Empty if not set.
 
-      # default sampling config, sampling param in request will overwrite these. Support sampling params see
-      # @ref(src/constants.h - SamplingConfig)
-      sampling:
-        temperature: 0.6
-        top_k: 40
-        top_p: 0.95
-
       # trtllm config.
       gpt_model_type: inflight_fused_batching # must be `V1`(==`v1`) or `inflight_batching`(==`inflight_fused_batching`).
-      gpt_model_path: /tmp/QwQ-32B/trt_engines/ # path of decoder model. Must be set.
+      gpt_model_path: /tmp/QwQ-32B-Preview/trt_engines/ # path of decoder model. Must be set.
       encoder_model_path: # path of encoder model. Null if not set.
       stop_words: # additional stop words. Empty if not set.
         - "<|im_start|>"

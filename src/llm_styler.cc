@@ -580,6 +580,163 @@ std::string Qwen25Styler::ParseFunctionCall(const std::string& gen_txt,
   }
 }
 
+void QwQStyler::ApplyChatTemplate(const std::string& chat_template) {
+  LLMStyler::ApplyChatTemplate(chat_template);
+}
+
+std::tuple<bool, std::string, std::vector<std::string>> QwQStyler::BuildPrompt(const rapidjson::Document& json_body) {
+  std::string prompt;
+
+  // Parse tools.
+  bool has_tools = false;
+  std::string tool_system;
+  if (json_body.HasMember("tools") && json_body["tools"].IsArray()) {
+    has_tools = true;
+    tool_system = tool_prompt_pre_;
+    for (auto& tool : json_body["tools"].GetArray()) {
+      tool_system.append("\n");
+      rapidjson::StringBuffer buffer;
+      rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+      tool.Accept(writer);
+      tool_system.append(buffer.GetString());
+    }
+    tool_system.append(tool_prompt_post_);
+  }
+
+  // Parse messages.
+  if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
+    throw std::invalid_argument("`messages` not found or not an array");
+  }
+  if (json_body["messages"].Empty()) {
+    throw std::invalid_argument("`messages` is empty");
+  }
+
+  bool skip_first = false;
+  // System message.
+  if (json_body["messages"][0].HasMember("role") && json_body["messages"][0]["role"].IsString() &&
+      std::string(json_body["messages"][0]["role"].GetString()) == "system") {
+    // If the first message is a system message, use it as the system prompt.
+    if (!json_body["messages"][0].HasMember("content") || !json_body["messages"][0]["content"].IsString()) {
+      throw std::invalid_argument("`content` not found or not a string");
+    }
+    prompt = "<|im_start|>system\n";
+    prompt.append(json_body["messages"][0]["content"].GetString());
+    if (has_tools) {
+      prompt.append(tool_system);
+    }
+    prompt.append("<|im_end|>\n");
+    skip_first = true;
+  } else if (has_tools) {
+    // If the first message is not a system message but have tool, add a system message.
+    prompt = "<|im_start|>system\n";
+    prompt.append(system_prompt());
+    prompt.append(tool_system);
+    prompt.append("<|im_end|>\n");
+  }
+
+  // Following messages.
+  size_t cur_idx = 0;
+  for (auto& message : json_body["messages"].GetArray()) {
+    if (skip_first) {
+      skip_first = false;
+      cur_idx++;
+      continue;
+    }
+
+    if (!message.HasMember("role") || !message["role"].IsString()) {
+      throw std::invalid_argument("`role` not found or not a string");
+    }
+    std::string role = GetRole(message["role"].GetString());
+
+    if (role == "user" || role == "system") {
+      prompt.append("<|im_start|>");
+      prompt.append(role);
+      if (message.HasMember("content") && message["content"].IsString()) {
+        prompt.append("\n");
+        prompt.append(message["content"].GetString());
+      }
+      prompt.append("<|im_end|>\n");
+    } else if (role == "assistant" && !message.HasMember("tool_calls")) {
+      prompt.append("<|im_start|>");
+      prompt.append(role);
+      std::string content;
+      if (message.HasMember("content") && message["content"].IsString()) {
+        content = message["content"].GetString();
+        // content = message.content.split('</think>')[-1]
+        size_t pos = content.find("</think>");
+        if (pos != std::string::npos) {
+          content = content.substr(pos + 8);
+        }
+        // content = content.lstrip("\n")
+        content = content.substr(content.find_first_not_of('\n'));
+      }
+      prompt.append("\n");
+      prompt.append(content);
+      prompt.append("<|im_end|>\n");
+    } else if (role == "assistant") {
+      prompt.append("<|im_start|>");
+      prompt.append(role);
+      std::string content;
+      if (message.HasMember("content") && message["content"].IsString()) {
+        content = message["content"].GetString();
+        // content = message.content.split('</think>')[-1]
+        size_t pos = content.find("</think>");
+        if (pos != std::string::npos) {
+          content = content.substr(pos + 8);
+        }
+        // content = content.lstrip("\n")
+        content = content.substr(content.find_first_not_of('\n'));
+      }
+      prompt.append("\n");
+      prompt.append(content);
+      if (message.HasMember("tool_calls") && message["tool_calls"].IsArray()) {
+        for (auto& tool_call : message["tool_calls"].GetArray()) {
+          if (tool_call.HasMember("function") && tool_call["function"].IsObject()) {
+            auto& func_call = tool_call["function"];
+            if (!func_call.HasMember("name") || !func_call["name"].IsString()) {
+              throw std::invalid_argument("`name` not found in `function` or not a string");
+            }
+            if (!func_call.HasMember("arguments") || !func_call["arguments"].IsString()) {
+              throw std::invalid_argument("`arguments` not found in `function` or not a string");
+            }
+            prompt.append("\n<tool_call>\n{\"name\": \"");
+            prompt.append(func_call["name"].GetString());
+            prompt.append("\", \"arguments\": ");
+            rapidjson::StringBuffer buffer;
+            rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+            func_call["arguments"].Accept(writer);
+            prompt.append(buffer.GetString());
+            prompt.append("}\n</tool_call>");
+          }
+        }
+        prompt.append("<|im_end|>\n");
+      }
+    } else if (role == "tool") {
+      if (message.HasMember("content") && message["content"].IsString()) {
+        if (cur_idx == 0 || std::string(json_body["messages"][cur_idx - 1]["role"].GetString()) != "tool") {
+          prompt.append("<|im_start|>user");
+        }
+        prompt.append("\n<tool_response>\n");
+        prompt.append(message["content"].GetString());
+        prompt.append("\n</tool_response>");
+        if (cur_idx == json_body["messages"].Size() - 1 ||
+            std::string(json_body["messages"][cur_idx + 1]["role"].GetString()) != "tool") {
+          prompt.append("<|im_end|>\n");
+        }
+      }
+    } else {
+      throw std::invalid_argument("Unsupported message role: " + role);
+    }
+
+    cur_idx++;
+  }
+
+  if (add_generation_prompt()) {
+    prompt.append("<|im_start|>assistant\n<think>\n");
+  }
+  return {has_tools, prompt, {}};
+}
+
 std::tuple<bool, std::string, std::vector<std::string>> ChatGlm3Styler::BuildPrompt(
   const rapidjson::Document& json_body) {
   std::string prompt;
@@ -2253,6 +2410,8 @@ std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& 
     llm_styler = std::make_unique<Qwen25Styler>();
   } else if (llm_style == "qwq") {
     llm_styler = std::make_unique<QwQStyler>();
+  } else if (llm_style == "qwq-preview") {
+    llm_styler = std::make_unique<QwQPreviewStyler>();
   } else if (llm_style == "chatglm3") {
     llm_styler = std::make_unique<ChatGlm3Styler>();
   } else if (llm_style == "glm4") {

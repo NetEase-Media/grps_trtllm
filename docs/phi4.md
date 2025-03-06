@@ -53,7 +53,7 @@ PORT(HTTP,RPC)      NAME                PID                 DEPLOY_PATH
 ## 模拟请求
 
 ```bash
-# curl命令非stream请求``
+# curl命令非stream请求
 curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{

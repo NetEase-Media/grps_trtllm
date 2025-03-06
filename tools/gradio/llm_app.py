@@ -920,7 +920,16 @@ elif app_type == 'deepseek-r1':
         "提供一段快速排序的c++代码：",
         "中国长城有多长？",
         "世界上第一高峰是哪座山？",
+        "解一下这道题：\n(x + 3) = (8 - x)\nx = ?"
     ], title="deepseek-r1-grps-trtllm", multimodal=False)
+elif app_type == 'qwq':
+    demo = gr.ChatInterface(concurrency_limit=32, fn=deepseek_llm_fn, type="messages", examples=[
+        "你好，你是谁？",
+        "提供一段快速排序的c++代码：",
+        "中国长城有多长？",
+        "世界上第一高峰是哪座山？",
+        "解一下这道题：\n(x + 3) = (8 - x)\nx = ?"
+    ], title="qwq-grps-trtllm", multimodal=False)
 elif app_type == 'janus-pro':
     demo = gr.ChatInterface(concurrency_limit=32, fn=janus_pro_llm_fn, type="messages", examples=[
         {"text": "你好，你是谁？"},
@@ -942,7 +951,7 @@ elif app_type == 'olm-ocr':
                             multimodal=True)
 else:
     print('`app_type` only support `llm`(text llm) or `internvl2`(multi-modal) or `intern-video2.5(multi-modal)` or '
-          '`qwenvl`(multi-modal), `qwen2vl`(multi-modal), `deepseek-r1`(deepseek-r1 text llm), '
+          '`qwenvl`(multi-modal), `qwen2vl`(multi-modal), `deepseek-r1`(deepseek-r1 text llm), `qwq`(qwq text llm), '
           '`janus-pro`(multi-modal), `olm-ocr`(multi-modal).')
     exit(1)
 demo.launch(server_name='0.0.0.0', server_port=SERVER_PORT)

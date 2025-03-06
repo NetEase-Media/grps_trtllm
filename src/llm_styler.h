@@ -185,16 +185,16 @@ public:
                                 rapidjson::GenericValue<rapidjson::UTF8<>>& message,
                                 rapidjson::MemoryPoolAllocator<>& allocator) override;
 
-private:
+protected:
   std::string tool_prompt_pre_;
   std::string tool_prompt_post_;
 };
 
-class QwQStyler : public Qwen25Styler {
+class QwQPreviewStyler : public Qwen25Styler {
 public:
-  QwQStyler()
+  QwQPreviewStyler()
       : Qwen25Styler(
-          "qwq",
+          "qwq-preview",
           "You are a helpful and harmless assistant. You are Qwen developed by Alibaba. You should think step-by-step.",
           {"system", "user", "assistant"},
           false,
@@ -205,7 +205,38 @@ public:
           "\n</tools>\n\nFor each function call, return a json object with function name and arguments within"
           "<tool_call></tool_call> XML tags:\n<tool_call>\n{\"name\": <function-name>, \"arguments\":"
           "<args-json-object>}\n</tool_call>") {}
+  ~QwQPreviewStyler() override = default;
+};
+
+class QwQStyler : public Qwen25Styler {
+public:
+  QwQStyler()
+      : Qwen25Styler(
+          "qwq",
+          "",
+          {"system", "user", "assistant"},
+          true,
+          "",
+          true,
+          "\n\n# Tools\n\nYou may call one or more functions to assist with the user query.\n\nYou are "
+          "provided with function signatures within <tools></tools> XML tags:\n<tools>",
+          "\n</tools>\n\nFor each function call, return a json object with function name and arguments within"
+          "<tool_call></tool_call> XML tags:\n<tool_call>\n{\"name\": <function-name>, \"arguments\":"
+          "<args-json-object>}\n</tool_call>") {}
   ~QwQStyler() override = default;
+
+  /**
+   * Apply chat template.
+   * @param chat_template: chat_template in tokenizer_config.json.
+   */
+  void ApplyChatTemplate(const std::string& chat_template) override;
+
+  /**
+   * @brief Build prompt for model input from OpenAI interface json body request.
+   * @param json_body: Json body from client.
+   * @return <if_function_call, prompt, img_urls>: if_function_call is true if the prompt contains function call.
+   */
+  std::tuple<bool, std::string, std::vector<std::string>> BuildPrompt(const rapidjson::Document& json_body) override;
 };
 
 class ChatGlm3Styler : public LLMStyler {

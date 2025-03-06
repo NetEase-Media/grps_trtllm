@@ -46,7 +46,8 @@
 | supported model                                                          | llm_styler  | chat | function_call | doc                                                  |
 |--------------------------------------------------------------------------|-------------|------|---------------|------------------------------------------------------|
 | DeepSeek-R1-Distill<br>TinyR1-32B-Preview                                | deepseek-r1 | ✅    | ❌             | [deepseek-r1-distill](docs%2Fdeepseek-r1-distill.md) |
-| QwQ                                                                      | qwq         | ✅    | ❌             | [qwq](docs%2Fqwq.md)                                 |
+| QwQ-32B                                                                  | qwq         | ✅    | ✅             | [qwq](docs%2Fqwq.md)                                 |
+| QwQ-32B-Preview                                                          | qwq-preview | ✅    | ❌             | [qwq-preview](docs%2Fqwq-preview.md)                 |
 | Qwen2.5-1M<br>Qwen2.5-Coder<br>Qwen2.5-Math<br>Qwen2.5                   | qwen2.5     | ✅    | ✅             | [qwen2.5](docs%2Fqwen2.5.md)                         |
 | Qwen1.5-Chat<br>Qwen1.5-Moe-Chat<br>Qwen2-Instruct<br>Qwen2-Moe-Instruct | qwen        | ✅    | ✅             | [qwen2](docs%2Fqwen2.md)                             |
 | chatglm3                                                                 | chatglm3    | ✅    | ✅             | [chatglm3](docs%2Fchatglm3.md)                       |                                                     
@@ -239,7 +240,7 @@ PORT(HTTP,RPC)      NAME                PID                 DEPLOY_PATH
 ### 模拟请求
 
 ```bash
-# curl命令非stream请求``
+# curl命令非stream请求
 curl --no-buffer http://127.0.0.1:9997/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
