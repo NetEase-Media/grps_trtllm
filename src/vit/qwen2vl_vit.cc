@@ -818,17 +818,15 @@ std::tuple<PtuningEmbeddingTableType, std::optional<tensorrt_llm::executor::Mrop
   auto img_features_tensor = executor::detail::ofITensor(img_features);
 
   const auto& concat_cos_sin = model_out[1].second->tensor;
-  tensorrt_llm::batch_manager::NamedTensor concat_cos_sin_reshape(
-    concat_cos_sin->getDataType(), {concat_cos_sin->getShape().d[1]}, model_out[1].second->name);
-  TLLM_CUDA_CHECK(cudaMemcpyAsync(static_cast<char*>(concat_cos_sin_reshape.tensor->data()), concat_cos_sin->data(),
-                                  concat_cos_sin->getShape().d[1] * sizeof(float), cudaMemcpyDeviceToDevice,
+  auto concat_cos_sin_tensor = executor::Tensor::pooledPinned(executor::DataType::kFP32, {concat_cos_sin->getShape().d[1]});
+  TLLM_CUDA_CHECK(cudaMemcpyAsync(static_cast<char*>(concat_cos_sin_tensor.getData()), concat_cos_sin->data(),
+                                  concat_cos_sin_tensor.getSizeInBytes(), cudaMemcpyDeviceToHost,
                                   manager.getStream().get()));
-  auto concat_cos_sin_tensor = executor::detail::ofITensor(concat_cos_sin_reshape.tensor);
 
   const auto& mrope_position_deltas_out = model_out[2].second->tensor;
   int64_t mrope_position_deltas_out_cpu;
-  CudaCheck(cudaMemcpyAsync(&mrope_position_deltas_out_cpu, mrope_position_deltas_out->data(), sizeof(int64_t),
-                            cudaMemcpyDeviceToHost, manager.getStream().get()));
+  TLLM_CUDA_CHECK(cudaMemcpyAsync(&mrope_position_deltas_out_cpu, mrope_position_deltas_out->data(), sizeof(int64_t),
+                                  cudaMemcpyDeviceToHost, manager.getStream().get()));
   manager.getStream().synchronize();
 #if VIT_DBG
   CLOG4(INFO, "img_features_tensor shape: ["
@@ -836,7 +834,7 @@ std::tuple<PtuningEmbeddingTableType, std::optional<tensorrt_llm::executor::Mrop
                 << int(img_features_tensor.getDataType()) << ", size: " << img_features_tensor.getSize());
   CLOG4(INFO, "concat_cos_sin_tensor shape: [" << concat_cos_sin_tensor.getShape()[0]
                                                << "], dtype: " << int(concat_cos_sin_tensor.getDataType())
-                                               << ", size: " << concat_cos_sin_tensor.getSize());
+                                               << ", size: " << concat_cos_sin_tensor.getSizeInBytes());
   CLOG4(INFO, "mrope_position_deltas_out_cpu: " << mrope_position_deltas_out_cpu);
 #endif
   return {executor::PromptTuningConfig(std::move(img_features_tensor), std::nullopt),
@@ -893,22 +891,23 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> Qwen2vlVIT::Encode(const st
     auto manager = tensorrt_llm::runtime::BufferManager{std::move(stream)};
 
     const auto& concat_cos_sin = outputs[0].second->tensor;
-    tensorrt_llm::batch_manager::NamedTensor concat_cos_sin_reshape(
-      concat_cos_sin->getDataType(), {concat_cos_sin->getShape().d[1]}, outputs[0].second->name);
-    TLLM_CUDA_CHECK(cudaMemcpyAsync(static_cast<char*>(concat_cos_sin_reshape.tensor->data()), concat_cos_sin->data(),
-                                    concat_cos_sin->getShape().d[1] * sizeof(float), cudaMemcpyDeviceToDevice,
+    auto concat_cos_sin_tensor = executor::Tensor::pooledPinned(executor::DataType::kFP32, {concat_cos_sin->getShape().d[1]});
+    TLLM_CUDA_CHECK(cudaMemcpyAsync(static_cast<char*>(concat_cos_sin_tensor.getData()), concat_cos_sin->data(),
+                                    concat_cos_sin_tensor.getSizeInBytes(), cudaMemcpyDeviceToHost,
                                     manager.getStream().get()));
-    auto concat_cos_sin_tensor = executor::detail::ofITensor(concat_cos_sin_reshape.tensor);
 
     const auto& mrope_position_deltas_out = outputs[1].second->tensor;
     int64_t mrope_position_deltas_out_cpu;
-    CudaCheck(cudaMemcpyAsync(&mrope_position_deltas_out_cpu, mrope_position_deltas_out->data(), sizeof(int64_t),
-                              cudaMemcpyDeviceToHost, manager.getStream().get()));
+    TLLM_CUDA_CHECK(cudaMemcpyAsync(&mrope_position_deltas_out_cpu, mrope_position_deltas_out->data(), sizeof(int64_t),
+                                    cudaMemcpyDeviceToHost, manager.getStream().get()));
     manager.getStream().synchronize();
 
     auto postprocess_end = GET_SYS_TIME_US();
 
 #if VIT_DBG
+    CLOG4(INFO, "concat_cos_sin_tensor shape: [" << concat_cos_sin_tensor.getShape()[0]
+                                                 << "], dtype: " << int(concat_cos_sin_tensor.getDataType())
+                                                 << ", size: " << concat_cos_sin_tensor.getSizeInBytes());
     CLOG4(INFO, "VIT model encode success, type: " << type_name_ << ", img_urls size: " << img_urls.size()
                                                    << ", preprocess_time: " << preprocess_end - begin
                                                    << " us, infer_time: " << infer_end - preprocess_end
