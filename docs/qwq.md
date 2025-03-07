@@ -1,6 +1,6 @@
-# QwQ-32B
+# QwQ
 
-QwQ-32B模型的部署示例。
+QwQ模型的部署示例。包含QwQ-32B和QwQ-32B-AWQ两个模型。
 
 ## 演示
 
@@ -11,6 +11,8 @@ QwQ-32B模型的部署示例。
 见[快速开始](../README.md#快速开始)的拉取代码和创建容器部分。
 
 ## 构建trtllm引擎
+
+### QwQ-32B模型
 
 ```bash
 # 下载QwQ-32B模型
@@ -34,6 +36,30 @@ trtllm-build --checkpoint_dir /tmp/QwQ-32B/tllm_checkpoint/ \
 cd ../../../../
 ```
 
+### QwQ-32B-AWQ模型
+
+```bash
+# 下载QwQ-32B-AWQ模型
+apt update && apt install git-lfs
+git lfs install
+git clone https://huggingface.co/Qwen/QwQ-32B-AWQ /tmp/QwQ-32B-AWQ
+
+# 进入TensorRT-LLM/examples/qwen目录，参考README进行构建trtllm引擎。
+cd third_party/TensorRT-LLM/examples/qwen
+# 转换ckpt，QwQ-32B-AWQ 使用int4量化，24G显存单卡可以部署。
+rm -rf /tmp/QwQ-32B-AWQ/tllm_checkpoint/
+python3 convert_checkpoint.py --model_dir /tmp/QwQ-32B-AWQ \
+--output_dir /tmp/QwQ-32B-AWQ/tllm_checkpoint/ --dtype bfloat16 --load_model_on_cpu
+# 构建引擎，注意这里为了24G单卡可以部署，减小了max_seq_len等参数
+rm -rf /tmp/QwQ-32B-AWQ/trt_engines/
+trtllm-build --checkpoint_dir /tmp/QwQ-32B-AWQ/tllm_checkpoint/ \
+--output_dir /tmp/QwQ-32B-AWQ/trt_engines/ \
+--gemm_plugin bfloat16 --max_batch_size 16 --paged_kv_cache enable --use_paged_context_fmha enable \
+--max_input_len 11776 --max_seq_len 12288 --max_num_tokens 11776
+# 回到工程根目录
+cd ../../../../
+````
+
 ## 构建与部署
 
 ```bash
@@ -44,6 +70,7 @@ grpst archive .
 # 通过--inference_conf参数指定模型对应的inference.yml配置文件启动服务。
 # 如需修改服务端口，并发限制等，可以修改conf/server.yml文件，然后启动时指定--server_conf参数指定新的server.yml文件。
 # 注意如果使用多卡推理，需要使用mpi方式启动，--mpi_np参数为并行推理的GPU数量。
+# 使用QwQ-32B-AWQ模型注意修改一下inference_qwq.yml路径参数，单卡推理不需要带--mpi_np参数。
 grpst start ./server.mar --inference_conf=conf/inference_qwq.yml --mpi_np 8
 
 # 查看服务状态
