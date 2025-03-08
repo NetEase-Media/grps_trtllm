@@ -69,7 +69,7 @@ def load_video(video_path, bound=None, input_size=448, max_num=1, num_segments=3
     return img_urls, img_url_root
 
 
-def llm_fn(message, history):
+def llm_fn(message, history, max_tokens):
     # print('message:', message)
     # print('history:', history)
 
@@ -99,7 +99,7 @@ def llm_fn(message, history):
         model="",
         messages=messages,
         stream=True,
-        max_tokens=16384
+        max_tokens=max_tokens
     )
     # print('res: ', res)
 
@@ -118,7 +118,7 @@ def llm_fn(message, history):
         yield 'error: ' + str(e)
 
 
-def deepseek_llm_fn(message, history):
+def deepseek_llm_fn(message, history, max_tokens):
     # print('message:', message)
     # print('history:', history)
 
@@ -149,7 +149,8 @@ def deepseek_llm_fn(message, history):
         model="",
         messages=messages,
         stream=True,
-        max_tokens=16384
+        max_tokens=max_tokens,
+
     )
     # print('res: ', res)
     content = '```text\n'
@@ -859,12 +860,16 @@ def olm_ocr_fn(message, history):
 
 
 if app_type == 'llm':
-    demo = gr.ChatInterface(concurrency_limit=32, fn=llm_fn, type="messages", examples=[
-        "你好，你是谁？",
-        "提供一段快速排序的c++代码：",
-        "中国长城有多长？",
-        "世界上第一高峰是哪座山？",
-    ], title="grps-trtllm", multimodal=False)
+    demo = gr.ChatInterface(
+        concurrency_limit=32, fn=llm_fn, type="messages", title="grps-trtllm",
+        additional_inputs=[
+            gr.Slider(1, 32768, value=2048, step=1, label="Max Tokens"),
+        ], examples=[
+            ["你好，你是谁？", 2048],
+            ["提供一段快速排序的c++代码：", 2048],
+            ["中国长城有多长？", 2048],
+            ["世界上第一高峰是哪座山？", 2048],
+        ], multimodal=False)
 elif app_type == 'internvl2':
     demo = gr.ChatInterface(concurrency_limit=32, fn=internvl2_llm_fn, type="messages", examples=[
         {"text": "你好，你是谁？"},
@@ -915,21 +920,31 @@ elif app_type == 'qwen2vl':
                             title="qwen2vl-grps-trtllm",
                             multimodal=True)
 elif app_type == 'deepseek-r1':
-    demo = gr.ChatInterface(concurrency_limit=32, fn=deepseek_llm_fn, type="messages", examples=[
-        "你好，你是谁？",
-        "提供一段快速排序的c++代码：",
-        "中国长城有多长？",
-        "世界上第一高峰是哪座山？",
-        "解一下这道题：\n(x + 3) = (8 - x)\nx = ?"
-    ], title="deepseek-r1-grps-trtllm", multimodal=False)
+    demo = gr.ChatInterface(
+        concurrency_limit=32, fn=deepseek_llm_fn, type="messages", title="deepseek-r1-grps-trtllm",
+        multimodal=False, additional_inputs=[
+            gr.Slider(1, 32768, value=2048, step=1, label="Max Tokens"),
+        ],
+        examples=[
+            ["你好，你是谁？", 2048],
+            ["提供一段快速排序的c++代码：", 2048],
+            ["中国长城有多长？", 2048],
+            ["世界上第一高峰是哪座山？", 2048],
+            ["解一下这道题：\n(x + 3) = (8 - x)\nx = ?", 2048]
+        ])
 elif app_type == 'qwq':
-    demo = gr.ChatInterface(concurrency_limit=32, fn=deepseek_llm_fn, type="messages", examples=[
-        "你好，你是谁？",
-        "提供一段快速排序的c++代码：",
-        "中国长城有多长？",
-        "世界上第一高峰是哪座山？",
-        "解一下这道题：\n(x + 3) = (8 - x)\nx = ?"
-    ], title="qwq-grps-trtllm", multimodal=False)
+    demo = gr.ChatInterface(
+        concurrency_limit=32, fn=deepseek_llm_fn, type="messages", title="qwq-grps-trtllm",
+        multimodal=False, additional_inputs=[
+            gr.Slider(1, 32768, value=2048, step=1, label="Max Tokens"),
+        ],
+        examples=[
+            ["你好，你是谁？", 2048],
+            ["提供一段快速排序的c++代码：", 2048],
+            ["中国长城有多长？", 2048],
+            ["世界上第一高峰是哪座山？", 2048],
+            ["解一下这道题：\n(x + 3) = (8 - x)\nx = ?", 2048]
+        ])
 elif app_type == 'janus-pro':
     demo = gr.ChatInterface(concurrency_limit=32, fn=janus_pro_llm_fn, type="messages", examples=[
         {"text": "你好，你是谁？"},

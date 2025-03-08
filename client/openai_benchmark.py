@@ -1,9 +1,13 @@
+import json
 import random
 import sys
-import time
-import requests
 import threading
+import time
 
+import requests
+from transformers import AutoTokenizer
+
+ttft_list = []
 latency_list = []
 tokens_list = []
 speed_list = []
@@ -45,7 +49,7 @@ random_prompts = [
 ]
 
 
-def request(server, prompt):
+def request(server, prompt, max_tokens, streaming, tokenizer=None):
     if type(prompt) is list:
         prompt_idx = random.randint(0, len(prompt) - 1)
         text_inp = prompt[prompt_idx]
@@ -65,43 +69,91 @@ def request(server, prompt):
                 "content": text_inp
             }
         ],
-        "max_tokens": 512,
+        "max_tokens": max_tokens,
         "top_p": 0.3,
         "repetition_penalty": 1.0,
-        "temperature": 0.1
+        "temperature": 0.01
     }
     headers = {'Content-Type': 'application/json'}
-    start = time.time()
-    response = requests.post(url, json=data, headers=headers).json()
-    end = time.time()
-    latency = (end - start) * 1000
-    text_output = response['choices'][0]['message']['content']
-    print(text_output, flush=True)
-    input_token_len = response['usage']['prompt_tokens']
-    output_token_len = response['usage']['completion_tokens']
-    total_tokens = response['usage']['total_tokens']
-    speed = total_tokens / latency * 1000
-    print(f'Latency: {latency} ms', flush=True)
-    print(f'Input tokens: {input_token_len}, Output tokens: {output_token_len}, Total tokens: {total_tokens}',
-          flush=True)
-    print(f'Speed: {speed} tokens/s', flush=True)
-    latency_list.append(latency)
-    tokens_list.append(total_tokens)
-    speed_list.append(speed)
+
+    if streaming:
+        data['stream'] = True
+        start = time.time()
+        response = requests.post(url, json=data, headers=headers, stream=True)
+        first = True
+        follow_content = ''
+        ttft = None
+        for trunk in response.iter_content(chunk_size=None):
+            if trunk:
+                if first:
+                    first_end = time.time()
+                    ttft = (first_end - start) * 1e3
+                trunk = trunk.decode('utf-8')
+                trunk = trunk[6:-1]  # skip 'data: ' and '\n\n'
+                trunk = json.loads(trunk)
+                content = trunk['choices'][0]['delta'].get('content', '')
+                if not content:
+                    continue
+                # print(content, flush=True)
+                if not first:
+                    follow_content += content
+                first = False
+        end = time.time()
+        follow_tokens = len(tokenizer(follow_content)['input_ids'])
+        latency = (end - start) * 1000 - ttft
+        speed = follow_tokens / latency * 1000
+        print(f'First token latency: {ttft} ms, Follow tokens: {follow_tokens}, Follow latency: {latency} ms,'
+              f' Follow Speed: {speed} tokens/s',
+              flush=True)
+        ttft_list.append(ttft)
+        latency_list.append(latency)
+        tokens_list.append(follow_tokens)
+        speed_list.append(speed)
+
+    else:
+        start = time.time()
+        response = requests.post(url, json=data, headers=headers).json()
+        end = time.time()
+        latency = (end - start) * 1000
+        text_output = response['choices'][0]['message']['content']
+        # print(text_output, flush=True)
+        input_token_len = response['usage']['prompt_tokens']
+        output_token_len = response['usage']['completion_tokens']
+        total_tokens = response['usage']['total_tokens']
+        speed = total_tokens / latency * 1000
+        print(f'Latency: {latency} ms, Total tokens: {total_tokens}, Speed: {speed} tokens/s', flush=True)
+        latency_list.append(latency)
+        tokens_list.append(total_tokens)
+        speed_list.append(speed)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
-        print("Usage: python openai_benchmark.py <server> <concurrency> <prompt_type>")
+    if len(sys.argv) < 6:
+        print(
+            "Usage: python openai_benchmark.py <server> <concurrency> <prompt_type> <max_tokens> <streaming> [tokenizer_path]")
         exit(1)
     server = sys.argv[1]
     concurrency = sys.argv[2]
     prompt_type = sys.argv[3]
+    max_tokens = int(sys.argv[4])
+    streaming = sys.argv[5]
+    tokenizer = None
+    if streaming in ['1', 'True', 'true']:
+        streaming = True
+    else:
+        streaming = False
+    if streaming:
+        if len(sys.argv) < 7:
+            print('streaming mode requires tokenizer_path')
+            exit(1)
+        tokenizer_path = sys.argv[6]
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+        print(f'Tokenizer loaded from {tokenizer_path}', flush=True)
 
 
-    def run(server, prompt):
+    def run(server, prompt, max_tokens, streaming, tokenizer):
         for _ in range(10):
-            request(server, prompt)
+            request(server, prompt, max_tokens, streaming, tokenizer)
 
 
     th = []
@@ -113,12 +165,19 @@ if __name__ == '__main__':
         elif prompt_type == '2':
             prompt = random_prompts
 
-        t = threading.Thread(target=run, args=(f'http://{server}', prompt))
+        t = threading.Thread(target=run, args=(f'http://{server}', prompt, max_tokens, streaming, tokenizer))
         th.append(t)
         t.start()
     for t in th:
         t.join()
 
-    print(f'Average Latency: {sum(latency_list) / len(latency_list)} ms', flush=True)
-    print(f'Average Tokens: {sum(tokens_list) / len(tokens_list)}', flush=True)
-    print(f'Average Speed: {sum(speed_list) / len(speed_list) * int(concurrency)} tokens/s', flush=True)
+    print('-' * 50, flush=True)
+    if not streaming:
+        print(f'Average Latency: {sum(latency_list) / len(latency_list)} ms', flush=True)
+        print(f'Average Tokens: {sum(tokens_list) / len(tokens_list)}', flush=True)
+        print(f'Throughput: {sum(speed_list) / len(speed_list) * int(concurrency)} tokens/s', flush=True)
+    else:
+        print(f'Average First token latency: {sum(ttft_list) / len(ttft_list)} ms', flush=True)
+        print(f'Average follow latency: {sum(latency_list) / len(latency_list)} ms', flush=True)
+        print(f'Average follow tokens: {sum(tokens_list) / len(tokens_list)}', flush=True)
+        print(f'Follow throughput: {sum(speed_list) / len(speed_list) * int(concurrency)} tokens/s', flush=True)

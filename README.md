@@ -78,6 +78,7 @@
 * [docker部署](docs/docker.md)
 * [性能比较](docs/performance.md)
 * [镜像列表](docs/images.md)
+* [benchmark](docs/benchmark.md)
 * [TODO](#todo)
 
 ## 工程结构
