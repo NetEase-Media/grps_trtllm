@@ -75,6 +75,7 @@
 * [快速开始](#快速开始)
 * [采样参数配置](docs/sampling.md)
 * [启动gradio服务](docs/gradio.md)
+* [调度策略](docs/scheduler.md)
 * [docker部署](docs/docker.md)
 * [性能比较](docs/performance.md)
 * [镜像列表](docs/images.md)
