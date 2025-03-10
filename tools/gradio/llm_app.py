@@ -867,8 +867,6 @@ if app_type == 'llm':
         ], examples=[
             ["你好，你是谁？", 2048],
             ["提供一段快速排序的c++代码：", 2048],
-            ["中国长城有多长？", 2048],
-            ["世界上第一高峰是哪座山？", 2048],
         ], multimodal=False)
 elif app_type == 'internvl2':
     demo = gr.ChatInterface(concurrency_limit=32, fn=internvl2_llm_fn, type="messages", examples=[
@@ -927,9 +925,6 @@ elif app_type == 'deepseek-r1':
         ],
         examples=[
             ["你好，你是谁？", 2048],
-            ["提供一段快速排序的c++代码：", 2048],
-            ["中国长城有多长？", 2048],
-            ["世界上第一高峰是哪座山？", 2048],
             ["解一下这道题：\n(x + 3) = (8 - x)\nx = ?", 2048]
         ])
 elif app_type == 'qwq':
@@ -940,9 +935,6 @@ elif app_type == 'qwq':
         ],
         examples=[
             ["你好，你是谁？", 2048],
-            ["提供一段快速排序的c++代码：", 2048],
-            ["中国长城有多长？", 2048],
-            ["世界上第一高峰是哪座山？", 2048],
             ["解一下这道题：\n(x + 3) = (8 - x)\nx = ?", 2048]
         ])
 elif app_type == 'janus-pro':
