@@ -55,4 +55,20 @@ LLM: InternVL2.5-4B
 |------------------------|---------|---------|---------|---------|
 | vllm                   | 2221.40 | 3372.00 | 3818.08 | 4256.31 | 
 | grps-trtllm            | 2681.85 | 3872.88 | 4530.22 | 4945.15 | 
-| 同比                     | +20.72% | +14.85% | +18.65% | +16.18% | 
+| 同比                     | +20.72% | +14.85% | +18.65% | +16.18% |
+
+## 其他参考
+
+* [#1. An Overall Evaluation](https://blog.squeezebits.com/vllm-vs-tensorrtllm-1-an-overall-evaluation-30703)
+* [#2. Towards Optimal Batching for LLM Serving](https://blog.squeezebits.com/vllm-vs-tensorrtllm-2-towards-optimal-batching-for-llm-serving-31349)
+* [#3 Understanding Sampling Methods and Their Performance Impact](https://blog.squeezebits.com/vllm-vs-tensorrtllm-3-understanding-sampling-methods-and-their-performance-impact-31921)
+* [#4 Which Scheduler Wins?](https://blog.squeezebits.com/vllm-vs-tensorrtllm-4-which-scheduler-wins--33083)
+* [#5 Dynamic Sequence Lengths](https://blog.squeezebits.com/vllm-vs-tensorrtllm-5-dynamic-sequence-lengths--33410)
+* [#6. Weight-Only Quantization](https://blog.squeezebits.com/vllm-vs-tensorrtllm-6-weightonly-quantization-33728)
+* [#7. Weight-Activation Quantization](https://blog.squeezebits.com/vllm-vs-tensorrtllm-7-weightactivation-quantization-34461)
+* [#8. KV Cache Quantization](https://blog.squeezebits.com/vllm-vs-tensorrtllm-8-kv-cache-quantization-35079)
+* [#9. Parallelism Strategies](https://blog.squeezebits.com/vllm-vs-tensorrtllm-9-parallelism-strategies-36310)
+* [#10 Serving Multiple LoRAs at Once](https://blog.squeezebits.com/37065)
+* [#11. Speculative Decoding](https://blog.squeezebits.com/vllm-vs-tensorrtllm-11-speculative-decoding-37301)
+* [#12. Automatic Prefix Caching](https://blog.squeezebits.com/vllm-vs-tensorrtllm-12-automatic-prefix-caching-38189)
+* [#13. Vision-Language Models](https://blog.squeezebits.com/vllm-vs-tensorrtllm-13-visionlanguage-models-40761)
