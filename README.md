@@ -51,6 +51,7 @@
 | Qwen2.5-1M<br>Qwen2.5-Coder<br>Qwen2.5-Math<br>Qwen2.5                   | qwen2.5     | ✅    | ✅             | [qwen2.5](docs%2Fqwen2.5.md)                         |
 | Qwen1.5-Chat<br>Qwen1.5-Moe-Chat<br>Qwen2-Instruct<br>Qwen2-Moe-Instruct | qwen        | ✅    | ✅             | [qwen2](docs%2Fqwen2.md)                             |
 | chatglm3                                                                 | chatglm3    | ✅    | ✅             | [chatglm3](docs%2Fchatglm3.md)                       |                                                     
+| glm4                                                                     | glm4        | ✅    | ✅             | [glm4](docs%2Fglm4.md)                               |
 | internlm2_5-chat<br>internlm2-chat                                       | internlm2   | ✅    | ✅             | [internlm2.5](docs%2Finternlm2.5.md)                 |
 | llama-3-instruct<br>llama-3.1-instruct                                   | llama3      | ✅    | ❌             | [llama3](docs%2Fllama3.md)                           |
 | phi-4                                                                    | phi4        | ✅    | ❌             | [phi4](docs%2Fphi4.md)                               |
