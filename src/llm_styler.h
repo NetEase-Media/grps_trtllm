@@ -705,6 +705,42 @@ private:
   std::string img_ctx_replace_str_{}; // Image context replace string.
 };
 
+class Gemma3Styler : public LLMStyler {
+public:
+  Gemma3Styler() : LLMStyler("gemma3", "", {"", "user", "model"}, false, "", true) {
+    img_ctx_replace_str_.append("\n\n<start_of_image>");
+    for (size_t k = 0; k < 256; k++) { // 256: token count for every image patch.
+      img_ctx_replace_str_.append("<image_soft_token>");
+    }
+    img_ctx_replace_str_.append("<end_of_image>\n\n");
+  }
+  ~Gemma3Styler() override = default;
+
+  /**
+   * @brief Build prompt for model input from OpenAI interface json body request.
+   * @param json_body: Json body from client.
+   * @return <if_function_call, prompt, img_urls>: if_function_call is true if the prompt contains function call.
+   */
+  std::tuple<bool, std::string, std::vector<std::string>> BuildPrompt(const rapidjson::Document& json_body) override;
+
+  /**
+   * @brief Parse function call response from generated text and build content and tool_calls array of message
+   * member of OpenAI interface response.
+   * @param gen_txt: Generated text.
+   * @param req_id: Request id.
+   * @param message: Message member of OpenAI interface response format.
+   * @param allocator: Json allocator.
+   * @return stop reason.
+   */
+  std::string ParseFunctionCall(const std::string& gen_txt,
+                                int64_t req_id,
+                                rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                rapidjson::MemoryPoolAllocator<>& allocator) override;
+
+private:
+  std::string img_ctx_replace_str_{}; // Image context replace string.
+};
+
 class LLMStylerFactory {
 public:
   LLMStylerFactory() = default;

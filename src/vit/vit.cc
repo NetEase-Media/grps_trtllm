@@ -9,6 +9,7 @@
 #include <regex>
 
 #include "src/utils.h"
+#include "src/vit/gemma3_vit.h"
 #include "src/vit/intern_video_2_5_vit.h"
 #include "src/vit/internvl2_vit.h"
 #include "src/vit/janus_pro_vit.h"
@@ -132,6 +133,8 @@ std::unique_ptr<VIT> VITFactory::CreateVIT(const std::string& type_name) {
     return std::make_unique<Qwen2vlVIT>();
   } else if (type_name == "janus-pro") {
     return std::make_unique<JanusProVIT>();
+  } else if (type_name == "gemma3") {
+    return std::make_unique<Gemma3VIT>();
   } else {
     return nullptr;
   }

@@ -116,6 +116,7 @@ set(COMMON_SRCS
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/qwen2vl_vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/janus_pro_vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/vit/intern_video_2_5_vit.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/vit/gemma3_vit.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tokenizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/grps_cli.cc
 )

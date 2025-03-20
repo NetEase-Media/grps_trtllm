@@ -56,6 +56,7 @@
 | llama-3-instruct<br>llama-3.1-instruct                                   | llama3      | ✅    | ❌             | [llama3](docs%2Fllama3.md)                           |
 | phi-4                                                                    | phi4        | ✅    | ❌             | [phi4](docs%2Fphi4.md)                               |
 | Phi-3, Phi-3.5                                                           | phi3        | ✅    | ❌             | [phi3](docs%2Fphi3.md)                               |
+| gemma-3(experimental)                                                    | gemma3      | ✅    | ❌             | [gemma-3](docs%2Fgemma3.md)                          |
 
 支持的多模态LLM：
 

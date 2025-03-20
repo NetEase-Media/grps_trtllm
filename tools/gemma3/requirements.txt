@@ -1,0 +1,4 @@
+#--extra-index-url https://pypi.nvidia.com
+#einops==0.8.0
+#timm==1.0.9
+#pycuda==2024.1.2

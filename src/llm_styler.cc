@@ -2401,6 +2401,133 @@ std::string JanusProStyler::ParseFunctionCall(const std::string& gen_txt,
   return "";
 }
 
+std::tuple<bool, std::string, std::vector<std::string>> Gemma3Styler::BuildPrompt(
+  const rapidjson::Document& json_body) {
+  std::string prompt = "<bos>";
+
+  // System message.
+  std::string first_user_prefix;
+  bool skip_first = false;
+  if (json_body["messages"][0].HasMember("role") && json_body["messages"][0]["role"].IsString() &&
+      std::string(json_body["messages"][0]["role"].GetString()) == "system") {
+    if (json_body["messages"][0].HasMember("content") && json_body["messages"][0]["content"].IsString()) {
+      first_user_prefix = json_body["messages"][0]["content"].GetString();
+      first_user_prefix.append("\n\n");
+    } else if (json_body["messages"][0].HasMember("content") && json_body["messages"][0]["content"].IsArray()) {
+      if (json_body["messages"][0]["content"][0].HasMember("text") &&
+          json_body["messages"][0]["content"][0]["text"].IsString()) {
+        first_user_prefix = json_body["messages"][0]["content"][0]["text"].GetString();
+        first_user_prefix.append("\n\n");
+      }
+    }
+    skip_first = true;
+  }
+
+  // Parse following messages.
+  int idx = 0;
+  std::vector<std::string> image_urls;
+  for (auto& message : json_body["messages"].GetArray()) {
+    if (skip_first) {
+      skip_first = false;
+      continue;
+    }
+    if (!message.HasMember("role") || !message["role"].IsString()) {
+      throw std::invalid_argument("`role` not found or not a string");
+    }
+
+    std::string role = GetRole(message["role"].GetString());
+    if (role == "user" && idx % 2 == 1) {
+      throw std::invalid_argument("Conversation roles must alternate user/assistant/user/assistant/...");
+    } else if (role == "model" && idx % 2 == 0) {
+      throw std::invalid_argument("Conversation roles must alternate user/assistant/user/assistant/...");
+    }
+
+    if (!message.HasMember("content")) {
+      throw std::invalid_argument("`content` not found");
+    }
+
+    std::string content;
+    std::string image_pre;
+    if (message["content"].IsString()) {
+      content = utils::Strip(message["content"].GetString());
+    } else if (message["content"].IsArray()) {
+      //  "content": [
+      //           {
+      //             "type": "text",
+      //             "text": "What'\''s in this image?"
+      //           },
+      //           {
+      //             "type": "image_url",
+      //             "image_url": {
+      //               "url": "https://**"
+      //             }
+      //           }
+      //         ]
+      std::vector<std::string> cur_img_urls;
+      for (auto& item : message["content"].GetArray()) {
+        if (!item.HasMember("type") || !item["type"].IsString()) {
+          throw std::invalid_argument("`type` not found or not a string");
+        }
+        std::string type = item["type"].GetString();
+        if (type == "text") {
+          if (!item.HasMember("text") || !item["text"].IsString()) {
+            throw std::invalid_argument("`text` not found or not a string");
+          }
+          content.append(utils::Strip(item["text"].GetString()));
+        } else if (type == "image_url") {
+          if (!item.HasMember("image_url") || !item["image_url"].IsObject()) {
+            throw std::invalid_argument("`image_url` not found or not an object");
+          }
+          auto& image_url = item["image_url"];
+          if (!image_url.HasMember("url") || !image_url["url"].IsString()) {
+            throw std::invalid_argument("`url` not found or not a string");
+          }
+          cur_img_urls.emplace_back(image_url["url"].GetString());
+        } else {
+          throw std::invalid_argument("Unsupported content type: " + type);
+        }
+      }
+      for (size_t i = 0; i < cur_img_urls.size(); ++i) {
+        image_pre.append(img_ctx_replace_str_);
+      }
+      image_urls.insert(image_urls.end(), cur_img_urls.begin(), cur_img_urls.end());
+    } else {
+      throw std::invalid_argument("Unsupported content type");
+    }
+
+    prompt.append("<start_of_turn>");
+    prompt.append(role);
+    prompt.append("\n");
+    if (idx == 0) {
+      prompt.append(first_user_prefix);
+    }
+    if (!content.empty()) {
+      // content.strip()
+      content = utils::Strip(content);
+      prompt.append(image_pre);
+      prompt.append(content);
+    }
+    prompt.append("<end_of_turn>\n");
+
+    idx++;
+  }
+
+  if (add_generation_prompt()) {
+    prompt.append("<start_of_turn>");
+    prompt.append(GetRole("assistant"));
+    prompt.append("\n");
+  }
+
+  return {false, prompt, image_urls};
+}
+
+std::string Gemma3Styler::ParseFunctionCall(const std::string& gen_txt,
+                                            int64_t req_id,
+                                            rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                            rapidjson::MemoryPoolAllocator<>& allocator) {
+  return "";
+}
+
 std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& llm_style,
                                                              const std::string& chat_template) {
   std::unique_ptr<LLMStyler> llm_styler;
@@ -2442,6 +2569,8 @@ std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& 
     llm_styler = std::make_unique<DeepSeekR1Styler>();
   } else if (llm_style == "janus-pro") {
     llm_styler = std::make_unique<JanusProStyler>();
+  } else if (llm_style == "gemma3") {
+    llm_styler = std::make_unique<Gemma3Styler>();
   } else {
     throw std::runtime_error("LLM style " + llm_style + " not supported now.");
   }
