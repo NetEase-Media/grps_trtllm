@@ -46,12 +46,12 @@ python3 ./third_party/TensorRT-LLM/examples/llama/convert_checkpoint.py --model_
 # 这里设置支持最大batch_size为4，即支持4个并发同时推理，超过4个排队处理。
 # 设置每个请求最多输入8个图片。
 # 即：max_multimodal_len= 4 * 8（图片个数） * 576（每个图片对应576个token） = 18432
-# 设置max_input_len为32k，max_seq_len为36k（即最大输出为4k）。
+# 设置max_input_len为30k，max_seq_len为32k（即默认最大输出为2k）。
 rm -rf /tmp/Janus-Pro-7B/trt_engines/
 trtllm-build --checkpoint_dir /tmp/Janus-Pro-7B/tllm_checkpoint/ \
 --output_dir /tmp/Janus-Pro-7B/trt_engines/ \
 --gemm_plugin bfloat16 --max_batch_size 4 --paged_kv_cache enable \
---max_input_len 32768 --max_seq_len 36960 --max_num_tokens 32768 --max_multimodal_len 18432
+--max_input_len 30720 --max_seq_len 32768 --max_num_tokens 32768 --max_multimodal_len 18432
 ```
 
 ## 构建与部署

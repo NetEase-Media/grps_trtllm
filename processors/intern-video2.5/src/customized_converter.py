@@ -151,7 +151,7 @@ def load_video(video_path, bound=None, input_size=448, max_num=1, num_segments=3
 
 
 def download_video(video_url, video_path):
-    response = requests.get(video_url)
+    response = requests.get(video_url, headers={'User-Agent': 'Mozilla/5.0'})
     if response.status_code == 200:
         with open(video_path, 'wb') as f:
             f.write(response.content)
@@ -286,14 +286,14 @@ class YourConverter(Converter):
             self.cur_shm_idx = (self.cur_shm_idx + 1) % self.shm_cnt
 
         with self.shm_lock[shm_idx]:
-            # check first byte to wait for client read, max wait 1s.
+            # check first byte to wait for client read, max wait 3s.
             retry = 0
             while self.shm_mmap[shm_idx][0] != 0 and retry < 300:
                 time.sleep(0.01)
                 retry += 1
             if retry >= 300:
-                raise Exception('Wait client read shm timeout(3s), please check client svc and restart current '
-                                'service, shm_path: {}'.format(self.shm_path[shm_idx]))
+                clogger.warning(
+                    f'shm {self.shm_path[shm_idx]} wait for client read timeout(3s), will overwrite.')
 
             # set first byte to 1 to stand for new data and not read by client.
             self.shm_mmap[shm_idx].seek(0)

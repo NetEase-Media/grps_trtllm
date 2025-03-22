@@ -60,17 +60,18 @@
 
 支持的多模态LLM：
 
-| supported model                               | llm_styler          | vit             | chat | function_call | doc                                          |
-|-----------------------------------------------|---------------------|-----------------|------|---------------|----------------------------------------------|
-| Janus-Pro                                     | janus-pro           | janus-pro       | ✅    | ❌             | [janus-pro](docs%2Fjanus-pro.md)             |
-| InternVideo2.5                                | intern-video2.5     | intern-video2.5 | ✅    | ❌             | [intern-video2.5](docs%2Fintern-video2.5.md) |
-| InternVL2_5<br>InternVL2_5-MPO                | internvl2.5         | internvl2       | ✅    | ❌             | [internvl2.5](docs%2Finternvl2.5.md)         |
-| InternVL2-2B<br>InternVL2-8B<br>InternVL2-26B | internvl2-internlm2 | internvl2       | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
-| InternVL2-1B                                  | internvl2-qwen2     | internvl2       | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
-| InternVL2-4B                                  | internvl2-phi3      | internvl2       | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
-| olmOCR                                        | qwen2vl             | qwen2vl         | ✅    | ❌             | [olm-ocr](docs%2Folm-ocr.md)                 |
-| Qwen2-VL-Instruct                             | qwen2vl             | qwen2vl         | ✅    | ❌             | [qwen2vl](docs%2Fqwen2vl.md)                 |
-| Qwen-VL-Chat<br>Qwen-VL                       | qwenvl              | qwenvl          | ✅    | ❌             | [qwenvl](docs%2Fqwenvl.md)                   |
+| supported model                               | llm_styler          | vit             | vit_type | chat | function_call | doc                                          |
+|-----------------------------------------------|---------------------|-----------------|----------|------|---------------|----------------------------------------------|
+| MiniCPM-V-2_6                                 | minicpmv            | minicpmv        | py       | ✅    | ❌             | [minicpmv](docs%2Fminicpmv.md)               |
+| Janus-Pro                                     | janus-pro           | janus-pro       | c++      | ✅    | ❌             | [janus-pro](docs%2Fjanus-pro.md)             |
+| InternVideo2.5                                | intern-video2.5     | intern-video2.5 | py       | ✅    | ❌             | [intern-video2.5](docs%2Fintern-video2.5.md) |
+| InternVL2_5<br>InternVL2_5-MPO                | internvl2.5         | internvl2       | c++      | ✅    | ❌             | [internvl2.5](docs%2Finternvl2.5.md)         |
+| InternVL2-2B<br>InternVL2-8B<br>InternVL2-26B | internvl2-internlm2 | internvl2       | c++      | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
+| InternVL2-1B                                  | internvl2-qwen2     | internvl2       | c++      | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
+| InternVL2-4B                                  | internvl2-phi3      | internvl2       | c++      | ✅    | ❌             | [internvl2](docs%2Finternvl2.md)             |
+| olmOCR                                        | qwen2vl             | qwen2vl         | c++      | ✅    | ❌             | [olm-ocr](docs%2Folm-ocr.md)                 |
+| Qwen2-VL-Instruct                             | qwen2vl             | qwen2vl         | c++      | ✅    | ❌             | [qwen2vl](docs%2Fqwen2vl.md)                 |
+| Qwen-VL-Chat<br>Qwen-VL                       | qwenvl              | qwenvl          | c++      | ✅    | ❌             | [qwenvl](docs%2Fqwenvl.md)                   |
 
 ## 文档教程
 

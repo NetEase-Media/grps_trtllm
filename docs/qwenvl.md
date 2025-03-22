@@ -34,12 +34,12 @@ python3 ./tools/qwenvl/convert_checkpoint.py --model_dir /tmp/Qwen-VL-Chat/ \
 # 这里设置支持最大batch_size为2，即支持2个并发同时推理，超过两个排队处理。
 # 设置每个请求最多输入26个图片。
 # 即：max_multimodal_len=2（max_batch_size） * 26（图片个数） * 256（每个patch对应256个token） = 13312
-# 设置max_input_len为32k，max_seq_len为36k（即最大输出为4k）。
+# 设置max_input_len为30k，max_seq_len为32k（即默认最大输出为2k）。
 rm -rf /tmp/Qwen-VL-Chat/trt_engines/
 trtllm-build --checkpoint_dir /tmp/Qwen-VL-Chat/tllm_checkpoint/ \
 --output_dir /tmp/Qwen-VL-Chat/trt_engines/ \
 --gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
---max_input_len 32768 --max_seq_len 36960 --max_num_tokens 32768 --max_multimodal_len 13312
+--max_input_len 30720 --max_seq_len 32768 --max_num_tokens 32768 --max_multimodal_len 13312
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片。
 python3 tools/qwenvl/build_vit_engine.py --pretrainedModelPath /tmp/Qwen-VL-Chat \

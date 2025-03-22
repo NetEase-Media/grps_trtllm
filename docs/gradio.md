@@ -29,6 +29,9 @@ python3 tools/gradio/llm_app.py janus-pro 0.0.0.0:9997
 
 # 启动多模态聊天界面，使用olm-ocr多模态模型，0.0.0.0:9997表示llm后端服务地址
 python3 tools/gradio/llm_app.py olm-ocr 0.0.0.0:9997
+
+# 启动多模态聊天界面，使用minicpmv多模态模型，0.0.0.0:9997表示llm后端服务地址
+python3 tools/gradio/llm_app.py minicpmv 0.0.0.0:9997
 ```
 
 启动后日志会显示服务端口号，默认为7860如下：

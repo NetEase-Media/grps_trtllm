@@ -2528,6 +2528,28 @@ std::string Gemma3Styler::ParseFunctionCall(const std::string& gen_txt,
   return "";
 }
 
+std::tuple<bool, std::string, std::vector<std::string>> MiniCPMVStyler::BuildPrompt(
+  const rapidjson::Document& json_body) {
+  if (!json_body.HasMember("messages") || !json_body["messages"].IsArray()) {
+    throw std::invalid_argument("`messages` not found or not an array");
+  }
+
+  // json body convert to string directly, will parse by vit.
+  std::string prompt;
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  json_body["messages"].Accept(writer);
+  prompt.append(buffer.GetString());
+  return {false, prompt, {}};
+}
+
+std::string MiniCPMVStyler::ParseFunctionCall(const std::string& gen_txt,
+                                              int64_t req_id,
+                                              rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                              rapidjson::MemoryPoolAllocator<>& allocator) {
+  return "";
+}
+
 std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& llm_style,
                                                              const std::string& chat_template) {
   std::unique_ptr<LLMStyler> llm_styler;
@@ -2571,6 +2593,8 @@ std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& 
     llm_styler = std::make_unique<JanusProStyler>();
   } else if (llm_style == "gemma3") {
     llm_styler = std::make_unique<Gemma3Styler>();
+  } else if (llm_style == "minicpmv") {
+    llm_styler = std::make_unique<MiniCPMVStyler>();
   } else {
     throw std::runtime_error("LLM style " + llm_style + " not supported now.");
   }

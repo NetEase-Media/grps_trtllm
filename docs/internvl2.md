@@ -46,12 +46,12 @@ python3 tools/internvl2/convert_internlm2_ckpt.py --model_dir /tmp/InternVL2-8B/
 # 这里设置支持最大batch_size为2，即支持2个并发同时推理，超过两个排队处理。
 # 设置每个请求最多输入26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
 # 即：max_multimodal_len=2（max_batch_size） * 26（图片最多产生patch个数） * 256（每个patch对应256个token） = 13312
-# 设置max_input_len为32k，max_seq_len为36k（即最大输出为4k）。
+# 设置max_input_len为30k，max_seq_len为32k（即默认最大输出为2k）。
 rm -rf /tmp/InternVL2-8B/trt_engines/
 trtllm-build --checkpoint_dir /tmp/InternVL2-8B/tllm_checkpoint/ \
 --output_dir /tmp/InternVL2-8B/trt_engines/ \
 --gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
---max_input_len 32768 --max_seq_len 36960 --max_num_tokens 32768 --max_multimodal_len 13312
+--max_input_len 30720 --max_seq_len 32768 --max_num_tokens 32768 --max_multimodal_len 13312
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
 python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2-8B \
@@ -86,12 +86,12 @@ python3 tools/internvl2/convert_qwen2_ckpt.py --model_dir /tmp/InternVL2-1B/ \
 # 这里设置支持最大batch_size为2，即支持2个并发同时推理，超过两个排队处理。
 # 设置每个请求最多输入26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
 # 即：max_multimodal_len=2（max_batch_size） * 26（图片最多产生patch个数） * 256（每个patch对应256个token） = 13312
-# 设置max_input_len为32k，max_seq_len为36k（即最大输出为4k）。
+# 设置max_input_len为30k，max_seq_len为32k（即默认最大输出为2k）。
 rm -rf /tmp/InternVL2-1B/trt_engines/
 trtllm-build --checkpoint_dir /tmp/InternVL2-1B/tllm_checkpoint/ \
 --output_dir /tmp/InternVL2-1B/trt_engines/ \
 --gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
---max_input_len 32768 --max_seq_len 36960 --max_num_tokens 32768 --max_multimodal_len 13312
+--max_input_len 30720 --max_seq_len 32768 --max_num_tokens 32768 --max_multimodal_len 13312
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
 python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2-1B \
@@ -123,12 +123,12 @@ python3 tools/internvl2/convert_phi3_ckpt.py --model_dir /tmp/InternVL2-4B/ \
 # 这里设置支持最大batch_size为2，即支持2个并发同时推理，超过两个排队处理。
 # 设置每个请求最多输入26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
 # 即：max_multimodal_len=2（max_batch_size） * 26（图片最多产生patch个数） * 256（每个patch对应256个token） = 13312
-# 设置max_input_len为32k，max_seq_len为36k（即最大输出为4k）。
+# 设置max_input_len为30k，max_seq_len为32k（即默认最大输出为2k）。
 rm -rf /tmp/InternVL2-4B/trt_engines/
 trtllm-build --checkpoint_dir /tmp/InternVL2-4B/tllm_checkpoint/ \
 --output_dir /tmp/InternVL2-4B/trt_engines/ \
 --gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
---max_input_len 32768 --max_seq_len 36960 --max_num_tokens 32768 --max_multimodal_len 13312
+--max_input_len 30720 --max_seq_len 32768 --max_num_tokens 32768 --max_multimodal_len 13312
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
 python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL2-4B \

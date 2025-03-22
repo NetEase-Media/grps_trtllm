@@ -39,7 +39,7 @@ rm -rf /tmp/InternVideo2_5_Chat_8B/trt_engines/
 trtllm-build --checkpoint_dir /tmp/InternVideo2_5_Chat_8B/tllm_checkpoint/ \
 --output_dir /tmp/InternVideo2_5_Chat_8B/trt_engines/ \
 --gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
---max_input_len 6144 --max_seq_len 8192 --max_num_tokens 6144 --max_multimodal_len 4096
+--max_input_len 6144 --max_seq_len 8192 --max_num_tokens 8192 --max_multimodal_len 4096
 ```
 
 ## 构建与部署
@@ -101,6 +101,7 @@ vit_processor_args:
   dtype: bfloat16 # vit模型输入输出数据类型，可以是`float16`, `bfloat16`。
   max_frames: 80 # vit截取最大帧数。
   shm_size: 536870912 # (512M), 共享内存大小，用于图像embeddings传输。
+kv_cache_free_gpu_mem_fraction: 0.4 # llm模型的kv cache占用空闲显存的比例，过高可能会导致vit推理OOM。
 ```
 
 * 为了避免视频embeddings进程间传输占用大量耗时，这里使用了共享内存技术，可以通过`shm_size`和`shm_cnt`配置共享内存大小和个数。
@@ -108,6 +109,7 @@ vit_processor_args:
 * 由于显存限制，这里限制了视频产生的最大帧数为80帧，可以根据显存情况调整`max_frames`。
 * 由于显存限制，这里限制了视频vit最大并发数为1，可以根据显存情况调整`max_concurrency`。
 * 视频vit可以单独放到其他显卡上，可以通过vit服务的`device`配置指定显卡，这里使用了`cuda:0`。
+* 当显存不足导致OOM时可以调小上述`max_frames`、`max_concurrency`、`kv_cache_free_gpu_mem_fraction`等参数。
 
 ## 模拟请求
 

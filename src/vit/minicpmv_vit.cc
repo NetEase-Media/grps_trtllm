@@ -1,6 +1,6 @@
-// InternVideo2.5 VIT(Vision transformer).
+// MiniCPM-V VIT(Vision transformer).
 
-#include "intern_video_2_5_vit.h"
+#include "minicpmv_vit.h"
 
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -12,24 +12,18 @@
 #include "src/utils.h"
 
 namespace netease::grps {
-InternVideo25VIT::InternVideo25VIT() : VIT("intern-video2.5") {}
-InternVideo25VIT::~InternVideo25VIT() = default;
+MiniCPMVVIT::MiniCPMVVIT() : VIT("minicpmv") {}
+MiniCPMVVIT::~MiniCPMVVIT() = default;
 
-void InternVideo25VIT::Init(const std::string& path,
-                            int worker_tp,
-                            const std::string& device,
-                            const YAML::Node& trt_args,
-                            const YAML::Node& processor_args,
-                            netease::grps::MultiInstanceTokenizer* tokenizer) {
-  grps_cli_ = std::make_unique<GrpsCli>("intern-video2.5");
+void MiniCPMVVIT::Init(const std::string& path,
+                       int worker_tp,
+                       const std::string& device,
+                       const YAML::Node& trt_args,
+                       const YAML::Node& processor_args,
+                       netease::grps::MultiInstanceTokenizer* tokenizer) {
+  grps_cli_ = std::make_unique<GrpsCli>("minicpmv");
   grps_cli_->Init(processor_args);
 
-  if (processor_args["max_frames"] && !processor_args["max_frames"].IsNull() &&
-      processor_args["max_frames"].IsScalar()) {
-    max_frames_ = processor_args["max_frames"].as<int32_t>();
-  } else {
-    throw VitException("max_frames is required.");
-  }
   if (processor_args["shm_size"] && !processor_args["shm_size"].IsNull() && processor_args["shm_size"].IsScalar()) {
     shm_size_ = processor_args["shm_size"].as<int32_t>();
   } else {
@@ -46,29 +40,37 @@ void InternVideo25VIT::Init(const std::string& path,
   } else {
     throw VitException("dtype is required.");
   }
-  CLOG4(INFO, "InternVideo25VIT initialized, processor_args: " << processor_args);
-}
 
-void InternVideo25VIT::Load() {}
-
-std::tuple<PtuningEmbeddingTableType, MropeConfType> InternVideo25VIT::Encode(
-  const std::vector<std::string>& video_urls, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids) {
-  if (video_urls.empty()) {
-    return {std::nullopt, std::nullopt};
+  if (processor_args["image_token_id"] && !processor_args["image_token_id"].IsNull() &&
+      processor_args["image_token_id"].IsScalar()) {
+    image_token_id_ = processor_args["image_token_id"].as<int32_t>();
+  } else {
+    throw VitException("image_token_id is required.");
   }
 
+  if (processor_args["img_begin_token_id"] && !processor_args["img_begin_token_id"].IsNull() &&
+      processor_args["img_begin_token_id"].IsScalar()) {
+    img_begin_token_id_ = processor_args["img_begin_token_id"].as<int32_t>();
+  } else {
+    throw VitException("img_begin_token_id is required.");
+  }
+
+  CLOG4(INFO, "MiniCPMVVIT initialized, processor_args: " << processor_args);
+}
+
+void MiniCPMVVIT::Load() {}
+
+std::tuple<PtuningEmbeddingTableType, MropeConfType> MiniCPMVVIT::Encode(const std::vector<std::string>& image_urls,
+                                                                         std::string& prompt,
+                                                                         tensorrt_llm::executor::VecTokens& token_ids) {
 #if VIT_DBG
   auto begin = GET_SYS_TIME_US();
 #endif
 
-  // 1. Call remote vit, predict video images embeddings.
+  // 1. Call remote vit, predict image images embeddings.
   ::grps::protos::v1::GrpsMessage request;
   ::grps::protos::v1::GrpsMessage response;
-  if (video_urls.size() != 1) {
-    throw VitException("Only support one video now.");
-  }
-  request.mutable_gmap()->mutable_s_s()->insert({"video_url", video_urls[0]});
-  request.mutable_gmap()->mutable_s_i32()->insert({"max_frames", max_frames_});
+  *request.mutable_str_data() = std::move(prompt);
   grps_cli_->Predict(request, response);
   if (response.status().status() != ::grps::protos::v1::Status::SUCCESS) {
     std::string err = utils::Rstrip(response.status().msg());
@@ -86,25 +88,21 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> InternVideo25VIT::Encode(
     tensor_shape.push_back(shape_gtensor.Get(i));
   }
 
-  // 2. Add prompt prefix for each frame.
-  auto num_patches_gtensor = response.gtensors().tensors().Get(0).flat_int32();
-  std::string prompt_replace;
-  int num_frames = 1;
-  for (int i = 0; i < num_patches_gtensor.size(); ++i) {
-    for (int j = 0; j < num_patches_gtensor.Get(i); ++j) {
-      prompt_replace += "Frame";
-      prompt_replace += std::to_string(num_frames++);
-      prompt_replace += ": <img>";
-      for (int k = 0; k < tensor_shape[1]; ++k) {
-        prompt_replace += "<IMG_CONTEXT>";
-      }
-      prompt_replace += "</img>\n";
+  // 2. Replace image token id.
+  auto input_ids = response.gtensors().tensors().Get(0).flat_int32();
+  token_ids.assign(input_ids.begin(), input_ids.end());
+  int32_t cur_img_token_id = img_begin_token_id_;
+  for (size_t i = 0; i < token_ids.size(); i++) {
+    if (token_ids[i] == image_token_id_) {
+      token_ids[i] = cur_img_token_id++;
     }
   }
-  utils::ReplaceWorld(prompt, "<VIDEO_CONTEXT>", prompt_replace, 0, 1);
 
   // 3. Get embeddings from shared memory.
   std::string shm_path = response.gtensors().tensors().Get(1).flat_string().Get(0);
+  if (shm_path.empty()) { // No image input.
+    return {std::nullopt, std::nullopt};
+  }
   int fd = shm_open(shm_path.c_str(), O_RDWR, 0666);
   if (fd == -1) {
     CLOG4(ERROR, "shm_open failed: " << strerror(errno) << ", path: " << shm_path);
@@ -151,19 +149,19 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> InternVideo25VIT::Encode(
   auto end = GET_SYS_TIME_US();
   CLOG4(INFO, "shm_path: " << shm_path << ", tensor_shape: " << tensor_shape[0] << ", " << tensor_shape[1] << ", "
                            << tensor_shape[2]);
-  CLOG4(INFO, "InternVideo25VIT encode success, type: " << type_name_ << ", video_urls size: " << video_urls.size()
-                                                        << ", cost: " << end - begin << " us");
+  CLOG4(INFO, "MiniCPMVVIT encode success, type: " << type_name_ << ", image_urls size: " << image_urls.size()
+                                                   << ", cost: " << end - begin << " us");
 #endif
   return {executor::PromptTuningConfig(std::move(e_tensor)), std::nullopt};
 }
 
-VitModelInputType InternVideo25VIT::Preprocess(const std::vector<std::vector<char>>& images_bytes,
-                                               std::string& prompt,
-                                               tensorrt_llm::executor::VecTokens& token_ids) {
+VitModelInputType MiniCPMVVIT::Preprocess(const std::vector<std::vector<char>>& images_bytes,
+                                          std::string& prompt,
+                                          tensorrt_llm::executor::VecTokens& token_ids) {
   throw VitException("Not implemented.");
 }
 
-std::tuple<PtuningEmbeddingTableType, MropeConfType> InternVideo25VIT::Postprocess(
+std::tuple<PtuningEmbeddingTableType, MropeConfType> MiniCPMVVIT::Postprocess(
   netease::grps::VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids) {
   throw VitException("Not implemented.");
 }
