@@ -60,8 +60,9 @@ grpst start ./server.mar --inference_conf=conf/inference_minicpmv.yml
 # 查看服务状态
 grpst ps
 # 如下输出
-PORT(HTTP,RPC)      NAME                PID                 DEPLOY_PATH         
-9997                my_grps             65322               /home/appops/.grps/my_grps
+PORT(HTTP,RPC)      NAME                PID                 DEPLOY_PATH
+7080,7081           minicpmv-processor  1173838             /root/.grps/minicpmv-processor
+9997                my_grps             1177400             /root/.grps/my_grps
 ```
 
 ## 配置说明

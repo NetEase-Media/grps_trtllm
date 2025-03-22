@@ -97,7 +97,7 @@ inline void HttpRespondErrorWithOpenAi(GrpsContext& grps_ctx, int status_code, c
 /// @brief Streaming respond error http response with OpenAI format.
 inline void HttpStreamingRespondErrorWithOpenAi(GrpsContext& grps_ctx, const std::string& error_msg) {
   grps_ctx.set_err_msg(error_msg);
-  std::string content = R"(data: {"error": {"message": ")" + error_msg + "\"}}\n\n";
+  std::string content = R"(data: {"error": {"message": ")" + error_msg.substr(0, 512) + "\"}}\n\n";
   grps_ctx.CustomizedHttpStreamingRespond(content.c_str(), content.size(), true);
 }
 
