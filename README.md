@@ -13,7 +13,7 @@
 ![Ai-Agent](https://img.shields.io/badge/Ai_Agent-blue)
 ![Multi-Modal](https://img.shields.io/badge/Multi_Modal-green)
 
-[快速开始](#快速开始) | [模型列表](#模型列表) | [镜像列表](./docs/images.md) | [更新历史](./docs/release_note.md) | [性能](./docs/performance.md)
+[快速开始](#快速开始) | [模型列表](#模型列表) | [镜像列表](./docs/images.md) | [性能](./docs/performance.md) | [更新历史](./docs/release_note.md) | [预告](./docs/next.md)
 
 <div align="left">
 
