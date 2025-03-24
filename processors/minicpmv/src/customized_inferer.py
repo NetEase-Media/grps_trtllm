@@ -71,8 +71,8 @@ class YourInferer(ModelInferer):
         # free llm memory, only use vit.
         del self.hf_model.llm
         gc.collect()
-        self.hf_model.vpm.to(self._device)
-        self.hf_model.resampler.to(self._device)
+        self.hf_model.vpm.to(self._device).to(self.dtype)
+        self.hf_model.resampler.to(self._device).to(self.dtype)
         clogger.info('your inferer load model successfully.')
         return True
 
@@ -174,7 +174,6 @@ class YourInferer(ModelInferer):
             for i in range(B):
                 patch_attn_mask[i, 0, :tgt_sizes[i][0] * tgt_sizes[i][1]] = True
 
-            all_pixel_values = all_pixel_values.type(self.dtype)
             all_pixel_values = all_pixel_values.type(self.dtype)
             if B > self.vision_batch_size:
                 hs = []
