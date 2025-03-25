@@ -36,11 +36,14 @@ public:
    * @param model_out: output of vit trt model will be postprocessed.
    * @param prompt: prompt may be changed when vit encoding.
    * @param token_ids: token ids may generated when vit.
+   * @param img_hash: hash of images.
    * @return vit embeddings that will be used as trtllm ptuning embedding table, and mrope config if need or nullopt if
    * not.
    */
-  std::tuple<PtuningEmbeddingTableType, MropeConfType> Postprocess(
-    VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids) override;
+  virtual std::tuple<PtuningEmbeddingTableType, MropeConfType> Postprocess(VitModelOutputType& model_out,
+                                                                           std::string& prompt,
+                                                                           tensorrt_llm::executor::VecTokens& token_ids,
+                                                                           uint64_t img_hash) override;
 
 private:
   static std::pair<int, int> FindClosestAspectRatio(

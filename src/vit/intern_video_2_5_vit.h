@@ -26,7 +26,8 @@ public:
             const std::string& device,
             const YAML::Node& trt_args,
             const YAML::Node& processor_args,
-            MultiInstanceTokenizer* tokenizer) override;
+            MultiInstanceTokenizer* tokenizer,
+            bool kv_cache_reuse = false) override;
 
   // Load the vit trt model.
   void Load() override;
@@ -48,6 +49,7 @@ public:
    * @param images: images bytes will be preprocessed.
    * @param prompt: prompt may be changed when vit encoding.
    * @param token_ids: token ids may generated when vit.
+   * @param img_hash: hash of images.
    * @return processed image data with trt tensor format, will be used as the input to the ViT model.
    */
   VitModelInputType Preprocess(const std::vector<std::vector<char>>& images_bytes,
@@ -62,8 +64,10 @@ public:
    * @return vit embeddings that will be used as trtllm ptuning embedding table, and mrope config if need or nullopt if
    * not.
    */
-  std::tuple<PtuningEmbeddingTableType, MropeConfType> Postprocess(
-    VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids) override;
+  virtual std::tuple<PtuningEmbeddingTableType, MropeConfType> Postprocess(VitModelOutputType& model_out,
+                                                                           std::string& prompt,
+                                                                           tensorrt_llm::executor::VecTokens& token_ids,
+                                                                           uint64_t img_hash) override;
 
 private:
   std::unique_ptr<GrpsCli> grps_cli_; // grps client to access remote vit.

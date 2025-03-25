@@ -62,6 +62,7 @@ struct RequestData {
   std::vector<int32_t> history_tokens; // For fix garbled test case.
   size_t last_tokens;                  // last tokens count for streaming mode.
   uint64_t begin_time_us;
+  uint64_t first_token_time_us;
 };
 
 // TrtLlmModelInstance

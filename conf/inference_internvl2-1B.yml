@@ -88,7 +88,7 @@ models:
       stats_check_period_ms: # will be set to 100 (ms) if not set.
       iter_stats_max_iterations: # will be set to 1000 if not set.
       request_stats_max_iterations: # will be set to 0 if not set.
-      enable_kv_cache_reuse: # will be set to false if not set.
+      enable_kv_cache_reuse: true # will be set to false if not set.
       normalize_log_probs: # will be set to true if not set.
       enable_chunked_context: # will be set to false if not set.
       gpu_device_ids: # will be automatically set if not set.

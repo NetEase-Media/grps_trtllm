@@ -38,7 +38,7 @@ python3 tools/intern-video2.5/convert_internlm2_ckpt.py --model_dir /tmp/InternV
 rm -rf /tmp/InternVideo2_5_Chat_8B/trt_engines/
 trtllm-build --checkpoint_dir /tmp/InternVideo2_5_Chat_8B/tllm_checkpoint/ \
 --output_dir /tmp/InternVideo2_5_Chat_8B/trt_engines/ \
---gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
+--gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable --use_paged_context_fmha enable \
 --max_input_len 6144 --max_seq_len 8192 --max_num_tokens 8192 --max_multimodal_len 4096
 ```
 

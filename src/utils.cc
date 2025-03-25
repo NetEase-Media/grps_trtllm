@@ -14,10 +14,21 @@
 #include <rapidjson/writer.h>
 
 #include "logger/logger.h"
+#include "src/vit/vit.h"
 
 using namespace tensorrt_llm::batch_manager;
 
 namespace netease::grps::utils {
+
+template <>
+uint64_t Hash(const std::vector<std::vector<char>>& bytes) {
+  std::string combined;
+  for (const auto& v : bytes) {
+    combined.append(v.begin(), v.end());
+  }
+  uint64_t hash = CityHash64(combined.data(), combined.size());
+  return static_cast<int64_t>(hash);
+}
 
 std::string Lstrip(const std::string& str) {
   size_t start = str.find_first_not_of(" \t\n\r");

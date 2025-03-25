@@ -33,7 +33,7 @@ python3 third_party/TensorRT-LLM/examples/qwen/convert_checkpoint.py --model_dir
 rm -rf /tmp/MiniCPM-V-2_6/trt_engines/
 trtllm-build --checkpoint_dir /tmp/MiniCPM-V-2_6/tllm_checkpoint/ \
 --output_dir /tmp/MiniCPM-V-2_6/trt_engines/ \
---gemm_plugin bfloat16 --max_batch_size 8 --paged_kv_cache enable \
+--gemm_plugin bfloat16 --max_batch_size 8 --paged_kv_cache enable --use_paged_context_fmha enable \
 --max_input_len 30720 --max_seq_len 32768 --max_num_tokens 32768 --max_prompt_embedding_table_size=32768
 ```
 

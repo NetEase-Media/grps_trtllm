@@ -50,7 +50,7 @@ python3 tools/internvl2/convert_internlm2_ckpt.py --model_dir /tmp/InternVL2-8B/
 rm -rf /tmp/InternVL2-8B/trt_engines/
 trtllm-build --checkpoint_dir /tmp/InternVL2-8B/tllm_checkpoint/ \
 --output_dir /tmp/InternVL2-8B/trt_engines/ \
---gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
+--gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable --use_paged_context_fmha enable \
 --max_input_len 30720 --max_seq_len 32768 --max_num_tokens 32768 --max_multimodal_len 13312
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
@@ -90,7 +90,7 @@ python3 tools/internvl2/convert_qwen2_ckpt.py --model_dir /tmp/InternVL2-1B/ \
 rm -rf /tmp/InternVL2-1B/trt_engines/
 trtllm-build --checkpoint_dir /tmp/InternVL2-1B/tllm_checkpoint/ \
 --output_dir /tmp/InternVL2-1B/trt_engines/ \
---gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
+--gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable --use_paged_context_fmha enable \
 --max_input_len 30720 --max_seq_len 32768 --max_num_tokens 32768 --max_multimodal_len 13312
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。
@@ -127,7 +127,7 @@ python3 tools/internvl2/convert_phi3_ckpt.py --model_dir /tmp/InternVL2-4B/ \
 rm -rf /tmp/InternVL2-4B/trt_engines/
 trtllm-build --checkpoint_dir /tmp/InternVL2-4B/tllm_checkpoint/ \
 --output_dir /tmp/InternVL2-4B/trt_engines/ \
---gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
+--gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable --use_paged_context_fmha enable \
 --max_input_len 30720 --max_seq_len 32768 --max_num_tokens 32768 --max_multimodal_len 13312
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2中每个图片根据不同的尺寸最多产生13个patch）。

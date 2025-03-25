@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <city.h>
 #include <rapidjson/document.h>
 
 #include <chrono>
@@ -15,7 +16,6 @@
 #include "src/constants.h"
 #include "src/llm_styler.h"
 #include "src/tokenizer.h"
-#include "src/vit/vit.h"
 #include "tensorrt_llm/batch_manager/inferenceRequest.h"
 #include "tensorrt_llm/common/logger.h"
 #include "tensorrt_llm/runtime/tllmLogger.h"
@@ -24,6 +24,7 @@
 using namespace tensorrt_llm;
 
 namespace netease::grps {
+class VIT;
 
 #define SET_TIMESTAMP(TS_NS)                                                                                          \
   {                                                                                                                   \
@@ -41,6 +42,15 @@ namespace netease::grps {
   std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()
 
 namespace utils {
+// --------------------------------------- Hash utils [BEGIN] ---------------------------------------
+template <typename T>
+uint64_t Hash(const T& bytes);
+template <>
+uint64_t Hash(const std::vector<std::vector<char>>& bytes);
+inline uint64_t Hash(const char* bytes, size_t len) {
+  return CityHash64(bytes, len);
+}
+
 // --------------------------------------- String utils [BEGIN] ---------------------------------------
 static inline bool StartsWith(const std::string& str, const std::string& prefix) {
   return str.size() >= prefix.size() && str.compare(0, prefix.size(), prefix) == 0;
@@ -99,8 +109,14 @@ inline void HttpStreamingRespondErrorWithOpenAi(GrpsContext& grps_ctx, const std
   grps_ctx.set_err_msg(error_msg);
 
   std::string content;
-  if (error_msg.length() > 512) {
-    content = R"(data: {"error": {"message": ")" + error_msg.substr(0, 512) + "......\"}}\n\n";
+  if (error_msg.length() > 1024) {
+    auto err = error_msg.substr(0, 1024);
+    // Replace some char avoiding json parse error.
+    utils::ReplaceWorld(err, "\"", "\\\"");
+    utils::ReplaceWorld(err, "\n", "\\n");
+    utils::ReplaceWorld(err, "\r", "\\r");
+    utils::ReplaceWorld(err, "\t", "\\t");
+    content = R"(data: {"error": {"message": ")" + err + "......\"}}\n\n";
   } else {
     content = R"(data: {"error": {"message": ")" + error_msg + "\"}}\n\n";
   }

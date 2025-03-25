@@ -178,6 +178,7 @@ target_link_libraries(grps-tensorrt-llm-common PUBLIC
         opencv_imgproc
         opencv_highgui
         opencv_imgcodecs
+        cityhash
 )
 if (PILLOW_RESIZE_ENABLE)
     target_link_libraries(grps-tensorrt-llm-common PUBLIC PillowResize)

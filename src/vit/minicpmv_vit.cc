@@ -6,6 +6,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include <boost/asio/post.hpp>
+#include <boost/thread/latch.hpp>
 #include <cstring>
 
 #include "grps_cli.h"
@@ -20,7 +22,8 @@ void MiniCPMVVIT::Init(const std::string& path,
                        const std::string& device,
                        const YAML::Node& trt_args,
                        const YAML::Node& processor_args,
-                       netease::grps::MultiInstanceTokenizer* tokenizer) {
+                       netease::grps::MultiInstanceTokenizer* tokenizer,
+                       bool kv_cache_reuse) {
   grps_cli_ = std::make_unique<GrpsCli>("minicpmv");
   grps_cli_->Init(processor_args);
 
@@ -55,7 +58,14 @@ void MiniCPMVVIT::Init(const std::string& path,
     throw VitException("img_begin_token_id is required.");
   }
 
-  CLOG4(INFO, "MiniCPMVVIT initialized, processor_args: " << processor_args);
+  worker_tp_ = std::make_unique<boost::asio::thread_pool>(worker_tp);
+  kv_cache_reuse_ = kv_cache_reuse;
+  tokenizer_ = tokenizer;
+
+  CLOG4(INFO, "MiniCPMVVIT initialized, kv_cache_reuse: "
+                << kv_cache_reuse_ << ", shm_size: " << shm_size_ << ", dtype: " << int(dtype_)
+                << ", worker_tp: " << worker_tp << ", image_token_id: " << image_token_id_
+                << ", img_begin_token_id: " << img_begin_token_id_ << ", processor_args: " << processor_args);
 }
 
 void MiniCPMVVIT::Load() {}
@@ -70,6 +80,7 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> MiniCPMVVIT::Encode(const s
   // 1. Call remote vit, predict image images embeddings.
   ::grps::protos::v1::GrpsMessage request;
   ::grps::protos::v1::GrpsMessage response;
+  prompt = "{\"msgs\":" + prompt + ", \"calc_hash\":" + (kv_cache_reuse_ ? "true" : "false") + "}";
   *request.mutable_str_data() = std::move(prompt);
   grps_cli_->Predict(request, response);
   if (response.status().status() != ::grps::protos::v1::Status::SUCCESS) {
@@ -116,9 +127,10 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> MiniCPMVVIT::Encode(const s
   }
   void* ptr = (void*)(char_ptr + 1); // First byte is flag.
 
-  // 4. Copy data to tensorrt-llm tensor.
   std::vector<int64_t> reshape = {tensor_shape[0] * tensor_shape[1], tensor_shape[2]};
   int64_t num_elements = reshape[0] * reshape[1];
+
+  // 4. Copy data to tensorrt-llm tensor.
   tensorrt_llm::batch_manager::NamedTensor named_tensor(dtype_, reshape, "output");
   auto stream = std::make_shared<tensorrt_llm::runtime::CudaStream>();
   auto manager = tensorrt_llm::runtime::BufferManager{std::move(stream)};
@@ -145,6 +157,9 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> MiniCPMVVIT::Encode(const s
   close(fd);
   auto e_tensor = executor::detail::ofITensor(named_tensor.tensor);
 
+  // 6. Get image hash.
+  uint64_t hash = response.gtensors().tensors().Get(3).flat_int64().Get(0);
+
 #if VIT_DBG
   auto end = GET_SYS_TIME_US();
   CLOG4(INFO, "shm_path: " << shm_path << ", tensor_shape: " << tensor_shape[0] << ", " << tensor_shape[1] << ", "
@@ -152,7 +167,12 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> MiniCPMVVIT::Encode(const s
   CLOG4(INFO, "MiniCPMVVIT encode success, type: " << type_name_ << ", image_urls size: " << image_urls.size()
                                                    << ", cost: " << end - begin << " us");
 #endif
-  return {executor::PromptTuningConfig(std::move(e_tensor)), std::nullopt};
+
+  if (kv_cache_reuse_) {
+    return {executor::PromptTuningConfig(std::move(e_tensor), PrepareExtraIds(hash, token_ids)), std::nullopt};
+  } else {
+    return {executor::PromptTuningConfig(std::move(e_tensor), std::nullopt), std::nullopt};
+  }
 }
 
 VitModelInputType MiniCPMVVIT::Preprocess(const std::vector<std::vector<char>>& images_bytes,
@@ -162,7 +182,10 @@ VitModelInputType MiniCPMVVIT::Preprocess(const std::vector<std::vector<char>>& 
 }
 
 std::tuple<PtuningEmbeddingTableType, MropeConfType> MiniCPMVVIT::Postprocess(
-  netease::grps::VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids) {
+  netease::grps::VitModelOutputType& model_out,
+  std::string& prompt,
+  tensorrt_llm::executor::VecTokens& token_ids,
+  uint64_t img_hash) {
   throw VitException("Not implemented.");
 }
 

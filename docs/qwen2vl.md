@@ -35,6 +35,7 @@ trtllm-build --checkpoint_dir /tmp/Qwen2-VL-2B-Instruct//tllm_checkpoint/ \
 --gemm_plugin=bfloat16 \
 --gpt_attention_plugin=bfloat16 \
 --max_batch_size=4 \
+--use_paged_context_fmha enable \
 --max_input_len=30720 --max_seq_len=32768 \
 --max_num_tokens 32768 \
 --max_prompt_embedding_table_size=28416
@@ -79,6 +80,7 @@ trtllm-build --checkpoint_dir /tmp/Qwen2-VL-7B-Instruct//tllm_checkpoint/ \
 --output_dir /tmp/Qwen2-VL-7B-Instruct/trt_engines \
 --gemm_plugin=bfloat16 \
 --gpt_attention_plugin=bfloat16 \
+--use_paged_context_fmha enable \
 --max_batch_size=4 \
 --max_input_len=32768 --max_seq_len=36960 \
 --max_num_tokens 32768 \

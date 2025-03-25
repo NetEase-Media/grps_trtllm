@@ -205,7 +205,7 @@ VitModelInputType Internvl2VIT::Preprocess(const std::vector<std::vector<char>>&
 }
 
 std::tuple<PtuningEmbeddingTableType, MropeConfType> Internvl2VIT::Postprocess(
-  VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids) {
+  VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids, uint64_t img_hash) {
   auto out = model_out[0].second;
 
   // reshape.
@@ -217,6 +217,15 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> Internvl2VIT::Postprocess(
   true_shape.d[1] = cur_shape.d[2];
   tensor->reshape(true_shape);
   auto e_tensor = executor::detail::ofITensor(out->tensor);
-  return {executor::PromptTuningConfig(std::move(e_tensor)), std::nullopt};
+
+  if (token_ids.empty()) {
+    token_ids = tokenizer_->Encode(prompt);
+  }
+
+  if (kv_cache_reuse_) {
+    return {executor::PromptTuningConfig(std::move(e_tensor), PrepareExtraIds(img_hash, token_ids)), std::nullopt};
+  } else {
+    return {executor::PromptTuningConfig(std::move(e_tensor), std::nullopt), std::nullopt};
+  }
 }
 } // namespace netease::grps

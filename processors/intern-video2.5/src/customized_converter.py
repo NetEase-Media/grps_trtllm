@@ -9,6 +9,7 @@ import sys
 import threading
 import time
 
+import xxhash
 import numpy as np
 import requests
 import torch
@@ -16,6 +17,7 @@ import torchvision.transforms as T
 from PIL import Image
 from decord import VideoReader, cpu
 from torchvision.transforms import InterpolationMode
+from concurrent.futures import ThreadPoolExecutor
 
 # Add src dir to sys.path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -174,6 +176,7 @@ class YourConverter(Converter):
         self.shm_lock = []
         self.cur_shm_idx = 0
         self.cur_shm_idx_lock = threading.Lock()
+        self.hash_caculator = ThreadPoolExecutor()
 
     def init(self, path=None, args=None):
         """
@@ -215,6 +218,36 @@ class YourConverter(Converter):
 
         clogger.info('your converter init, path: {}, args: {}'.format(path, args))
 
+    @staticmethod
+    def __hash_calculate(tensor):
+        """
+        Calculate hash value of tensor.
+
+        Args:
+            tensor: Tensor to be calculated.
+
+        Returns:
+            Hash value of tensor.
+        """
+        # begin = time.time()
+        # calc city hash for pixel_values bytes.
+        tensor_size = tensor.numel() * tensor.element_size()
+        tensor_bytes = bytearray((ctypes.c_ubyte * tensor_size).from_address(tensor.data_ptr()))
+        # hash_value = cityhash.CityHash64(tensor_bytes)
+        hash_value = xxhash.xxh64(tensor_bytes).intdigest()
+
+        def safe_uint64_to_int64(value):
+            value = np.uint64(value)
+            if value > np.iinfo(np.int64).max:
+                value -= np.uint64(1) << np.uint64(64)
+            return np.int64(value)
+
+        hash_value = safe_uint64_to_int64(hash_value)
+
+        # clogger.info(f'city hash: {hash_value}, time: {(time.time() - begin) * 1e6:.2f} us, tensor_size: '
+        #              f'{tensor_size}')
+        return hash_value
+
     def preprocess(self, inp: GrpsMessage, context: GrpsContext):
         """
         Preprocess.
@@ -232,6 +265,7 @@ class YourConverter(Converter):
         """
         video_url = inp.gmap.s_s.get('video_url', '')
         max_frames = inp.gmap.s_i32.get('max_frames', 128)
+        calc_hash = inp.gmap.s_i32.get('calc_hash', 0)
         if max_frames <= 0 or max_frames % 4 != 0:
             raise Exception('max_frames must be positive and multiple of 4, but got: {}'.format(max_frames))
 
@@ -254,6 +288,9 @@ class YourConverter(Converter):
         # load video
         pixel_values, num_patches_list = load_video(video_path, num_segments=max_frames, max_num=1,
                                                     get_frame_by_duration=False)
+        if calc_hash == 1:
+            context.put_user_data('pixel_values', pixel_values)
+
         # save num_patches_list to context for return to client.
         context.put_user_data('num_patches_list', num_patches_list)
         return pixel_values
@@ -273,6 +310,12 @@ class YourConverter(Converter):
             Exception: If postprocess failed, can raise exception and exception will be caught by server and return error
             message to client.
         """
+        # submit hash calculate task to thread pool.
+        pixel_values = context.get_user_data('pixel_values')
+        hash_future = None
+        if pixel_values is not None:
+            hash_future = self.hash_caculator.submit(self.__hash_calculate, pixel_values)
+
         tensor = inp.cpu()
         tensor_size = tensor.numel() * tensor.element_size()
         if tensor_size > self.shm_size:
@@ -304,6 +347,14 @@ class YourConverter(Converter):
             tensor_bytes = bytearray((ctypes.c_ubyte * tensor_size).from_address(tensor.data_ptr()))
             self.shm_mmap[shm_idx][1:tensor_size + 1] = tensor_bytes
 
+        hash_value = 0
+        if hash_future is not None:
+            try:
+                hash_value = hash_future.result()
+            except Exception as e:
+                clogger.warning(f'Hash calculate failed: {e}')
+                raise Exception(f'Hash calculate failed: {e}')
+
         out = GrpsMessage()
         # gtensor = GenericTensor(name='img_embeddings')
         # gtensor.shape.extend(inp.shape)
@@ -325,6 +376,11 @@ class YourConverter(Converter):
         gtensor.shape.extend([len(inp.shape)])
         gtensor.dtype = DataType.DT_INT32
         gtensor.flat_int32.extend(inp.shape)
+        out.gtensors.tensors.append(gtensor)
+        gtensor = GenericTensor(name='hash')
+        gtensor.shape.extend([1])
+        gtensor.dtype = DataType.DT_INT64
+        gtensor.flat_int64.append(hash_value)
         out.gtensors.tensors.append(gtensor)
 
         # Delete video file if download from url.

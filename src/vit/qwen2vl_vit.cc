@@ -16,8 +16,9 @@ void Qwen2vlVIT::Init(const std::string& path,
                       const std::string& device,
                       const YAML::Node& trt_args,
                       const YAML::Node& processor_args,
-                      MultiInstanceTokenizer* tokenizer) {
-  VIT::Init(path, worker_tp, device, trt_args, processor_args, tokenizer);
+                      MultiInstanceTokenizer* tokenizer,
+                      bool kv_cache_reuse) {
+  VIT::Init(path, worker_tp, device, trt_args, processor_args, tokenizer, kv_cache_reuse);
   if (processor_args["min_pixels"] && !processor_args["min_pixels"].IsNull() &&
       processor_args["min_pixels"].IsScalar()) {
     min_pixels_ = processor_args["min_pixels"].as<int32_t>();
@@ -810,7 +811,7 @@ VitModelInputType Qwen2vlVIT::Preprocess(const std::vector<std::vector<char>>& i
 }
 
 std::tuple<PtuningEmbeddingTableType, std::optional<tensorrt_llm::executor::MropeConfig>> Qwen2vlVIT::Postprocess(
-  VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids) {
+  VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids, uint64_t img_hash) {
   auto stream = std::make_shared<tensorrt_llm::runtime::CudaStream>();
   auto manager = tensorrt_llm::runtime::BufferManager{std::move(stream)};
 
@@ -818,7 +819,8 @@ std::tuple<PtuningEmbeddingTableType, std::optional<tensorrt_llm::executor::Mrop
   auto img_features_tensor = executor::detail::ofITensor(img_features);
 
   const auto& concat_cos_sin = model_out[1].second->tensor;
-  auto concat_cos_sin_tensor = executor::Tensor::pooledPinned(executor::DataType::kFP32, {concat_cos_sin->getShape().d[1]});
+  auto concat_cos_sin_tensor =
+    executor::Tensor::pooledPinned(executor::DataType::kFP32, {concat_cos_sin->getShape().d[1]});
   TLLM_CUDA_CHECK(cudaMemcpyAsync(static_cast<char*>(concat_cos_sin_tensor.getData()), concat_cos_sin->data(),
                                   concat_cos_sin_tensor.getSizeInBytes(), cudaMemcpyDeviceToHost,
                                   manager.getStream().get()));
@@ -837,8 +839,18 @@ std::tuple<PtuningEmbeddingTableType, std::optional<tensorrt_llm::executor::Mrop
                                                << ", size: " << concat_cos_sin_tensor.getSizeInBytes());
   CLOG4(INFO, "mrope_position_deltas_out_cpu: " << mrope_position_deltas_out_cpu);
 #endif
-  return {executor::PromptTuningConfig(std::move(img_features_tensor), std::nullopt),
-          executor::MropeConfig(std::move(concat_cos_sin_tensor), int32_t(mrope_position_deltas_out_cpu))};
+
+  if (token_ids.empty()) {
+    token_ids = tokenizer_->Encode(prompt);
+  }
+
+  if (kv_cache_reuse_) {
+    return {executor::PromptTuningConfig(std::move(img_features_tensor), PrepareExtraIds(img_hash, token_ids)),
+            executor::MropeConfig(std::move(concat_cos_sin_tensor), int32_t(mrope_position_deltas_out_cpu))};
+  } else {
+    return {executor::PromptTuningConfig(std::move(img_features_tensor), std::nullopt),
+            executor::MropeConfig(std::move(concat_cos_sin_tensor), int32_t(mrope_position_deltas_out_cpu))};
+  }
 }
 
 std::tuple<PtuningEmbeddingTableType, MropeConfType> Qwen2vlVIT::Encode(const std::vector<std::string>& img_urls,
@@ -891,7 +903,8 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> Qwen2vlVIT::Encode(const st
     auto manager = tensorrt_llm::runtime::BufferManager{std::move(stream)};
 
     const auto& concat_cos_sin = outputs[0].second->tensor;
-    auto concat_cos_sin_tensor = executor::Tensor::pooledPinned(executor::DataType::kFP32, {concat_cos_sin->getShape().d[1]});
+    auto concat_cos_sin_tensor =
+      executor::Tensor::pooledPinned(executor::DataType::kFP32, {concat_cos_sin->getShape().d[1]});
     TLLM_CUDA_CHECK(cudaMemcpyAsync(static_cast<char*>(concat_cos_sin_tensor.getData()), concat_cos_sin->data(),
                                     concat_cos_sin_tensor.getSizeInBytes(), cudaMemcpyDeviceToHost,
                                     manager.getStream().get()));
@@ -926,17 +939,32 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> Qwen2vlVIT::Encode(const st
     }
     auto get_images_end = GET_SYS_TIME_US();
 
-    // 2. Preprocess image data to vit trt model input.
+    // 2. Calc image hash parallel.
+    uint64_t hash = 0;
+    boost::latch hash_done(1);
+    if (kv_cache_reuse_) {
+      boost::asio::post(*worker_tp_, [&images_bytes, &hash, &hash_done] {
+        hash = CalImagesHash(images_bytes);
+        hash_done.count_down();
+      });
+    }
+
+    // 3. Preprocess image data to vit trt model input.
     VitModelInputType model_inp = Preprocess(images_bytes, prompt, token_ids);
     auto preprocess_end = GET_SYS_TIME_US();
 
-    // 3. Vit model trt infer.
+    // 4. Vit model trt infer.
     VitModelOutputType outputs;
     inferer_->Infer(model_inp, outputs);
     auto infer_end = GET_SYS_TIME_US();
 
-    // 4. Postprocess vit trt model output to trtllm ptuning embedding table.
-    auto out = Postprocess(outputs, prompt, token_ids);
+    if (kv_cache_reuse_) {
+      // Wait for hash calc done.
+      hash_done.wait();
+    }
+
+    // 5. Postprocess vit trt model output to trtllm ptuning embedding table.
+    auto out = Postprocess(outputs, prompt, token_ids, hash);
     auto postprocess_end = GET_SYS_TIME_US();
 
 #if VIT_DBG

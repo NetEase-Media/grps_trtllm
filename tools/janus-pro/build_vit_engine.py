@@ -50,7 +50,7 @@ class ONNX_TRT:
         prepare_inputs = vl_chat_processor(
             conversations=conversation, images=pil_images, force_batchify=True
         ).to(device)
-        images = rearrange(prepare_inputs.pixel_values, "b n c h w -> (b n) c h w")
+        images = rearrange(prepare_inputs.pixel_values, "b n c h w -> (b n) c h w").to(str_dtype_to_torch(dtype))
 
         print('images shape:', images.shape)
         torch.onnx.export(vision_model,

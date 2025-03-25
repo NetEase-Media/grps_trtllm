@@ -94,11 +94,6 @@ executor::KvCacheConfig TrtLlmModelInstance::GetKvCacheConfigFromParams() {
     CLOG4(WARN, "enable_kv_cache_reuse is not specified, will be set to false");
   }
 
-  if (enable_kv_cache_reuse && vit_ != nullptr) {
-    CLOG4(WARN, "Not support enable_kv_cache_reuse for vLLM now, will be set to false");
-    enable_kv_cache_reuse = false;
-  }
-
   std::optional<float> cross_kv_cache_fraction = std::nullopt;
   try {
     cross_kv_cache_fraction = model_state_->GetParameter<float>("cross_kv_cache_fraction");
@@ -131,7 +126,6 @@ executor::KvCacheConfig TrtLlmModelInstance::GetKvCacheConfigFromParams() {
   }
 
   tensorrt_llm::runtime::RuntimeDefaults runtime_defaults(max_attention_window_vec, sink_token_length);
-
   return executor::KvCacheConfig(enable_kv_cache_reuse, max_tokens_in_paged_kv_cache, max_attention_window_vec,
                                  sink_token_length, kv_cache_free_gpu_mem_fraction, kv_cache_host_memory_bytes,
                                  kv_cache_onboard_blocks, cross_kv_cache_fraction, secondary_offload_min_priority,
@@ -586,7 +580,8 @@ void TrtLlmModelInstance::EnqueueAndWait(GrpsContext& grps_ctx, const std::strin
                                                                               &promise,
                                                                               {},
                                                                               0,
-                                                                              begin_time_us});
+                                                                              begin_time_us,
+                                                                              0});
   }
 
   future.wait();
@@ -652,6 +647,10 @@ void TrtLlmModelInstance::WaitForResponse() {
         continue;
       }
 
+      if (grps_ctx->IfStreaming() && request_data->first_token_time_us == 0) {
+        request_data->first_token_time_us = GET_SYS_TIME_US();
+      }
+
       if (is_final) {
         if (grps_ctx->IfStreaming()) {
           if (!error.empty()) {
@@ -686,16 +685,24 @@ void TrtLlmModelInstance::WaitForResponse() {
         }
 
         uint64_t finish_time_us = GET_SYS_TIME_US();
-        CLOG4(INFO, "Finished request: " << request_data->trtllm_req_id << ", model: " << request_data->model
-                                         << ", if func call: " << request_data->func_call
-                                         << ", if streaming: " << grps_ctx->IfStreaming()
-                                         << ", input tokens count: " << request_data->input_tokens_size
-                                         << ", output tokens count: " << request_data->output_tokens_size
-                                         << ", total tokens count: "
-                                         << request_data->input_tokens_size + request_data->output_tokens_size
-                                         << ", used time: " << (finish_time_us - request_data->begin_time_us) / 1000
-                                         << "ms");
-
+        if (grps_ctx->IfStreaming()) {
+          CLOG4(INFO, "Finished request: "
+                        << request_data->trtllm_req_id << ", model: " << request_data->model << ", if func call: "
+                        << request_data->func_call << ", if streaming: " << grps_ctx->IfStreaming()
+                        << ", input tokens count: " << request_data->input_tokens_size
+                        << ", output tokens count: " << request_data->output_tokens_size << ", total tokens count: "
+                        << request_data->input_tokens_size + request_data->output_tokens_size << ", first token time: "
+                        << (request_data->first_token_time_us - request_data->begin_time_us) / 1000 << "ms"
+                        << ", total used time: " << (finish_time_us - request_data->begin_time_us) / 1000 << "ms");
+        } else {
+          CLOG4(INFO, "Finished request: "
+                        << request_data->trtllm_req_id << ", model: " << request_data->model << ", if func call: "
+                        << request_data->func_call << ", if streaming: " << grps_ctx->IfStreaming()
+                        << ", input tokens count: " << request_data->input_tokens_size
+                        << ", output tokens count: " << request_data->output_tokens_size << ", total tokens count: "
+                        << request_data->input_tokens_size + request_data->output_tokens_size
+                        << ", used time: " << (finish_time_us - request_data->begin_time_us) / 1000 << "ms");
+        }
         // Clean up request data and notify the waiting thread
         {
           std::lock_guard<std::mutex> lock(trtllm_request_id_to_request_data_mutex_);

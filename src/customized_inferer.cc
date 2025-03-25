@@ -159,12 +159,20 @@ void TrtllmInferer::Load() {
     vit_processor_args = model_state_->GetModelConfig()["vit_processor_args"];
   } catch (const std::exception& e) {
   }
+  bool enable_kv_cache_reuse = false;
+  try {
+    enable_kv_cache_reuse = model_state_->GetParameter<bool>("enable_kv_cache_reuse");
+  } catch (std::exception const& e) {
+    // If parameter is not specified, just ignore
+    CLOG4(WARN, "enable_kv_cache_reuse is not specified, will be set to false");
+  }
   if (!vit_type.empty()) {
     vit_ = VITFactory::CreateVIT(vit_type);
     if (vit_ == nullptr) {
       throw InfererException("Unsupported vit type: " + vit_type);
     }
-    vit_->Init(vit_path, vit_worker_tp, "gpu:0", vit_trt_args, vit_processor_args, tokenizer_.get());
+    vit_->Init(vit_path, vit_worker_tp, "gpu:0", vit_trt_args, vit_processor_args, tokenizer_.get(),
+               enable_kv_cache_reuse);
     if (GlobalConfig::Instance().mpi().world_rank == 0) { // Only rank 0 load vit when using MPI.
       vit_->Load();
     }

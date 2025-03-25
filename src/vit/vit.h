@@ -53,7 +53,8 @@ public:
                     const std::string& device,
                     const YAML::Node& trt_args,
                     const YAML::Node& processor_args,
-                    MultiInstanceTokenizer* tokenizer);
+                    MultiInstanceTokenizer* tokenizer,
+                    bool kv_cache_reuse = false);
 
   // Load the vit trt model.
   virtual void Load();
@@ -93,19 +94,28 @@ public:
    * @param model_out: output of vit trt model will be postprocessed.
    * @param prompt: prompt may be changed when vit encoding.
    * @param token_ids: token ids may generated when vit.
+   * @param img_hash: hash of images.
    * @return vit embeddings that will be used as trtllm ptuning embedding table, and mrope config if need or nullopt if
    * not.
    */
-  virtual std::tuple<PtuningEmbeddingTableType, MropeConfType> Postprocess(
-    VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids) = 0;
+  virtual std::tuple<PtuningEmbeddingTableType, MropeConfType> Postprocess(VitModelOutputType& model_out,
+                                                                           std::string& prompt,
+                                                                           tensorrt_llm::executor::VecTokens& token_ids,
+                                                                           uint64_t img_hash) = 0;
 
 protected:
   std::string type_name_;
   std::unique_ptr<TrtModelInferer> inferer_;
   std::unique_ptr<boost::asio::thread_pool> worker_tp_; // TP used to get image, preprocessing, postprocessing...
   YAML::Node processor_args_;
+  bool kv_cache_reuse_; // whether enable kv cache reuse.
 
   MultiInstanceTokenizer* tokenizer_;
+
+  static uint64_t CalImagesHash(const std::vector<std::vector<char>>& bytes);
+
+  std::optional<tensorrt_llm::executor::VecTokenExtraIds> PrepareExtraIds(
+    uint64_t hash, const tensorrt_llm::executor::VecTokens& token_ids);
 };
 
 class VITFactory {

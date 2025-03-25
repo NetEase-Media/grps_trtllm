@@ -5,13 +5,14 @@ import io
 import json
 import mmap
 import os
-import random
-import shutil
 import sys
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
+import numpy as np
 import requests
+import xxhash
 from PIL import Image
 
 # Add src dir to sys.path
@@ -52,6 +53,7 @@ class YourConverter(Converter):
         self.shm_lock = []
         self.cur_shm_idx = 0
         self.cur_shm_idx_lock = threading.Lock()
+        self.hash_caculator = ThreadPoolExecutor()
 
     def init(self, path=None, args=None):
         """
@@ -89,6 +91,52 @@ class YourConverter(Converter):
 
         clogger.info('your converter init, path: {}, args: {}'.format(path, args))
 
+    @staticmethod
+    def __hash_calculate(images_data):
+        """
+        Calculate hash of images data.
+
+        Args:
+            images_data: Images data list.
+
+        Returns:
+            Hash of images data.
+
+        Raises:
+            Exception: If calculate hash failed, can raise exception and exception will be caught by server and return
+            error message to client.
+        """
+        # begin = time.time()
+        # calculate hash of images data.
+        if len(images_data) == 0:
+            clogger.warning('images data is empty, return empty hash.')
+            raise Exception('images data is empty.')
+
+        # calculate hash of images data.
+        hash = xxhash.xxh64()
+        for image_data in images_data:
+            if isinstance(image_data, Image.Image):
+                image_data = image_data.tobytes()
+            elif isinstance(image_data, bytes):
+                pass
+            else:
+                raise Exception('Invalid image data type: {}'.format(type(image_data)))
+            hash.update(image_data)
+
+        hash_value = hash.intdigest()
+
+        def safe_uint64_to_int64(value):
+            value = np.uint64(value)
+            if value > np.iinfo(np.int64).max:
+                value -= np.uint64(1) << np.uint64(64)
+            return np.int64(value)
+
+        hash_value = safe_uint64_to_int64(hash_value)
+
+        # clogger.info('calculate hash cost: {:.2f}us, hash: {}'.format(
+        #     (time.time() - begin) * 1e6, hash_value))
+        return hash_value
+
     def preprocess(self, inp: GrpsMessage, context: GrpsContext):
         """
         Preprocess.
@@ -104,14 +152,17 @@ class YourConverter(Converter):
             Exception: If preprocess failed, can raise exception and exception will be caught by server and return error
             message to client.
         """
-        # msgs = [{'role': 'user', 'content': [image_url, question]}]
+        # msgs = {"msgs": [{'role': 'user', 'content': [image_url, question]}], "calc_hash": true}
         # clogger.info('input: {}'.format(inp))
         json_body = json.loads(inp.str_data)
         if len(json_body) == 0:
             raise Exception('The input message list is empty.')
 
+        calc_hash = json_body.get('calc_hash', False)
+
         # download image and load.
-        for msg in json_body:
+        images_data = []
+        for msg in json_body["msgs"]:
             if msg['role'] == 'user':
                 if isinstance(msg['content'], str):
                     pass
@@ -135,24 +186,29 @@ class YourConverter(Converter):
                             image_url = content.get('image_url', {}).get('url')
                             if image_url.startswith('http://') or image_url.startswith('https://'):
                                 image = download_image(image_url)
-                                msg['content'][i] = Image.open(io.BytesIO(image)).convert('RGB')
+                                image_data = Image.open(io.BytesIO(image)).convert('RGB')
                             elif image_url.startswith('file://'):
                                 image_path = image_url[7:]
                                 if not os.path.exists(image_path):
                                     raise Exception('image file not exists: {}'.format(image_path))
-                                msg['content'][i] = Image.open(image_path).convert('RGB')
+                                image_data = Image.open(image_path).convert('RGB')
                             elif image_url.startswith('data:image/') and image_url.find(';base64,') != -1:
                                 base64_str = image_url.split(';base64,')[1]
                                 image_data = base64.b64decode(base64_str)
-                                msg['content'][i] = Image.open(io.BytesIO(image_data)).convert('RGB')
+                                image_data = Image.open(io.BytesIO(image_data)).convert('RGB')
                             else:
                                 raise Exception('Invalid image url: {}'.format(image_url))
+                            msg['content'][i] = image_data
+                            if calc_hash:
+                                images_data.append(image_data)
                         else:
                             raise Exception('Invalid user content type: {}'.format(content.get('type')))
                 else:
                     raise Exception('Invalid content type: {}'.format(type(msg['content'])))
 
-        return json_body
+        if calc_hash:
+            context.put_user_data('images_data', images_data)
+        return json_body['msgs']
 
     def postprocess(self, inp, context: GrpsContext) -> GrpsMessage:
         """
@@ -195,6 +251,11 @@ class YourConverter(Converter):
         # clogger.info(f'input_ids: {input_ids}')
         # clogger.info(f'tensor: {tensor}')
 
+        images_data = context.get_user_data('images_data')
+        hash_future = None
+        if images_data is not None:
+            hash_future = self.hash_caculator.submit(self.__hash_calculate, images_data)
+
         tensor = tensor.cpu()
         tensor_size = tensor.numel() * tensor.element_size()
         if tensor_size > self.shm_size:
@@ -226,6 +287,14 @@ class YourConverter(Converter):
             tensor_bytes = bytearray((ctypes.c_ubyte * tensor_size).from_address(tensor.data_ptr()))
             self.shm_mmap[shm_idx][1:tensor_size + 1] = tensor_bytes
 
+        hash_value = 0
+        if hash_future is not None:
+            try:
+                hash_value = hash_future.result()
+            except Exception as e:
+                clogger.warning(f'Hash calculate failed: {e}')
+                raise Exception(f'Hash calculate failed: {e}')
+
         out = GrpsMessage()
         # gtensor = GenericTensor(name='img_embeddings')
         # gtensor.shape.extend(inp.shape)
@@ -247,6 +316,11 @@ class YourConverter(Converter):
         gtensor.shape.extend([len(tensor.shape)])
         gtensor.dtype = DataType.DT_INT32
         gtensor.flat_int32.extend(tensor.shape)
+        out.gtensors.tensors.append(gtensor)
+        gtensor = GenericTensor(name='hash')
+        gtensor.shape.extend([1])
+        gtensor.dtype = DataType.DT_INT64
+        gtensor.flat_int64.append(hash_value)
         out.gtensors.tensors.append(gtensor)
 
         return out

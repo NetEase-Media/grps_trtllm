@@ -25,19 +25,34 @@
 
 [grps](https://github.com/NetEase-Media/grps)接入[trtllm](https://github.com/NVIDIA/TensorRT-LLM)
 实现更高性能的、支持```OpenAI```模式访问、支持```Ai-agent```以及多模态的```LLM```
-服务，相比较[triton tensorrtllm_backend](https://github.com/triton-inference-server/tensorrtllm_backend)
-实现服务。有如下优势：
+服务：
 
-* 通过纯```C++```实现完整```LLM```服务。包含```tokenizer```部分，支持`huggingface`, `sentencepiece`tokenizer。
-* 不存在```triton_server <--> tokenizer_backend <--> trtllm_backend```之间的进程间通信。
+* 通过纯```C++```实现完整```LLM```服务，包含```tokenizer```（支持`huggingface`, `sentencepiece`tokenizer）、```llm推理```
+  、```vit```等部分。
 * 通过```grps```的自定义```http```功能实现```OpenAI```接口协议，支持```chat```和```function call```模式。
 * 支持扩展不同```LLM```的```prompt```构建风格以及生成结果的解析风格，以实现不同```LLM```的```chat```
   和```function call```模式，支持[llama-index](https://github.com/run-llama/llama_index)```ai-agent```。
 * 通过集成```tensorrt```推理后端与```opencv```库，支持多模态```LLM```。
-* 通过测试，```grps-trtllm```相比较```triton-trtllm```性能有稳定的提升。
+* 支持```inflight batching```、```multi-gpu```、```paged attention```、```kv-cache reuse```等```TensorRT-LLM```推理加速技术。
+* 相比较[triton tensorrtllm_backend](https://github.com/triton-inference-server/tensorrtllm_backend),
+  不存在```triton_server <--> tokenizer_backend <--> trtllm_backend```之间的进程间通信，纯C++实现，性能有稳定的提升。
 
 欢迎各位使用和提[issue](https://github.com/NetEase-Media/grps_trtllm/issues)
 ，欢迎提交[pr](https://github.com/NetEase-Media/grps_trtllm/pulls)支持新的模型，感谢star⭐️。也可以添加微信沟通：zhaocc1218。
+
+## 文档教程
+
+* [快速开始](#快速开始)
+* [模型列表](#模型列表)
+* [采样参数配置](docs/sampling.md)
+* [调度策略配置](docs/scheduler.md)
+* [前缀缓存重用](docs/kv_reuse.md)
+* [启动gradio服务](docs/gradio.md)
+* [docker部署](docs/docker.md)
+* [性能比较](docs/performance.md)
+* [镜像列表](docs/images.md)
+* [压测](docs/benchmark.md)
+* [TODO](#todo)
 
 ## 模型列表
 
@@ -58,7 +73,7 @@
 | Phi-3, Phi-3.5                                                           | phi3        | ✅    | ❌             | [phi3](docs%2Fphi3.md)                               |
 | gemma-3(experimental)                                                    | gemma3      | ✅    | ❌             | [gemma-3](docs%2Fgemma3.md)                          |
 
-支持的多模态LLM：
+支持的多模态LLM（少部分模型vit无法通过纯c++实现）：
 
 | supported model                               | llm_styler          | vit             | vit_type | chat | function_call | doc                                          |
 |-----------------------------------------------|---------------------|-----------------|----------|------|---------------|----------------------------------------------|
@@ -72,18 +87,6 @@
 | olmOCR                                        | qwen2vl             | qwen2vl         | c++      | ✅    | ❌             | [olm-ocr](docs%2Folm-ocr.md)                 |
 | Qwen2-VL-Instruct                             | qwen2vl             | qwen2vl         | c++      | ✅    | ❌             | [qwen2vl](docs%2Fqwen2vl.md)                 |
 | Qwen-VL-Chat<br>Qwen-VL                       | qwenvl              | qwenvl          | c++      | ✅    | ❌             | [qwenvl](docs%2Fqwenvl.md)                   |
-
-## 文档教程
-
-* [快速开始](#快速开始)
-* [采样参数配置](docs/sampling.md)
-* [启动gradio服务](docs/gradio.md)
-* [调度策略](docs/scheduler.md)
-* [docker部署](docs/docker.md)
-* [性能比较](docs/performance.md)
-* [镜像列表](docs/images.md)
-* [benchmark](docs/benchmark.md)
-* [TODO](#todo)
 
 ## 工程结构
 

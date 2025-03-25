@@ -24,14 +24,17 @@ void VIT::Init(const std::string& path,
                const std::string& device,
                const YAML::Node& trt_args,
                const YAML::Node& processor_args,
-               MultiInstanceTokenizer* tokenizer) {
+               MultiInstanceTokenizer* tokenizer,
+               bool kv_cache_reuse) {
   inferer_ = std::make_unique<TrtModelInferer>();
   worker_tp_ = std::make_unique<boost::asio::thread_pool>(worker_tp);
   inferer_->Init(path, device, trt_args);
   processor_args_ = processor_args;
   tokenizer_ = tokenizer;
+  kv_cache_reuse_ = kv_cache_reuse;
   CLOG4(INFO, "VIT model initialized, type: " << type_name_ << ", worker_tp" << worker_tp << ", path: " << path
-                                              << ", trt_args: " << trt_args << ", processor_args: " << processor_args);
+                                              << ", kv_cache_reuse: " << kv_cache_reuse << ", trt_args: " << trt_args
+                                              << ", processor_args: " << processor_args);
 }
 
 void VIT::Load() {
@@ -99,17 +102,32 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> VIT::Encode(const std::vect
   std::vector<std::vector<char>> images_bytes = GetImages(img_urls);
   auto get_images_end = GET_SYS_TIME_US();
 
-  // 2. Preprocess image data to vit trt model input.
+  // 2. Calc image hash parallel.
+  uint64_t hash = 0;
+  boost::latch hash_done(1);
+  if (kv_cache_reuse_) {
+    boost::asio::post(*worker_tp_, [&images_bytes, &hash, &hash_done] {
+      hash = CalImagesHash(images_bytes);
+      hash_done.count_down();
+    });
+  }
+
+  // 3. Preprocess image data to vit trt model input.
   VitModelInputType model_inp = Preprocess(images_bytes, prompt, token_ids);
   auto preprocess_end = GET_SYS_TIME_US();
 
-  // 3. Vit model trt infer.
+  // 4. Vit model trt infer.
   VitModelOutputType outputs;
   inferer_->Infer(model_inp, outputs);
   auto infer_end = GET_SYS_TIME_US();
 
-  // 4. Postprocess vit trt model output to trtllm ptuning embedding table.
-  auto out = Postprocess(outputs, prompt, token_ids);
+  if (kv_cache_reuse_) {
+    // Wait for hash calc done.
+    hash_done.wait();
+  }
+
+  // 5. Postprocess vit trt model output to trtllm ptuning embedding table.
+  auto out = Postprocess(outputs, prompt, token_ids, hash);
   auto postprocess_end = GET_SYS_TIME_US();
 
 #if VIT_DBG
@@ -121,6 +139,42 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> VIT::Encode(const std::vect
 #endif
 
   return out;
+}
+
+uint64_t VIT::CalImagesHash(const std::vector<std::vector<char>>& bytes) {
+#if VIT_DBG
+  auto begin = GET_SYS_TIME_US();
+#endif
+
+  uint64_t hash = 0;
+  hash = utils::Hash(bytes);
+
+#if VIT_DBG
+  auto end = GET_SYS_TIME_US();
+  CLOG4(INFO, "VIT model hash images success, hash: " << hash << ", hash_time: " << end - begin << " us");
+#endif
+  return hash;
+}
+
+std::optional<tensorrt_llm::executor::VecTokenExtraIds> VIT::PrepareExtraIds(
+  uint64_t hash, const tensorrt_llm::executor::VecTokens& token_ids) {
+#if VIT_DBG
+  auto begin = GET_SYS_TIME_US();
+#endif
+
+  auto extra_ids = std::make_optional<tensorrt_llm::executor::VecTokenExtraIds>(token_ids.size(), 0);
+  for (size_t i = 0; i < token_ids.size(); ++i) {
+    if (token_ids[i] >= tokenizer_->img_begin_token_id()) {
+      (*extra_ids)[i] = hash;
+    }
+  }
+
+#if VIT_DBG
+  auto end = GET_SYS_TIME_US();
+  CLOG4(INFO, "VIT model prepare extra ids success, hash: " << hash << ", extra_ids size: " << extra_ids->size()
+                                                            << ", prepare_extra_ids_time: " << end - begin << " us");
+#endif
+  return extra_ids;
 }
 
 std::unique_ptr<VIT> VITFactory::CreateVIT(const std::string& type_name) {

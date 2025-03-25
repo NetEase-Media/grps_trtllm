@@ -6,6 +6,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include <boost/asio/post.hpp>
+#include <boost/thread/latch.hpp>
 #include <cstring>
 
 #include "grps_cli.h"
@@ -20,7 +22,8 @@ void InternVideo25VIT::Init(const std::string& path,
                             const std::string& device,
                             const YAML::Node& trt_args,
                             const YAML::Node& processor_args,
-                            netease::grps::MultiInstanceTokenizer* tokenizer) {
+                            netease::grps::MultiInstanceTokenizer* tokenizer,
+                            bool kv_cache_reuse) {
   grps_cli_ = std::make_unique<GrpsCli>("intern-video2.5");
   grps_cli_->Init(processor_args);
 
@@ -46,7 +49,14 @@ void InternVideo25VIT::Init(const std::string& path,
   } else {
     throw VitException("dtype is required.");
   }
-  CLOG4(INFO, "InternVideo25VIT initialized, processor_args: " << processor_args);
+
+  worker_tp_ = std::make_unique<boost::asio::thread_pool>(worker_tp);
+  kv_cache_reuse_ = kv_cache_reuse;
+  tokenizer_ = tokenizer;
+
+  CLOG4(INFO, "InternVideo25VIT initialized, kv_cache_reuse: "
+                << kv_cache_reuse_ << ", max_frames: " << max_frames_ << ", shm_size: " << shm_size_ << ", dtype: "
+                << int(dtype_) << ", worker_tp: " << worker_tp << ", processor_args: " << processor_args);
 }
 
 void InternVideo25VIT::Load() {}
@@ -69,6 +79,7 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> InternVideo25VIT::Encode(
   }
   request.mutable_gmap()->mutable_s_s()->insert({"video_url", video_urls[0]});
   request.mutable_gmap()->mutable_s_i32()->insert({"max_frames", max_frames_});
+  request.mutable_gmap()->mutable_s_i32()->insert({"calc_hash", kv_cache_reuse_ ? 1 : 0});
   grps_cli_->Predict(request, response);
   if (response.status().status() != ::grps::protos::v1::Status::SUCCESS) {
     std::string err = utils::Rstrip(response.status().msg());
@@ -147,14 +158,26 @@ std::tuple<PtuningEmbeddingTableType, MropeConfType> InternVideo25VIT::Encode(
   close(fd);
   auto e_tensor = executor::detail::ofITensor(named_tensor.tensor);
 
+  // 6. Get image hash.
+  uint64_t hash = response.gtensors().tensors().Get(3).flat_int64().Get(0);
+
+  if (token_ids.empty()) {
+    token_ids = tokenizer_->Encode(prompt);
+  }
+
 #if VIT_DBG
   auto end = GET_SYS_TIME_US();
   CLOG4(INFO, "shm_path: " << shm_path << ", tensor_shape: " << tensor_shape[0] << ", " << tensor_shape[1] << ", "
-                           << tensor_shape[2]);
+                           << tensor_shape[2] << ", hash: " << hash);
   CLOG4(INFO, "InternVideo25VIT encode success, type: " << type_name_ << ", video_urls size: " << video_urls.size()
                                                         << ", cost: " << end - begin << " us");
 #endif
-  return {executor::PromptTuningConfig(std::move(e_tensor)), std::nullopt};
+
+  if (kv_cache_reuse_) {
+    return {executor::PromptTuningConfig(std::move(e_tensor), PrepareExtraIds(hash, token_ids)), std::nullopt};
+  } else {
+    return {executor::PromptTuningConfig(std::move(e_tensor), std::nullopt), std::nullopt};
+  }
 }
 
 VitModelInputType InternVideo25VIT::Preprocess(const std::vector<std::vector<char>>& images_bytes,
@@ -164,7 +187,10 @@ VitModelInputType InternVideo25VIT::Preprocess(const std::vector<std::vector<cha
 }
 
 std::tuple<PtuningEmbeddingTableType, MropeConfType> InternVideo25VIT::Postprocess(
-  netease::grps::VitModelOutputType& model_out, std::string& prompt, tensorrt_llm::executor::VecTokens& token_ids) {
+  netease::grps::VitModelOutputType& model_out,
+  std::string& prompt,
+  tensorrt_llm::executor::VecTokens& token_ids,
+  uint64_t img_hash) {
   throw VitException("Not implemented.");
 }
 

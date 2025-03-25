@@ -37,10 +37,11 @@ python3 ./third_party/TensorRT-LLM/examples/qwen/convert_checkpoint.py \
 # 构建llm引擎，根据具体显存情况可以配置不同。
 # 这里设置支持最大batch_size为4，即支持4个并发同时推理，超过4个排队处理。
 rm -rf /tmp/olmOCR-7B-0225-preview/trt_engines
-trtllm-build --checkpoint_dir /tmp/olmOCR-7B-0225-preview//tllm_checkpoint/ \
+trtllm-build --checkpoint_dir /tmp/olmOCR-7B-0225-preview/tllm_checkpoint/ \
 --output_dir /tmp/olmOCR-7B-0225-preview/trt_engines \
 --gemm_plugin=bfloat16 \
 --gpt_attention_plugin=bfloat16 \
+--use_paged_context_fmha enable \
 --max_batch_size=4 \
 --max_input_len=30720 --max_seq_len=32768 \
 --max_num_tokens 32768 \

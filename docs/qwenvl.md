@@ -38,7 +38,7 @@ python3 ./tools/qwenvl/convert_checkpoint.py --model_dir /tmp/Qwen-VL-Chat/ \
 rm -rf /tmp/Qwen-VL-Chat/trt_engines/
 trtllm-build --checkpoint_dir /tmp/Qwen-VL-Chat/tllm_checkpoint/ \
 --output_dir /tmp/Qwen-VL-Chat/trt_engines/ \
---gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable \
+--gemm_plugin bfloat16 --max_batch_size 2 --paged_kv_cache enable --use_paged_context_fmha enable \
 --max_input_len 30720 --max_seq_len 32768 --max_num_tokens 32768 --max_multimodal_len 13312
 
 # 构建vit引擎，设置--maxBS为26可以同时处理26个图片。

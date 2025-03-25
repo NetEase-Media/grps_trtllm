@@ -41,16 +41,20 @@ def grpc_request(server, image_url, prompt):
     #     }
     # ]
     msgs = \
-        [
-            {
-                'role': 'user',
-                'content':
-                    [
-                        {'type': 'image_url', 'image_url': {'url': image_url}},
-                        {'type': 'text', 'text': prompt}
-                    ]
-            }
-        ]
+        {
+            "msgs":
+                [
+                    {
+                        'role': 'user',
+                        'content':
+                            [
+                                {'type': 'image_url', 'image_url': {'url': image_url}},
+                                {'type': 'text', 'text': prompt}
+                            ]
+                    }
+                ],
+            "calc_hash": True
+        }
     request.str_data = json.dumps(msgs).encode('utf-8')
     response = client.Predict(request)
     end = time.time()
@@ -76,5 +80,4 @@ if __name__ == '__main__':
         print('Usage: python3 grpc_client.py <server> <image_url> <prompt>')
         sys.exit(1)
 
-    while True:
-        grpc_request(sys.argv[1], sys.argv[2], sys.argv[3])
+    grpc_request(sys.argv[1], sys.argv[2], sys.argv[3])

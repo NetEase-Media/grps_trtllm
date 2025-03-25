@@ -1,5 +1,9 @@
 # 重要更新
 
+* 2025-03-25
+    * 通过对图片hash的方式支持多模态的kv cache reuse。
+    * grps1.1.0_cuda12.6_cudnn9.6_trtllm0.16.0_py3.12镜像更新，增加了cityhash的依赖。
+
 * 2025-03-22
     * 支持MiniCPM-V-2_6。
 
