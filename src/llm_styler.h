@@ -456,6 +456,22 @@ public:
           false,
           "",
           true) {}
+
+  Internvl25Styler(std::string style_name,
+                   std::string system_prompt,
+                   const std::vector<std::string>& roles,
+                   bool support_func_call,
+                   std::string func_call_observation_words,
+                   bool add_generation_prompt = false,
+                   std::string tool_prompt_pre = "",
+                   std::string tool_prompt_post = "")
+      : LLMStyler(std::move(style_name),
+                  std::move(system_prompt),
+                  roles,
+                  support_func_call,
+                  std::move(func_call_observation_words),
+                  add_generation_prompt) {}
+
   ~Internvl25Styler() override = default;
 
   /**
@@ -512,6 +528,20 @@ public:
                                 int64_t req_id,
                                 rapidjson::GenericValue<rapidjson::UTF8<>>& message,
                                 rapidjson::MemoryPoolAllocator<>& allocator) override;
+};
+
+class Internvl3Styler : public Internvl25Styler {
+public:
+  Internvl3Styler()
+      : Internvl25Styler(
+          "internvl3",
+          "你是书生·万象，英文名是InternVL，是由上海人工智能实验室、清华大学及多家合作单位联合开发的多模态大语言模型。",
+          {"system", "user", "assistant"},
+          false,
+          "",
+          true) {}
+
+  ~Internvl3Styler() = default;
 };
 
 class QwenvlStyler : public LLMStyler {

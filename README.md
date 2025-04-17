@@ -77,6 +77,7 @@
 
 | supported model                               | llm_styler          | vit             | vit_type | chat | function_call | doc                                          |
 |-----------------------------------------------|---------------------|-----------------|----------|------|---------------|----------------------------------------------|
+| InternVL3                                     | internvl3           | internvl2       | c++      | ✅    | ❌             | [internvl3](docs%2Finternvl3.md)             |
 | MiniCPM-V-2_6                                 | minicpmv            | minicpmv        | py       | ✅    | ❌             | [minicpmv](docs%2Fminicpmv.md)               |
 | Janus-Pro                                     | janus-pro           | janus-pro       | c++      | ✅    | ❌             | [janus-pro](docs%2Fjanus-pro.md)             |
 | InternVideo2.5                                | intern-video2.5     | intern-video2.5 | py       | ✅    | ❌             | [intern-video2.5](docs%2Fintern-video2.5.md) |

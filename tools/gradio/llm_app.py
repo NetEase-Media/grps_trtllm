@@ -981,6 +981,20 @@ elif app_type == 'intern-video2.5':
     ],
                             title="intern-video2.5-grps-trtllm",
                             multimodal=True)
+elif app_type == 'internvl3':
+    demo = gr.ChatInterface(concurrency_limit=32, fn=internvl2_llm_fn, type="messages", examples=[
+        {"text": "你好，你是谁？"},
+        {"text": "解一下这道题：",
+         "files": [os.path.dirname(os.path.realpath(__file__)) + '/data/leetcode_205.png']},
+        {"text": "描述一下这两张图片：",
+         "files": [
+             'https://p6.itc.cn/q_70/images03/20230821/69b103277521450e89090a24df1327d7.jpeg',
+             'https://i0.hdslb.com/bfs/archive/dd8dfe1126b847e00573dbda617180da77a38a06.jpg']},
+        {"text": "描述一下这个视频：",
+         "files": [os.path.dirname(os.path.realpath(__file__)) + '/data/red-panda.mp4']},
+    ],
+                            title="internvl3-grps-trtllm",
+                            multimodal=True)
 elif app_type == 'qwenvl':
     if not os.path.exists("/tmp/Qwen-VL-Chat"):
         print("Please download the qwenvl to /tmp/Qwen-VL-Chat first.")
@@ -1062,7 +1076,8 @@ elif app_type == 'minicpmv':
                             multimodal=True)
 else:
     print('`app_type` only support `llm`(text llm) or `internvl2`(multi-modal) or `intern-video2.5(multi-modal)` or '
-          '`qwenvl`(multi-modal), `qwen2vl`(multi-modal), `deepseek-r1`(deepseek-r1 text llm), `qwq`(qwq text llm), '
+          ' `internvl3(multi-modal)` or `qwenvl`(multi-modal), `qwen2vl`(multi-modal),'
+          ' `deepseek-r1`(deepseek-r1 text llm), `qwq`(qwq text llm), '
           '`janus-pro`(multi-modal), `olm-ocr`(multi-modal).')
     exit(1)
 demo.launch(server_name='0.0.0.0', server_port=SERVER_PORT)

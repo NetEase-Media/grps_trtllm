@@ -12,6 +12,9 @@ python3 tools/gradio/llm_app.py llm 0.0.0.0:9997
 # 启动多模态聊天界面，使用internvl2多模态模型，支持视频输入，由于显存限制，视频默认只截取了8帧，且可能不支持比较大的分别率，可以根据实际情况进行调整。
 python3 tools/gradio/llm_app.py internvl2 0.0.0.0:9997
 
+# 启动多模态聊天界面，使用internvl3多模态模型，0.0.0.0:9997表示llm后端服务地址
+python3 tools/gradio/llm_app.py internvl3 0.0.0.0:9997
+
 # 启动多模态聊天界面，使用qwenvl多模态模型，支持输出检测框
 python3 tools/gradio/llm_app.py qwenvl 0.0.0.0:9997
 

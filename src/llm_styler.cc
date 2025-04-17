@@ -2579,6 +2579,8 @@ std::unique_ptr<LLMStyler> LLMStylerFactory::CreateLLMStyler(const std::string& 
     llm_styler = std::make_unique<Internvl25Styler>();
   } else if (llm_style == "intern-video2.5") {
     llm_styler = std::make_unique<InternVideo25Styler>();
+  } else if (llm_style == "internvl3") {
+    llm_styler = std::make_unique<Internvl3Styler>();
   } else if (llm_style == "qwenvl") {
     llm_styler = std::make_unique<QwenvlStyler>();
   } else if (llm_style == "qwen2vl") {
