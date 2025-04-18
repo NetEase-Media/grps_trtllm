@@ -1,6 +1,6 @@
 # InternVL3
 
-InternVL3多模态LLM模型的部署示例（暂不支持InternVL3-9B）。具体不同尺寸的vit和llm组合如下表格：
+InternVL3多模态LLM模型的部署示例。具体不同尺寸的vit和llm组合如下表格：
 
 |  Model Name   |                                       Vision Part                                       |                                 Language Part                                  |                          HF Link                          |
 |:-------------:|:---------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------:|:---------------------------------------------------------:|
@@ -38,7 +38,7 @@ pip install -r ./tools/internvl2/requirements.txt
 # 转换ckpt
 rm -rf /tmp/InternVL3-8B/tllm_checkpoint/
 python3 tools/internvl2/convert_qwen2_ckpt.py --model_dir /tmp/InternVL3-8B/ \
---output_dir /tmp/InternVL3-8B/tllm_checkpoint/ --dtype bfloat16
+--output_dir /tmp/InternVL3-8B/tllm_checkpoint/ --dtype bfloat16 --load_model_on_cpu
 
 # 构建llm引擎，根据具体显存情况可以配置不同。
 # 这里设置支持最大batch_size为2，即支持2个并发同时推理，超过两个排队处理。
@@ -61,9 +61,43 @@ python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL3
 
 ### 9B
 
-暂不支持
+```bash
+# 下载InternVL3-9B模型
+apt update && apt install git-lfs
+git lfs install
+git clone https://huggingface.co/OpenGVLab/InternVL3-9B /tmp/InternVL3-9B
+
+# 安装依赖
+pip install -r ./tools/internvl2/requirements.txt
+
+# 转换ckpt
+rm -rf /tmp/InternVL3-9B/tllm_checkpoint/
+python3 tools/internvl2/convert_internlm2_ckpt.py --model_dir /tmp/InternVL3-9B/ \
+--output_dir /tmp/InternVL3-9B/tllm_checkpoint/ --dtype bfloat16 --load_model_on_cpu
+
+# 构建llm引擎，根据具体显存情况可以配置不同。
+# 这里设置支持最大batch_size为2，即支持2个并发同时推理，超过两个排队处理。
+# 设置每个请求最多输入26个图片patch（InternVL2.5中每个图片根据不同的尺寸最多产生13个patch）。
+# 即：max_multimodal_len=4（max_batch_size） * 26（图片最多产生patch个数） * 256（每个patch对应256个token） = 26624
+# 设置max_input_len为30k，max_seq_len为32k（即默认最大输出为2k）。
+rm -rf /tmp/InternVL3-9B/trt_engines/
+trtllm-build --checkpoint_dir /tmp/InternVL3-9B/tllm_checkpoint/ \
+--output_dir /tmp/InternVL3-9B/trt_engines/ \
+--gemm_plugin bfloat16 --max_batch_size 4 --paged_kv_cache enable --use_paged_context_fmha enable \
+--max_input_len 30720 --max_seq_len 32768 --max_num_tokens 32768 --max_multimodal_len 26624
+
+# 构建vit引擎，设置--maxBS为26可以同时处理26个图片patch（InternVL2.5中每个图片根据不同的尺寸最多产生13个patch）。
+python3 tools/internvl2/build_vit_engine.py --pretrainedModelPath /tmp/InternVL3-9B \
+--imagePath ./data/frames/frame_0.jpg \
+--onnxFile /tmp/InternVL3-9B/vision_encoder_bfp16.onnx \
+--trtFile /tmp/InternVL3-9B/vision_encoder_bfp16.trt \
+--dtype bfloat16 --minBS 1 --optBS 13 --maxBS 26
+```
 
 ## 构建与部署
+
+9B尺寸部署需要使用[inference_internvl3-9B.yml](../conf/inference_internvl3-9B.yml)
+，其他尺寸参考[inference_internvl3.yml](../conf/inference_internvl3.yml)。
 
 ```bash
 # 构建
@@ -73,6 +107,7 @@ grpst archive .
 # 通过--inference_conf参数指定模型对应的inference.yml配置文件启动服务。
 # 如需修改服务端口，并发限制等，可以修改conf/server.yml文件，然后启动时指定--server_conf参数指定新的server.yml文件。
 # 注意如果使用多卡推理，需要使用mpi方式启动，--mpi_np参数为并行推理的GPU数量。
+# grpst start ./server.mar --inference_conf=conf/inference_internvl3-9B.yml
 grpst start ./server.mar --inference_conf=conf/inference_internvl3.yml
 
 # 查看服务状态
