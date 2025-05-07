@@ -147,6 +147,7 @@ private:
   std::unordered_set<std::string> bad_words_;
 
   executor::SamplingConfig def_sampling_config_;
+  bool enable_thinking_;
 
   executor::ModelType model_type_;
 

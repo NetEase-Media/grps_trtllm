@@ -50,6 +50,9 @@ public:
 private:
   tokenizers::Tokenizer* GetTokenizer();
 
+  // Fix tokenizer compatibility issue.
+  void FixCompatibilityIfNeed(std::string& blob);
+
   std::string type_;
   std::vector<std::unique_ptr<tokenizers::Tokenizer>> tokenizers_{};
   std::vector<std::unique_ptr<std::mutex>> tokenizers_mtxs_{};

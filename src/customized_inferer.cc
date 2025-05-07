@@ -194,6 +194,7 @@ void TrtllmInferer::Infer(const ::grps::protos::v1::GrpsMessage& input,
     }
 
     // Enqueue.
+    // CLOG4(INFO, "Request: " << ctx.http_controller()->request_attachment().to_string());
     trtllm_instance_->EnqueueAndWait(ctx, ctx.http_controller()->request_attachment().to_string());
   } catch (const std::exception& e) {
     if (ctx.IfStreaming()) {

@@ -30,28 +30,28 @@ uint64_t Hash(const std::vector<std::vector<char>>& bytes) {
   return static_cast<int64_t>(hash);
 }
 
-std::string Lstrip(const std::string& str) {
-  size_t start = str.find_first_not_of(" \t\n\r");
+std::string Lstrip(const std::string& str, const std::string& chars) {
+  size_t start = str.find_first_not_of(chars);
   if (start == std::string::npos) {
     return "";
   }
   return str.substr(start);
 }
 
-std::string Rstrip(const std::string& str) {
-  size_t end = str.find_last_not_of(" \t\n\r");
+std::string Rstrip(const std::string& str, const std::string& chars) {
+  size_t end = str.find_last_not_of(chars);
   if (end == std::string::npos) {
     return "";
   }
   return str.substr(0, end + 1);
 }
 
-std::string Strip(const std::string& str) {
-  size_t start = str.find_first_not_of(" \t\n\r");
+std::string Strip(const std::string& str, const std::string& chars) {
+  size_t start = str.find_first_not_of(chars);
   if (start == std::string::npos) {
     return "";
   }
-  size_t end = str.find_last_not_of(" \t\n\r");
+  size_t end = str.find_last_not_of(chars);
   return str.substr(start, end - start + 1);
 }
 
@@ -88,6 +88,35 @@ size_t ReplaceWorld(
     count--;
   }
   return pos;
+}
+
+std::string JsonAddSpaceAfterColonAndComma(const std::string& json) {
+  std::ostringstream result;
+  bool in_string = false;
+  bool escape = false;
+
+  for (size_t i = 0; i < json.length(); ++i) {
+    char c = json[i];
+    result << c;
+
+    if (in_string) {
+      if (escape) {
+        escape = false;
+      } else if (c == '\\') {
+        escape = true;
+      } else if (c == '"') {
+        in_string = false;
+      }
+    } else {
+      if (c == '"') {
+        in_string = true;
+      } else if ((c == ':' || c == ',') && (i + 1 < json.length()) && json[i + 1] != ' ') {
+        result << ' ';
+      }
+    }
+  }
+
+  return result.str();
 }
 
 template <>
@@ -547,7 +576,8 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   const std::unordered_set<std::string>& bad_words,
   size_t max_output_len,
   executor::ModelType model_type,
-  const executor::SamplingConfig& def_sampling_config) {
+  const executor::SamplingConfig& def_sampling_config,
+  bool enable_thinking) {
   rapidjson::Document json_body;
   json_body.Parse(http_body.c_str());
   if (json_body.HasParseError()) {
@@ -568,6 +598,9 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   // Prompt input tokens.
   if (json_body.HasMember("tools") && !llm_styler->support_func_call()) {
     throw std::invalid_argument("Function call is not supported for this llm.");
+  }
+  if (!json_body.HasMember("enable_thinking") && !enable_thinking) { // set default `enable_thinking` if not set.
+    json_body.AddMember("enable_thinking", false, json_body.GetAllocator());
   }
   auto [func_call, prompt, image_urls] = llm_styler->BuildPrompt(json_body);
 

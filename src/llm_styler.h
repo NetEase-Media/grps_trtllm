@@ -798,6 +798,62 @@ public:
                                 rapidjson::MemoryPoolAllocator<>& allocator) override;
 };
 
+class Qwen3Styler : public LLMStyler {
+public:
+  Qwen3Styler() : LLMStyler("qwen3", "", {"system", "user", "assistant"}, true, "", true) {
+    tool_prompt_pre_ =
+      "# Tools\n\nYou may call one or more functions to assist with the user query.\n\nYou are provided with function "
+      "signatures within <tools></tools> XML tags:\n<tools>";
+    tool_prompt_post_ =
+      "\n</tools>\n\nFor each function call, return a json object with function name and arguments within <tool_call>"
+      "</tool_call> XML tags:\n<tool_call>\n{\"name\": <function-name>, \"arguments\": <args-json-object>}\n"
+      "</tool_call>";
+  }
+  Qwen3Styler(std::string style_name,
+              std::string system_prompt,
+              const std::vector<std::string>& roles,
+              bool support_func_call,
+              std::string func_call_observation_words,
+              bool add_generation_prompt = false,
+              std::string tool_prompt_pre = "",
+              std::string tool_prompt_post = "")
+      : LLMStyler(std::move(style_name),
+                  std::move(system_prompt),
+                  roles,
+                  support_func_call,
+                  std::move(func_call_observation_words),
+                  add_generation_prompt) {
+    tool_prompt_pre_ = std::move(tool_prompt_pre);
+    tool_prompt_post_ = std::move(tool_prompt_post);
+  }
+  ~Qwen3Styler() override = default;
+
+  /**
+   * @brief Build prompt for model input from OpenAI interface json body request.
+   * @param json_body: Json body from client.
+   * @return <if_function_call, prompt, img_urls>: if_function_call is true if the prompt contains function call.
+   */
+  std::tuple<bool, std::string, std::vector<std::string>> BuildPrompt(const rapidjson::Document& json_body) override;
+
+  /**
+   * @brief Parse function call response from generated text and build content and tool_calls array of message
+   * member of OpenAI interface response.
+   * @param gen_txt: Generated text.
+   * @param req_id: Request id.
+   * @param message: Message member of OpenAI interface response format.
+   * @param allocator: Json allocator.
+   * @return stop reason.
+   */
+  std::string ParseFunctionCall(const std::string& gen_txt,
+                                int64_t req_id,
+                                rapidjson::GenericValue<rapidjson::UTF8<>>& message,
+                                rapidjson::MemoryPoolAllocator<>& allocator) override;
+
+protected:
+  std::string tool_prompt_pre_;
+  std::string tool_prompt_post_;
+};
+
 class LLMStylerFactory {
 public:
   LLMStylerFactory() = default;

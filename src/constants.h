@@ -36,7 +36,7 @@ struct InputFieldsNames {
   /// @brief Controls the top-P probability to sample from. Default is 0.f
   static constexpr char const* kTopP = "top_p";
   /// @brief Controls decay in the top-P algorithm. topPMin is lower-bound. Default is 1.e-6.
-  static constexpr char const* kTopPMin = "top_k_min";
+  static constexpr char const* kTopPMin = "top_p_min";
   /// @brief Controls decay in the top-P algorithm. The decay value. Default is 1.f
   static constexpr char const* kTopPDecay = "top_p_decay";
   /// @brief Controls decay in the top-P algorithm. Indicates where to reset the decay. Default is 1.

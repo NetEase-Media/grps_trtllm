@@ -2,6 +2,9 @@
 
 #include "tokenizer.h"
 
+#include <rapidjson/rapidjson.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 #include <sentencepiece_processor.h>
 
 #include <fstream>
@@ -32,6 +35,7 @@ void MultiInstanceTokenizer::Load(const std::string& type,
   for (int i = 0; i < instance_num; ++i) {
     if (type == "huggingface") {
       auto blob = utils::LoadBytesFromFile<std::string>(conf_path + "/tokenizer.json");
+      FixCompatibilityIfNeed(blob);
       tokenizers_.emplace_back(tokenizers::Tokenizer::FromBlobJSON(blob));
     } else if (type == "sentencepiece") {
       auto blob = utils::LoadBytesFromFile<std::string>(conf_path + "/tokenizer.model");
@@ -242,4 +246,36 @@ tokenizers::Tokenizer* MultiInstanceTokenizer::GetTokenizer() {
 #endif
   return tokenizers_[idx].get();
 }
+
+void MultiInstanceTokenizer::FixCompatibilityIfNeed(std::string& blob) {
+  rapidjson::Document doc;
+  doc.Parse(blob.c_str());
+  if (doc.HasParseError()) {
+    throw std::runtime_error("Parse tokenizer.json failed.");
+  }
+
+  bool changed = false;
+  if (doc.HasMember("model") && doc["model"].IsObject()) {
+    if (doc["model"].HasMember("merges") && doc["model"]["merges"].IsArray()) {
+      for (size_t i = 0; i < doc["model"]["merges"].Size(); ++i) {
+        if (doc["model"]["merges"][i].IsArray() && doc["model"]["merges"][i].Size() == 2) { // ["i", "n"] -> "i n"
+          std::string merge = doc["model"]["merges"][i][0].GetString();
+          merge += " ";
+          merge += doc["model"]["merges"][i][1].GetString();
+          doc["model"]["merges"][i].SetString(merge.c_str(), merge.size(), doc.GetAllocator());
+          changed = true;
+          // CLOG4(INFO, "Fix merge: " << doc["model"]["merges"][i].GetString());
+        }
+      }
+    }
+  }
+
+  if (changed) {
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+    blob = buffer.GetString();
+  }
+}
+
 } // namespace netease::grps

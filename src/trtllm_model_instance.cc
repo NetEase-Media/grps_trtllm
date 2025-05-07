@@ -451,6 +451,13 @@ TrtLlmModelInstance::TrtLlmModelInstance(TrtLlmModelState* model_state,
 
   // Parse default sampling config
   def_sampling_config_ = model_state_->GetParameter<executor::SamplingConfig>("sampling");
+  enable_thinking_ = true;
+  try {
+    enable_thinking_ = model_state_->GetParameter<bool>("enable_thinking");
+  } catch (std::exception const& e) {
+    // If parameter is not specified, just ignore
+    CLOG4(WARN, "`enable_thinking` is not specified, will be set to true");
+  }
 
   std::string encoder_model_path;
   try {
@@ -546,7 +553,7 @@ void TrtLlmModelInstance::EnqueueAndWait(GrpsContext& grps_ctx, const std::strin
   uint64_t begin_time_us = GET_SYS_TIME_US();
   auto [func_call, model, executor_request] = utils::CreateRequestFromOpenAiHttpBody(
     http_body, instance_specific_config.exclude_input_from_output, grps_ctx.IfStreaming(), llm_styler_, tokenizer_,
-    vit_, stop_words_, bad_words_, max_output_len_, model_type_, def_sampling_config_);
+    vit_, stop_words_, bad_words_, max_output_len_, model_type_, def_sampling_config_, enable_thinking_);
   size_t input_tokens_size = executor_request.getInputTokenIds().size();
   if (input_tokens_size > max_input_len_) {
     std::string err = "Input tokens size " + std::to_string(input_tokens_size) + " exceeds max input length " +

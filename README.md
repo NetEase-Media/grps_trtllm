@@ -42,6 +42,10 @@
 
 ## 更新历史
 
+* 2025-05-07
+    * 支持Qwen3ForCausalLM。
+    * grps1.1.0_cuda12.6_cudnn9.6_trtllm0.16.0_py3.12镜像更新，增加了对Qwen3ForCausalLM的支持。
+
 * 2025-04-17
     * 支持InternVL3。
 
@@ -55,11 +59,11 @@
 * 2025-03-20
     * 支持gemma3-text。
 
-* 2025-03-06
-    * 支持QwQ-32B。
-
 <details close>
 <summary>Previous News</summary>
+
+* 2025-03-06
+    * 支持QwQ-32B。
 
 * 2025-03-04
     * 支持olmOCR。
@@ -120,6 +124,7 @@
 
 | supported model                                                          | llm_styler  | chat | function_call | doc                                                  |
 |--------------------------------------------------------------------------|-------------|------|---------------|------------------------------------------------------|
+| Qwen3                                                                    | qwen3       | ✅    | ❌             | [qwen3](docs%2Fqwen3.md)                             |
 | DeepSeek-R1-Distill<br>TinyR1-32B-Preview                                | deepseek-r1 | ✅    | ❌             | [deepseek-r1-distill](docs%2Fdeepseek-r1-distill.md) |
 | QwQ-32B<br>QwQ-32B-AWQ                                                   | qwq         | ✅    | ✅             | [qwq](docs%2Fqwq.md)                                 |
 | QwQ-32B-Preview                                                          | qwq-preview | ✅    | ❌             | [qwq-preview](docs%2Fqwq-preview.md)                 |

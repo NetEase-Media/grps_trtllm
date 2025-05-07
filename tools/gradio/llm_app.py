@@ -168,6 +168,59 @@ def deepseek_llm_fn(message, history, max_tokens):
         yield 'error: ' + str(e)
 
 
+def qwen3_llm_fn(message, history, max_tokens):
+    # print('message:', message)
+    # print('history:', history)
+
+    # History messages.
+    messages = []
+    for his in history:
+        messages.append({
+            "role": his['role'],
+            "content": his['content'][8:]
+            .replace('<blockquote id="think" style="font-size:0.8em;">', '<think>')
+            .replace('</blockquote id="think">', '</think>') if his['role'] == 'assistant' else his['content']
+        })
+
+    # New message.
+    new_message = {
+        "role": "user",
+        "content": message
+    }
+    messages.append(new_message)
+    # print('messages:', messages)
+
+    # Request to openai llm server.
+    client = openai.Client(
+        api_key="cannot be empty",
+        base_url=f"http://{llm_server}/v1"
+    )
+
+    res = client.chat.completions.create(
+        model="",
+        messages=messages,
+        stream=True,
+        max_tokens=max_tokens,
+    )
+    # print('res: ', res)
+    content = ''
+    try:
+        for msg in res:
+            # print('msg:', msg)
+            if msg.choices[0].delta.content is not None:
+                content += (msg.choices[0].delta.content
+                            .replace('<think>',
+                                     '<blockquote id="think" style="font-size:0.8em;">')
+                            .replace('</think>', '</blockquote id="think">'))
+                yield content
+    except openai.APIError as e:
+        print('error:', e)
+        yield 'error: ' + e.message
+    except Exception as e:
+        print('error:', e)
+        yield 'error: ' + str(e)
+
+
 def internvl2_llm_fn(message, history):
     # print('message:', message)
     # print('history:', history)
@@ -1043,6 +1096,16 @@ elif app_type == 'qwq':
             ["你好，你是谁？", 2048],
             ["解一下这道题：\n(x + 3) = (8 - x)\nx = ?", 2048]
         ])
+elif app_type == 'qwen3':
+    demo = gr.ChatInterface(
+        concurrency_limit=32, fn=qwen3_llm_fn, type="messages", title="qwen3-grps-trtllm", fill_height=False,
+        multimodal=False, additional_inputs=[
+            gr.Slider(1, 32768, value=2048, step=1, label="Max Tokens"),
+        ],
+        examples=[
+            ["你好，你是谁？", 2048],
+            ["解一下这道题：\n(x + 3) = (8 - x)\nx = ?", 2048]
+        ])
 elif app_type == 'janus-pro':
     demo = gr.ChatInterface(concurrency_limit=32, fn=janus_pro_llm_fn, type="messages", examples=[
         {"text": "你好，你是谁？"},
@@ -1077,7 +1140,7 @@ elif app_type == 'minicpmv':
 else:
     print('`app_type` only support `llm`(text llm) or `internvl2`(multi-modal) or `intern-video2.5(multi-modal)` or '
           ' `internvl3(multi-modal)` or `qwenvl`(multi-modal), `qwen2vl`(multi-modal),'
-          ' `deepseek-r1`(deepseek-r1 text llm), `qwq`(qwq text llm), '
+          ' `deepseek-r1`(deepseek-r1 text llm), `qwq`(qwq text llm), `qwen3`(qwen3 text llm)'
           '`janus-pro`(multi-modal), `olm-ocr`(multi-modal).')
     exit(1)
 demo.launch(server_name='0.0.0.0', server_port=SERVER_PORT)

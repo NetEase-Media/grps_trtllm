@@ -58,9 +58,9 @@ static inline bool StartsWith(const std::string& str, const std::string& prefix)
 static inline bool EndsWith(const std::string& str, const std::string& suffix) {
   return str.size() >= suffix.size() && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
-std::string Lstrip(const std::string& str);
-std::string Rstrip(const std::string& str);
-std::string Strip(const std::string& str);
+std::string Lstrip(const std::string& str, const std::string& chars = " \t\n\r");
+std::string Rstrip(const std::string& str, const std::string& chars = " \t\n\r");
+std::string Strip(const std::string& str, const std::string& chars = " \t\n\r");
 bool IsValidUTF8(const std::string& str);
 // Get word count in string.
 size_t GetWordCount(const std::string& str, const std::string& word);
@@ -75,6 +75,8 @@ size_t GetWordCount(const std::string& str, const std::string& word);
  */
 size_t ReplaceWorld(
   std::string& str, const std::string& word, const std::string& replace, size_t beg_pos = 0, size_t count = 1);
+// Add space after colon and comma in json string.
+std::string JsonAddSpaceAfterColonAndComma(const std::string& json);
 
 // --------------------------------------- Http utils [BEGIN] ---------------------------------------
 template <typename T>
@@ -157,6 +159,7 @@ std::tuple<bool, std::string, executor::Request> CreateRequestFromOpenAiHttpBody
   const std::unordered_set<std::string>& bad_words,
   size_t max_output_len,
   executor::ModelType model_type,
-  const executor::SamplingConfig& def_sampling_config);
+  const executor::SamplingConfig& def_sampling_config,
+  bool enable_thinking);
 } // namespace utils
 } // namespace netease::grps

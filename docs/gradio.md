@@ -27,6 +27,9 @@ python3 tools/gradio/llm_app.py deepseek-r1 0.0.0.0:9997
 # 启动纯文本聊天界面，qwq支持CoT过程的纯文本聊天，0.0.0.0:9997表示llm后端服务地址
 python3 tools/gradio/llm_app.py qwq 0.0.0.0:9997
 
+# 启动纯文本聊天界面，qwen3支持CoT过程的纯文本聊天，0.0.0.0:9997表示llm后端服务地址
+python3 tools/gradio/llm_app.py qwen3 0.0.0.0:9997
+
 # 启动多模态聊天界面，使用janus-pro多模态模型，0.0.0.0:9997表示llm后端服务地址
 python3 tools/gradio/llm_app.py janus-pro 0.0.0.0:9997
 
