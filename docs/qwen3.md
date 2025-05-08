@@ -66,16 +66,27 @@ trtllm-build --checkpoint_dir /tmp/Qwen3-8B/tllm_checkpoint/ \
 ### int4-awq量化
 
 ```bash
-# 转换ckpt
+# 使用Modelopt 转换 ckpt
 rm -rf /tmp/Qwen3-8B/tllm_checkpoint/
 python3 third_party/TensorRT-LLM/examples/quantization/quantize.py --model_dir /tmp/Qwen3-8B \
 --dtype bfloat16 --qformat int4_awq --awq_block_size 128 \
 --output_dir /tmp/Qwen3-8B/tllm_checkpoint/
-
 # 构建引擎
 rm -rf /tmp/Qwen3-8B/trt_engines/
 trtllm-build --checkpoint_dir /tmp/Qwen3-8B/tllm_checkpoint/ \
 --output_dir /tmp/Qwen3-8B/trt_engines/ \
+--gemm_plugin bfloat16 --max_batch_size 16 --paged_kv_cache enable --use_paged_context_fmha enable \
+--max_input_len 32256 --max_seq_len 32768 --max_num_tokens 32256
+
+# 也可以直接使用huggingface的awq版本直接转换ckpt，例如Qwen3-14B-AWQ
+git clone https://huggingface.co/Qwen/Qwen3-14B-AWQ /tmp/Qwen3-14B-AWQ
+rm -rf /tmp/Qwen3-14B-AWQ/tllm_checkpoint/
+python3 third_party/TensorRT-LLM/examples/qwen/convert_checkpoint.py --model_dir /tmp/Qwen3-14B-AWQ \
+--output_dir /tmp/Qwen3-14B-AWQ/tllm_checkpoint/ --dtype bfloat16 --load_model_on_cpu
+# 构建引擎
+rm -rf /tmp/Qwen3-14B-AWQ/trt_engines/
+trtllm-build --checkpoint_dir /tmp/Qwen3-14B-AWQ/tllm_checkpoint/ \
+--output_dir /tmp/Qwen3-14B-AWQ/trt_engines/ \
 --gemm_plugin bfloat16 --max_batch_size 16 --paged_kv_cache enable --use_paged_context_fmha enable \
 --max_input_len 32256 --max_seq_len 32768 --max_num_tokens 32256
 ```
