@@ -124,7 +124,7 @@
 
 | supported model                                                          | llm_styler  | chat | function_call | doc                                                  |
 |--------------------------------------------------------------------------|-------------|------|---------------|------------------------------------------------------|
-| Qwen3                                                                    | qwen3       | ✅    | ❌             | [qwen3](docs%2Fqwen3.md)                             |
+| Qwen3                                                                    | qwen3       | ✅    | ✅             | [qwen3](docs%2Fqwen3.md)                             |
 | DeepSeek-R1-Distill<br>TinyR1-32B-Preview                                | deepseek-r1 | ✅    | ❌             | [deepseek-r1-distill](docs%2Fdeepseek-r1-distill.md) |
 | QwQ-32B<br>QwQ-32B-AWQ                                                   | qwq         | ✅    | ✅             | [qwq](docs%2Fqwq.md)                                 |
 | QwQ-32B-Preview                                                          | qwq-preview | ✅    | ❌             | [qwq-preview](docs%2Fqwq-preview.md)                 |
