@@ -87,6 +87,10 @@ models:
       executor_worker_path: # will be set to `/opt/tritonserver/backends/tensorrtllm/trtllmExecutorWorker` if not set.
       medusa_choices: # will be set to `mc_sim_7b_63` if not set.
       gpu_weights_percent: # will be set to 1.0 if not set.
+      #lookahead_decoding:
+      #  window_size: 4
+      #  ngram_size: 2
+      #  verification_set_size: 4
     converter_type: none # only support `torch` (torch tensor converter), `tensorflow` (tf tensor converter), `tensorrt` (tensorrt tensor converter), `customized`  or `none`(no converter mode) now.
     converter_name: # converter name that has registered in src/customized_converter.h. Not none when converter_type is `customized`.
     converter_path: # path of converter.

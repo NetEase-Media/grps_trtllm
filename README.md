@@ -33,7 +33,8 @@
 * 支持扩展不同```LLM```的```prompt```构建风格以及生成结果的解析风格，以实现不同```LLM```的```chat```
   和```function call```模式，支持[llama-index](https://github.com/run-llama/llama_index)```ai-agent```。
 * 通过集成```tensorrt```推理后端与```opencv```库，支持多模态```LLM```。
-* 支持```inflight batching```、```multi-gpu```、```paged attention```、```kv-cache reuse```等```TensorRT-LLM```推理加速技术。
+* 支持```inflight batching```、```multi-gpu```、```paged attention```、```kv-cache reuse```、```lookahead decoding```等
+  ```TensorRT-LLM```推理加速技术。
 * 相比较[triton tensorrtllm_backend](https://github.com/triton-inference-server/tensorrtllm_backend),
   不存在```triton_server <--> tokenizer_backend <--> trtllm_backend```之间的进程间通信，纯C++实现，性能有稳定的提升。
 
@@ -41,6 +42,9 @@
 ，欢迎提交[pr](https://github.com/NetEase-Media/grps_trtllm/pulls)支持新的模型，感谢star⭐️。也可以添加微信沟通：zhaocc1218。
 
 ## 更新历史
+
+* 2025-05-14
+    * 支持Lookahead解码优化。
 
 * 2025-05-07
     * 支持Qwen3ForCausalLM。
@@ -56,11 +60,11 @@
 * 2025-03-22
     * 支持MiniCPM-V-2_6。
 
-* 2025-03-20
-    * 支持gemma3-text。
-
 <details close>
 <summary>Previous News</summary>
+
+* 2025-03-20
+    * 支持gemma3-text。
 
 * 2025-03-06
     * 支持QwQ-32B。
@@ -110,7 +114,8 @@
 * [模型列表](#模型列表)
 * [采样参数配置](docs/sampling.md)
 * [调度策略配置](docs/scheduler.md)
-* [前缀缓存重用](docs/kv_reuse.md)
+* [前缀缓存重用优化](docs/kv_reuse.md)
+* [lookahead解码优化](docs/lookahead.md)
 * [启动gradio服务](docs/gradio.md)
 * [docker部署](docs/docker.md)
 * [性能比较](docs/performance.md)

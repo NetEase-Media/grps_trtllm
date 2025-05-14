@@ -91,4 +91,8 @@ template <>
 tensorrt_llm::executor::SamplingConfig TrtLlmModelState::GetParameter<tensorrt_llm::executor::SamplingConfig>(
   std::string const& name);
 
+template <>
+tensorrt_llm::executor::LookaheadDecodingConfig
+TrtLlmModelState::GetParameter<tensorrt_llm::executor::LookaheadDecodingConfig>(std::string const& name);
+
 } // namespace netease::grps

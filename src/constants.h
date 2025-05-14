@@ -78,6 +78,11 @@ struct InputFieldsNames {
   static constexpr char const* kDraftInputs = "draft_input_ids";
   static constexpr char const* kDraftLogits = "draft_logits";
   static constexpr char const* kDraftAcceptanceThreshold = "draft_acceptance_threshold";
+
+  // LookaheadDecodingConfig
+  static constexpr char const* kLookaheadWindowSize = "window_size";
+  static constexpr char const* kLookaheadNGramSize = "ngram_size";
+  static constexpr char const* kLookaheadVerificationSetSize = "verification_set_size";
 };
 
 /// @brief Names of output fields

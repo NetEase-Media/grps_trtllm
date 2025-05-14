@@ -11,15 +11,15 @@
 
 namespace netease::grps {
 
-#define YAML_TRY_EXTRACT(yaml_node, conf_name, DataType, output)                   \
-  try {                                                                            \
-    output = yaml_node[conf_name].as<DataType>();                                  \
-  } catch (const std::exception& e) {                                              \
-    std::string err = std::string("Failed to parse conf, conf_name: " #conf_name); \
-    err += ", data_type: " #DataType;                                              \
-    err += ", err: ";                                                              \
-    err += e.what();                                                               \
-    throw std::invalid_argument(err);                                              \
+#define YAML_TRY_EXTRACT(yaml_node, conf_name, DataType, output)                                 \
+  try {                                                                                          \
+    output = yaml_node[conf_name].as<DataType>();                                                \
+  } catch (const std::exception& e) {                                                            \
+    std::string err = std::string("Failed to parse conf, conf_name: ") + std::string(conf_name); \
+    err += ", data_type: " #DataType;                                                            \
+    err += ", err: ";                                                                            \
+    err += e.what();                                                                             \
+    throw std::invalid_argument(err);                                                            \
   }
 
 #define YAML_TRY_EXTRACT_VEC(yaml_node, conf_name, DataType, output)                             \
@@ -293,6 +293,24 @@ tensorrt_llm::executor::SamplingConfig TrtLlmModelState::GetParameter<tensorrt_l
                                                 random_seed, temperature, min_length, beam_search_diversity_rate,
                                                 repetition_penalty, presence_penalty, frequency_penalty, length_penalty,
                                                 early_stopping, no_repeat_ngram_size);
+}
+
+template <>
+tensorrt_llm::executor::LookaheadDecodingConfig
+TrtLlmModelState::GetParameter<tensorrt_llm::executor::LookaheadDecodingConfig>(std::string const& name) {
+  if (model_config_[name] && model_config_[name].IsMap()) {
+    int32_t window_size = 1, ngram_size = 1, verification_set_size = 0;
+    YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kLookaheadWindowSize, int32_t, window_size);
+    YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kLookaheadNGramSize, int32_t, ngram_size);
+    YAML_TRY_EXTRACT(model_config_[name], InputFieldsNames::kLookaheadVerificationSetSize, int32_t,
+                     verification_set_size);
+    CLOG4(INFO,
+          "Loaded lookahead decoding config: window_size: " << window_size << ", ngram_size: " << ngram_size
+                                                            << ", verification_set_size: " << verification_set_size);
+    return tensorrt_llm::executor::LookaheadDecodingConfig(window_size, ngram_size, verification_set_size);
+  } else {
+    throw std::invalid_argument("Failed to parse `lookahead_decoding` conf, not a map, conf_name: " + name);
+  }
 }
 
 } // namespace netease::grps

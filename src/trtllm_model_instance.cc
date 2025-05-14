@@ -367,6 +367,14 @@ executor::ExecutorConfig TrtLlmModelInstance::GetExecutorConfigFromParams() {
     }
   }
 
+  if (model_state_->GetModelConfig()["lookahead_decoding"]) {
+    auto lookahead_decoding_config =
+      model_state_->GetParameter<executor::LookaheadDecodingConfig>("lookahead_decoding");
+    decoding_config.setLookaheadDecoding(lookahead_decoding_config);
+  } else {
+    CLOG4(WARN, "`lookahead_decoding` parameter is not specified, will not setup.");
+  }
+
   float gpu_weights_percent = 1.0f;
   try {
     gpu_weights_percent = model_state_->GetParameter<float>("gpu_weights_percent");
