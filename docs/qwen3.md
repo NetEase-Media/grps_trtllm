@@ -43,8 +43,8 @@ python3 third_party/TensorRT-LLM/examples/run.py --input_text "你好，你是�
 
 ## 量化
 
-通过[NVIDIA Modelopt toolkit](../third_party/TensorRT-LLM/examples/quantization/README.md)支持int8/int4
-weight-only、awq、smooth quant、fp8等量化。
+通过[NVIDIA Modelopt toolkit](https://github.com/NVIDIA/TensorRT-LLM/blob/v0.16.0/examples/quantization/README.md)
+支持int8/int4 weight-only、awq、smooth quant、fp8等量化。
 
 ### int8 weight-only量化
 

@@ -6,9 +6,9 @@ Lookahead解码优化主要通过“并行推理多个token” + “n-gram缓存
 “一次性验证”来实现解码阶段一次推理多个token，充分利用GPU的并行计算能力，提升LLM解码阶段的吞吐量。具体介绍可以参考：
 
 * [Break the Sequential Dependency of LLM Inference Using Lookahead Decoding](https://lmsys.org/blog/2023-11-21-lookahead-decoding/)
-* [TensorRT-LLM lookahead](../third_party/TensorRT-LLM/examples/lookahead/README.md)
+* [TensorRT-LLM lookahead](https://github.com/NVIDIA/TensorRT-LLM/tree/v0.16.0/examples/lookahead)
 
-<img src="lookahead-decoding.gif" alt="glookahead-decoding.gif" height="400"/>
+<img src="lookahead-decoding.gif" alt="lookahead-decoding.gif" height="400"/>
 
 ## 如何打开该功能？
 
