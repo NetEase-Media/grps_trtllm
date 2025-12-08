@@ -39,7 +39,7 @@
   不存在```triton_server <--> tokenizer_backend <--> trtllm_backend```之间的进程间通信，纯C++实现，性能有稳定的提升。
 
 欢迎各位使用和提[issue](https://github.com/NetEase-Media/grps_trtllm/issues)
-，欢迎提交[pr](https://github.com/NetEase-Media/grps_trtllm/pulls)支持新的模型，感谢star⭐️。也可以添加微信沟通：zhaocc1218。
+，欢迎提交[pr](https://github.com/NetEase-Media/grps_trtllm/pulls)支持新的模型，感谢star⭐️。
 
 ## 更新历史
 
